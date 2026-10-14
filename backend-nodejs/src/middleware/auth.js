@@ -29,6 +29,16 @@ export const protect = async (req, res, next) => {
       }
 
       if (!req.user) {
+        if (mongoose.connection.readyState === 1) {
+          // DB is live but the account no longer exists → reject the token.
+          // (Never fabricate a privileged user for a deleted/unknown account.)
+          return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+            success: false,
+            message: 'Not authorized to access this route'
+          });
+        }
+        // Standalone mode (database offline): same fallback identity the
+        // offline login flow mints tokens for.
         req.user = {
           _id: decoded.id || 'usr_standalone_001',
           name: 'System Administrator',

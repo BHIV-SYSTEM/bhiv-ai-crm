@@ -1,4 +1,7 @@
 import assert from 'assert';
+// Load the same .env the server loads, so this test presents the same
+// SETU_INTEGRATION_API_KEY credential the running backend expects.
+import 'dotenv/config';
 
 /**
  * testArthaToSetuEndToEnd.test.js — End-to-End Integration Test (Artha -> SETU Node.js Backend)
@@ -16,13 +19,19 @@ console.log('===============================================================\n')
 async function testArthaSignalDispatch(signalName, payload) {
   console.log(`📡 [Artha Dispatch] Sending ${signalName} to SETU...`);
 
+  // SETU requires a machine credential: /setu rejects anonymous callers.
+  const headers = {
+    'Content-Type': 'application/json',
+    'x-trace-id': payload.trace_id,
+    'x-tenant-id': payload.tenant_id,
+  };
+  if (process.env.SETU_INTEGRATION_API_KEY) {
+    headers['X-SETU-API-Key'] = process.env.SETU_INTEGRATION_API_KEY;
+  }
+
   const response = await fetch(`${SETU_BASE_URL}/setu/signals/ingest`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-trace-id': payload.trace_id,
-      'x-tenant-id': payload.tenant_id,
-    },
+    headers,
     body: JSON.stringify(payload),
   });
 
@@ -141,7 +150,13 @@ async function runEndToEndTests() {
 
     // 3. Query Candidate Visibility for Trace 1
     console.log(`🔍 [Visibility Check] Querying UI candidate state for ${traceId1}...`);
-    const visResponse = await fetch(`${SETU_BASE_URL}/setu/visibility/candidate/${traceId1}`);
+    const visHeaders = {};
+    if (process.env.SETU_INTEGRATION_API_KEY) {
+      visHeaders['X-SETU-API-Key'] = process.env.SETU_INTEGRATION_API_KEY;
+    }
+    const visResponse = await fetch(`${SETU_BASE_URL}/setu/visibility/candidate/${traceId1}`, {
+      headers: visHeaders,
+    });
     const visJson = await visResponse.json();
     console.log(`   [Visibility Response]:`, JSON.stringify(visJson, null, 2));
     assert.strictEqual(visJson.trace_id, traceId1);

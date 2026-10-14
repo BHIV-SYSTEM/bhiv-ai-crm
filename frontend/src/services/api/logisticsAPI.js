@@ -18,6 +18,10 @@ export const logisticsAPI = {
   getShipments: (params) => apiClient.get('/delivery/shipments', { params }),
   trackShipment: (trackingNumber) => apiClient.get(`/delivery/track/${trackingNumber}`),
   getShipmentByOrder: (orderId) => apiClient.get(`/delivery/order/${orderId}`),
+
+  // Dealer / seller-agent portal
+  getDealerPortal: () => apiClient.get('/delivery/portal'),
+  updateShipmentStatus: (id, data) => apiClient.put(`/delivery/shipments/${id}/status`, data),
   
   // Couriers
   getCouriers: () => apiClient.get('/delivery/couriers'),

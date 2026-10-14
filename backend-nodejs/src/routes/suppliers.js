@@ -3,12 +3,15 @@ import Product from '../models/Product.js';
 import Supplier from '../models/Supplier.js';
 import mongoose from 'mongoose';
 import { protect } from '../middleware/auth.js';
+import { denyPortalRoles } from '../middleware/authorize.js';
 import { HTTP_STATUS } from '../config/constants.js';
 
 const router = express.Router();
 
 // All routes require authentication
 router.use(protect);
+// Staff-only: supplier data is company-wide, never customer-visible
+router.use(denyPortalRoles);
 
 // @route   GET /api/suppliers
 // @desc    Get all suppliers from Suppliers collection

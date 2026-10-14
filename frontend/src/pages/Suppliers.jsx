@@ -391,16 +391,12 @@ export const Suppliers = () => {
                   value={overview.total}
                   icon={Building2}
                   variant="primary"
-                  trend="up"
-                  trendValue="+4.1%"
                 />
                 <MetricCard
                   title="Active Suppliers"
                   value={overview.active}
                   icon={ClipboardList}
                   variant="success"
-                  trend="up"
-                  trendValue="+2.0%"
                 />
                 <MetricCard
                   title="Avg Lead Time"

@@ -31,49 +31,53 @@ export const Reports = () => {
 
       // Fetch charts data for sales report
       if (selectedReport === 'sales') {
+        // Real sales/orders trend from actual orders (last 6 days).
+        // The old code filled this chart with Math.random() numbers.
+        try {
+          const activityResponse = await dashboardAPI.getRecentActivity({ limit: 500 });
+          const recentOrders = activityResponse.data?.data?.recentOrders || [];
+          const buckets = [];
+          for (let i = 5; i >= 0; i--) {
+            const start = new Date();
+            start.setHours(0, 0, 0, 0);
+            start.setDate(start.getDate() - i);
+            const end = new Date(start);
+            end.setDate(end.getDate() + 1);
+            const dayOrders = recentOrders.filter((o) => {
+              const t = new Date(o.createdAt || o.created_at || 0).getTime();
+              return t >= start.getTime() && t < end.getTime();
+            });
+            buckets.push({
+              name: `${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}`,
+              sales: dayOrders.reduce((sum, o) => sum + Number(o.totalAmount ?? o.total_amount ?? 0), 0),
+              orders: dayOrders.length,
+            });
+          }
+          setSalesData(buckets);
+        } catch (err) {
+          console.warn('Failed to fetch orders for sales trend:', err);
+          setSalesData([]);
+        }
+
+        // Real stock-by-category data (no fabricated fallback categories)
         try {
           const chartsResponse = await dashboardAPI.getCharts();
           const charts = chartsResponse.data?.data || chartsResponse.data || {};
-
-          // Process order status for sales data
-          const orderStatus = charts.orderStatus || {};
-          const totalOrders = Object.values(orderStatus).reduce((sum, val) => sum + val, 0);
-          
-          // Create sales trend (last 6 months)
-          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-          const processedSalesData = months.map((name, index) => ({
-            name,
-            sales: Math.floor(totalOrders * (0.8 + Math.random() * 0.4) / 6),
-            orders: Math.floor(totalOrders / 6) + Math.floor(Math.random() * 50)
-          }));
-          setSalesData(processedSalesData);
-
-          // Process category data from inventory
           const inventory = charts.inventory || {};
           const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
           if (inventory.labels && Array.isArray(inventory.labels) && inventory.labels.length > 0) {
             const processedCategoryData = inventory.labels.map((label, index) => ({
               name: label,
-              value: inventory.currentStock?.[index] || 10,
+              value: inventory.currentStock?.[index] ?? 0,
               color: colors[index % colors.length]
             }));
             setCategoryData(processedCategoryData);
           } else {
-            setCategoryData([
-              { name: 'Tools', value: 45, color: '#6366f1' },
-              { name: 'Hardware', value: 30, color: '#10b981' },
-              { name: 'Electrical', value: 15, color: '#f59e0b' },
-              { name: 'Plumbing', value: 10, color: '#ef4444' }
-            ]);
+            setCategoryData([]);
           }
         } catch (err) {
           console.warn('Failed to fetch charts data:', err);
-          setCategoryData([
-            { name: 'Tools', value: 45, color: '#6366f1' },
-            { name: 'Hardware', value: 30, color: '#10b981' },
-            { name: 'Electrical', value: 15, color: '#f59e0b' },
-            { name: 'Plumbing', value: 10, color: '#ef4444' }
-          ]);
+          setCategoryData([]);
         }
       }
 
@@ -266,6 +270,11 @@ export const Reports = () => {
               <CardTitle>Sales & Orders Trend</CardTitle>
             </CardHeader>
             <CardContent>
+              {salesData.length === 0 ? (
+                <div className="h-[300px] flex items-center justify-center text-sm text-muted-foreground">
+                  No order data yet
+                </div>
+              ) : (
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={salesData}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -277,6 +286,7 @@ export const Reports = () => {
                   <Line type="monotone" dataKey="orders" stroke="#82ca9d" strokeWidth={2} />
                 </LineChart>
               </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
 
@@ -285,6 +295,11 @@ export const Reports = () => {
               <CardTitle>Sales by Category</CardTitle>
             </CardHeader>
             <CardContent>
+              {categoryData.length === 0 ? (
+                <div className="h-[300px] flex items-center justify-center text-sm text-muted-foreground">
+                  No data yet
+                </div>
+              ) : (
               <ResponsiveContainer width="100%" height={300}>
                 <RechartsPie>
                   <Pie
@@ -304,6 +319,7 @@ export const Reports = () => {
                   <Tooltip />
                 </RechartsPie>
               </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
         </div>

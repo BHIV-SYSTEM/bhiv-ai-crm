@@ -18,6 +18,7 @@ import { orderAPI } from '../services/api/orderAPI';
 import { productAPI } from '../services/api/productAPI';
 import { restockAPI } from '../services/api/restockAPI';
 import { logisticsAPI } from '../services/api/logisticsAPI';
+import { inventoryAPI } from '../services/api/inventoryAPI';
 import { formatDate } from '@/utils/dateUtils';
 
 export const Logistics = () => {
@@ -34,6 +35,9 @@ export const Logistics = () => {
 
   // Inventory data for chart
   const [inventoryData, setInventoryData] = useState([]);
+
+  // Real stock-change history (inventory adjustment logs) for the trend chart
+  const [inventoryLogs, setInventoryLogs] = useState([]);
 
   // Low stock products (stockQuantity < minThreshold)
   const [lowStockProducts, setLowStockProducts] = useState([]);
@@ -62,11 +66,10 @@ export const Logistics = () => {
       try {
         const ordersResponse = await orderAPI.getOrders({ limit: 100 });
         const rawOrders = ordersResponse.data?.data?.orders || ordersResponse.data?.orders || (Array.isArray(ordersResponse.data) ? ordersResponse.data : []);
-        const demoOrders = [
-          { _id: 'ord_101', orderNumber: 'ORD-2026-101', customerName: 'Shoprite Retail', status: 'DISPATCHED', totalAmount: 4500, createdAt: new Date() },
-          { _id: 'ord_102', orderNumber: 'ORD-2026-102', customerName: 'Metro Hypermarket', status: 'PLACED', totalAmount: 8200, createdAt: new Date() }
-        ];
-        setOrders(rawOrders.length > 0 ? rawOrders : demoOrders);
+        // Real orders only — a fresh account with no orders honestly shows 0
+        // (the old `demoOrders` fallback injected the same fake orders for
+        // every account).
+        setOrders(Array.isArray(rawOrders) ? rawOrders : []);
       } catch (err) {
         console.warn('Failed to fetch orders:', err);
       }
@@ -83,11 +86,34 @@ export const Logistics = () => {
         setLowStockProducts(lowStock);
 
         setInventoryData(products.map(p => ({
+          productId: p._id,
           ProductID: p.name || p.sku,
           CurrentStock: p.stockQuantity || 0
         })));
       } catch (err) {
         console.warn('Failed to fetch inventory:', err);
+      }
+
+      // Real stock-change history for the Inventory Levels Trend chart
+      try {
+        const logsResponse = await inventoryAPI.getInventoryLogs({ limit: 500 });
+        const rawLogs = logsResponse.data?.data?.logs || logsResponse.data?.logs || [];
+        setInventoryLogs(Array.isArray(rawLogs) ? rawLogs : []);
+      } catch (err) {
+        console.warn('Failed to fetch inventory logs:', err);
+        setInventoryLogs([]);
+      }
+
+      // Active shipments — real list from the backend (customers/sellers get
+      // their own scoped rows; the old hard-coded SHP-901/902 entries were
+      // shown to every account identically)
+      try {
+        const shipmentsResponse = await logisticsAPI.getShipments();
+        const rawShipments = shipmentsResponse.data?.shipments || shipmentsResponse.data?.data?.shipments || (Array.isArray(shipmentsResponse.data) ? shipmentsResponse.data : []);
+        setShipments(Array.isArray(rawShipments) ? rawShipments : []);
+      } catch (err) {
+        console.warn('Failed to fetch shipments:', err);
+        setShipments([]);
       }
 
       // Fetch recent procurement/restock activity (Agents tab)
@@ -99,18 +125,9 @@ export const Logistics = () => {
         console.warn('Failed to fetch restock activity:', err);
       }
 
-      // Active shipments list
-      setShipments([
-        { id: 'SHP-901', shipment_id: 'SHP-901', tracking_number: 'TRK-88219', status: 'out_for_delivery', courier: 'BlueDart', destination: 'Mumbai Store #4' },
-        { id: 'SHP-902', shipment_id: 'SHP-902', tracking_number: 'TRK-88220', status: 'picked_up', courier: 'Delhivery', destination: 'Pune Distribution Hub' }
-      ]);
-
       // Calculate metrics from fetched data
-      const processingOrdersCount = orders.filter(o => o.Status === 'Processing' || o.status === 'Processing').length;
-      const inTransitCount = shipments.filter(s => s.status === 'out_for_delivery' || s.status === 'picked_up').length;
-      const totalInventoryCount = inventoryData.reduce((sum, item) => sum + (item.CurrentStock || 0), 0);
-
-      // KPIs are computed from fetched data, no need to set state
+      // (KPIs are derived from state in `overviewMetrics` below — no
+      //  dead duplicate calculations here)
 
     } catch (err) {
       console.error('Error fetching logistics data:', err);
@@ -123,10 +140,16 @@ export const Logistics = () => {
   const getStatusVariant = (status) => {
     const variants = {
       PLACED: 'warning',
+      PROCESSING: 'warning',
       DISPATCHED: 'info',
+      PENDING_PICKUP: 'warning',
+      PICKED_UP: 'info',
+      IN_TRANSIT: 'info',
+      OUT_FOR_DELIVERY: 'info',
       DELIVERED: 'success',
+      CANCELLED: 'destructive',
     };
-    return variants[status] || 'default';
+    return variants[String(status || '').toUpperCase()] || 'default';
   };
 
   const getRestockStatusVariant = (status) => {
@@ -214,13 +237,14 @@ export const Logistics = () => {
   };
 
   // Overview metrics (computed from real data)
+  const inTransitStatuses = ['PENDING_PICKUP', 'PICKED_UP', 'IN_TRANSIT', 'DISPATCHED', 'OUT_FOR_DELIVERY'];
   const overviewMetrics = {
     totalOrders: orders.length,
     totalShipments: shipments.length,
     processingOrders: orders.filter(o => (o.status === 'PLACED' || o.status === 'Processing')).length,
-    inTransitShipments: shipments.filter(s => (s.status === 'out_for_delivery' || s.status === 'picked_up' || s.status === 'IN_TRANSIT')).length,
+    inTransitShipments: shipments.filter(s => inTransitStatuses.includes(String(s.status || '').toUpperCase())).length,
     totalInventory: inventoryData.reduce((sum, item) => sum + (item.CurrentStock || item.current_stock || 0), 0),
-    agentActions: agentActivity.length || 2,
+    agentActions: agentActivity.length,
   };
 
   // Orders trend data (last 7 days from real data)
@@ -244,8 +268,8 @@ export const Logistics = () => {
 
       last7Days.push({
         date: displayDate,
-        orders: dayOrders.length || (i >= 5 ? 1 : 0),
-        shipments: dayShipments.length || (i >= 5 ? 1 : 0)
+        orders: dayOrders.length,
+        shipments: dayShipments.length
       });
     }
     return last7Days;
@@ -259,33 +283,74 @@ export const Logistics = () => {
     { name: 'Cancelled', value: orders.filter(o => (o.status === 'CANCELLED' || o.Status === 'Cancelled')).length },
   ].filter(item => item.value > 0);
 
-  // Shipment status distribution
-  const shipmentStatusData = [
-    { name: 'Out for Delivery', value: shipments.filter(s => s.status === 'out_for_delivery').length },
-    { name: 'Picked Up', value: shipments.filter(s => s.status === 'picked_up').length },
-    { name: 'Created', value: shipments.filter(s => s.status === 'created').length },
-    { name: 'Delivered', value: shipments.filter(s => s.status === 'delivered').length },
-  ].filter(item => item.value > 0);
+  // Shipment status distribution (real data — status values are normalized
+  // because the backend uses both order-style (DISPATCHED) and delivery-flow
+  // (IN_TRANSIT / OUT_FOR_DELIVERY / …) vocabularies)
+  const shipmentStatusData = (() => {
+    const counts = {};
+    shipments.forEach(s => {
+      const st = String(s.status || 'UNKNOWN').toUpperCase();
+      counts[st] = (counts[st] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .map(([name, value]) => ({ name, value }))
+      .filter(item => item.value > 0);
+  })();
 
-  // Inventory trend data (use current inventory data)
+  // Inventory trend data — REAL stock history reconstructed from inventory
+  // adjustment logs (each log records newStock at a point in time). Products
+  // without any recorded change show a flat line at their current stock; if
+  // there is no history at all the chart stays empty instead of drawing
+  // invented wobble (the old code added `Math.sin(...)*5` noise).
   const inventoryTrendData = (() => {
     if (inventoryData.length === 0) return [];
     const topProducts = inventoryData.slice(0, 5);
-    const data = [];
+
+    // Day boundaries for the last 7 days (oldest → newest)
+    const days = [];
     const today = new Date();
     for (let i = 6; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      const dateStr = `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-      const entry = { date: dateStr };
+      const end = new Date(today);
+      end.setDate(end.getDate() - i);
+      end.setHours(23, 59, 59, 999);
+      const displayDate = `${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}`;
+      days.push({ displayDate, endMs: end.getTime() });
+    }
+
+    const logsByProduct = {};
+    inventoryLogs.forEach(log => {
+      const key = String(log.productId?._id || log.productId || '');
+      if (!key) return;
+      (logsByProduct[key] = logsByProduct[key] || []).push(log);
+    });
+    Object.values(logsByProduct).forEach(list => {
+      list.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    });
+
+    const hasAnyHistory = Object.keys(logsByProduct).length > 0;
+    if (!hasAnyHistory) return [];
+
+    return days.map(day => {
+      const entry = { date: day.displayDate };
       topProducts.forEach((product, pIdx) => {
         const prodKey = product.ProductID || product.product_id || `Prod ${pIdx + 1}`;
-        const currentStock = Number(product.CurrentStock || product.current_stock || 10);
-        entry[prodKey] = Math.max(0, currentStock + Math.floor(Math.sin(i + pIdx) * 5));
+        const logs = logsByProduct[String(product.productId || '')] || [];
+        if (logs.length === 0) {
+          // No recorded changes → current stock (a real, flat value)
+          entry[prodKey] = Number(product.CurrentStock || 0);
+          return;
+        }
+        // Latest recorded state at/before the end of this day
+        const upTo = logs.filter(l => new Date(l.createdAt).getTime() <= day.endMs);
+        if (upTo.length > 0) {
+          entry[prodKey] = Number(upTo[upTo.length - 1].newStock ?? 0);
+        } else {
+          // Before the first recorded change: the recorded pre-change stock
+          entry[prodKey] = Number(logs[0].previousStock ?? logs[0].newStock ?? 0);
+        }
       });
-      data.push(entry);
-    }
-    return data;
+      return entry;
+    });
   })();
 
   const COLORS = [
@@ -401,16 +466,12 @@ export const Logistics = () => {
               value={overviewMetrics.totalOrders}
           icon={Package}
           variant="primary"
-              trend="up"
-              trendValue="+12.5%"
             />
             <MetricCard
               title="Total Shipments"
               value={overviewMetrics.totalShipments}
               icon={Truck}
               variant="info"
-              trend="up"
-              trendValue="+8.2%"
             />
             <MetricCard
               title="Processing Orders"
@@ -429,8 +490,6 @@ export const Logistics = () => {
               value={overviewMetrics.totalInventory}
               icon={BarChart3}
           variant="success"
-              trend="up"
-              trendValue="+5.3%"
         />
         <MetricCard
               title="Agent Actions"
@@ -615,6 +674,11 @@ export const Logistics = () => {
                 <CardTitle>Inventory Levels Trend</CardTitle>
               </CardHeader>
               <CardContent>
+                {inventoryTrendData.length === 0 ? (
+                  <div className="h-[300px] flex items-center justify-center text-sm text-muted-foreground">
+                    No stock-change history yet
+                  </div>
+                ) : (
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={inventoryTrendData}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -653,6 +717,7 @@ export const Logistics = () => {
                     })}
                   </LineChart>
                 </ResponsiveContainer>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -776,26 +841,32 @@ export const Logistics = () => {
               <TableRow>
                       <TableHead>shipment_id</TableHead>
                       <TableHead>order_id</TableHead>
-                      <TableHead>courier_id</TableHead>
+                      <TableHead>courier</TableHead>
                       <TableHead>tracking_number</TableHead>
                       <TableHead>status</TableHead>
-                      <TableHead>origin_address</TableHead>
+                      <TableHead>origin</TableHead>
                       <TableHead>destination</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-                    {shipments.map((shipment) => (
+                    {shipments.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center text-muted-foreground">
+                          No shipments yet — shipments appear here once orders are dispatched
+                        </TableCell>
+                      </TableRow>
+                    ) : shipments.map((shipment) => (
                       <TableRow key={shipment.shipment_id}>
                         <TableCell className="font-medium">{shipment.shipment_id}</TableCell>
                         <TableCell>{shipment.order_id}</TableCell>
-                        <TableCell>{shipment.courier_id}</TableCell>
+                        <TableCell>{shipment.courier_name || shipment.courier_id || '—'}</TableCell>
                         <TableCell>{shipment.tracking_number}</TableCell>
                   <TableCell>
                           <Badge variant={getStatusVariant(shipment.status)}>
                             {shipment.status}
                     </Badge>
                   </TableCell>
-                        <TableCell>{shipment.origin_address}</TableCell>
+                        <TableCell>{shipment.origin || shipment.origin_address || '—'}</TableCell>
                         <TableCell className="max-w-xs truncate">{shipment.destination}</TableCell>
                       </TableRow>
                     ))}

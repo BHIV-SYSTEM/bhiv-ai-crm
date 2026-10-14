@@ -14,6 +14,7 @@ import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
 import productRoutes from './routes/products.js';
 import orderRoutes from './routes/orders.js';
+import orderFinanceRoutes from './routes/orderFinance.js';
 import inventoryRoutes from './routes/inventory.js';
 import restockRoutes from './routes/restock.js';
 import dashboardRoutes from './routes/dashboard.js';
@@ -26,6 +27,8 @@ import mitraRoutes from './routes/mitra.js';
 import setuRoutes from './routes/setu.js';
 import deliveryRoutes from './routes/delivery.js';
 import agentRoutes from './routes/agents.js';
+import financialRoutes from './routes/financial.js';
+import notificationRoutes from './routes/notifications.js';
 
 // Load environment variables
 dotenv.config();
@@ -55,7 +58,7 @@ app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, ngrok-skip-browser-warning');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, ngrok-skip-browser-warning, Cache-Control');
   }
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
@@ -77,7 +80,7 @@ const corsOptions = {
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'ngrok-skip-browser-warning'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'ngrok-skip-browser-warning', 'Cache-Control'],
   exposedHeaders: ['Content-Range', 'X-Content-Range'],
   optionsSuccessStatus: 204,
 };
@@ -142,6 +145,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/order-finance', orderFinanceRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/restock', restockRoutes);
 app.use('/api/ems', emsRoutes);
@@ -156,6 +160,8 @@ app.use('/projects', setuRoutes);
 app.use('/tasks', setuRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/suppliers', supplierRoutes);
+app.use('/api/financial', financialRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/delivery', deliveryRoutes);
 app.use('/returns', deliveryRoutes);
 app.use('/', agentRoutes);

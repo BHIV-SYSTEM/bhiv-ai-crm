@@ -1,0 +1,31 @@
+{
+  "registry": [
+    {
+      "tenant_id": "tenant_bright_connection_001",
+      "trace_id": "trc_phase2_replay_exec_001",
+      "entity_id": "entity_phase2_exec_001",
+      "source_connector": "bright_connection",
+      "schema_version": "1.0",
+      "idempotency_key": "idem_phase2_exec_001",
+      "integrity_hash": "e6f532d2a221fb38c7bd736c662ea6eec3c8894e4f40b2870e7f970b78ba1546",
+      "payload": {
+        "product_id": "BC-HAMMER-03",
+        "qty": 3
+      },
+      "created_at": "2026-10-14T08:31:04.263Z",
+      "duplicate": false
+    }
+  ],
+  "replay_history": [
+    {
+      "replay_name": "replay_exec_001",
+      "trace_id": "trc_phase2_replay_exec_001",
+      "tenant_id": "tenant_bright_connection_001",
+      "integrity_hash": "e6f532d2a221fb38c7bd736c662ea6eec3c8894e4f40b2870e7f970b78ba1546",
+      "original_ingestion_present": true,
+      "replay_registered": true,
+      "duplicate_guard": false,
+      "replayed_at": "2026-10-14T08:31:04.265Z"
+    }
+  ]
+}

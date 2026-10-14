@@ -4,13 +4,15 @@ import Product from '../models/Product.js';
 import Order from '../models/Order.js';
 import RestockRequest from '../models/RestockRequest.js';
 import { protect } from '../middleware/auth.js';
-import { isAdminOrManager } from '../middleware/authorize.js';
+import { isAdminOrManager, denyPortalRoles } from '../middleware/authorize.js';
 import { HTTP_STATUS, ORDER_STATUS, USER_ROLES, RESTOCK_STATUS } from '../config/constants.js';
 
 const router = express.Router();
 
 // All routes require authentication
 router.use(protect);
+// Staff-only: company-wide stats/activity/charts are not customer data
+router.use(denyPortalRoles);
 
 // @route   GET /api/dashboard/stats
 // @desc    Get dashboard statistics
@@ -225,11 +227,15 @@ router.get('/charts', async (req, res) => {
     const categoryCounts = {};
     products.forEach(p => {
       const cat = p.category || 'General';
-      categoryCounts[cat] = (categoryCounts[cat] || 0) + (p.stockQuantity || 10);
+      // `?? 0`: a product with 0 (or missing) stock contributes 0 — the old
+      // `|| 10` silently inflated every empty product by 10 units
+      categoryCounts[cat] = (categoryCounts[cat] || 0) + (p.stockQuantity ?? 0);
     });
 
-    const labels = Object.keys(categoryCounts).length > 0 ? Object.keys(categoryCounts) : ['Tools', 'Hardware', 'Electrical', 'Plumbing'];
-    const currentStock = Object.values(categoryCounts).length > 0 ? Object.values(categoryCounts) : [150, 220, 180, 95];
+    // Honest empty arrays when there is no category data — the old fallback
+    // fabricated ['Tools','Hardware',…] with [150, 220, 180, 95] stock numbers.
+    const labels = Object.keys(categoryCounts);
+    const currentStock = Object.values(categoryCounts);
 
     res.json({
       success: true,
@@ -238,7 +244,10 @@ router.get('/charts', async (req, res) => {
           PLACED: await Order.countDocuments({ status: ORDER_STATUS.PLACED }),
           DISPATCHED: await Order.countDocuments({ status: ORDER_STATUS.DISPATCHED }),
           DELIVERED: await Order.countDocuments({ status: ORDER_STATUS.DELIVERED }),
-          CANCELLED: await Order.countDocuments({ status: ORDER_STATUS.CANCELLED })
+          // No CANCELLED status exists in ORDER_STATUS — count the literal
+          // value so the query matches nothing instead of silently counting
+          // every order (undefined would be stripped from the filter).
+          CANCELLED: await Order.countDocuments({ status: 'CANCELLED' })
         },
         inventory: {
           labels,

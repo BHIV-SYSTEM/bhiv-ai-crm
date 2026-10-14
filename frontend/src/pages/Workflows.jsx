@@ -75,7 +75,9 @@ export const Workflows = () => {
         workflow: `${log.action || 'Unknown'} Workflow`,
         trigger: log.action || 'Unknown',
         status: log.confidence > 0.7 ? 'success' : 'warning',
-        executionTime: '2.3s',
+        // The logs don't record duration — show an honest dash, not a
+        // fabricated "2.3s" for every row
+        executionTime: log.duration ? `${log.duration}s` : '—',
         timestamp: log.timestamp ? new Date(log.timestamp) : new Date()
       }));
       setExecutionHistory(recentLogs);

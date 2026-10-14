@@ -11,6 +11,19 @@ const router = express.Router();
 // All routes require authentication
 router.use(protect);
 
+/**
+ * Customer-safe product view: strips internal/commercial fields
+ * (cost price, supplier details, who created it) from catalogue data.
+ */
+const toCustomerProduct = (product) => {
+  const obj = product.toObject ? product.toObject() : { ...product };
+  delete obj.costPrice;
+  delete obj.supplier;
+  delete obj.createdBy;
+  delete obj.profitMargin;
+  return obj;
+};
+
 // @route   GET /api/products
 // @desc    Get all products
 // @access  Private
@@ -48,10 +61,13 @@ router.get('/', async (req, res) => {
 
     const total = await Product.countDocuments(query);
 
+    const isCustomer = req.user.role === 'customer';
+    const payload = isCustomer ? products.map(toCustomerProduct) : products;
+
     res.json({
       success: true,
       data: {
-        products,
+        products: payload,
         pagination: {
           page: parseInt(page),
           limit: parseInt(limit),
@@ -133,7 +149,7 @@ router.get('/:id', async (req, res) => {
 
     res.json({
       success: true,
-      data: { product }
+      data: { product: req.user.role === 'customer' ? toCustomerProduct(product) : product }
     });
   } catch (error) {
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({

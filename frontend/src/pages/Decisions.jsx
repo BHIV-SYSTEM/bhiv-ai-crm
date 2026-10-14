@@ -83,10 +83,11 @@ export const Decisions = () => {
         const analyticsResponse = await aiDecisionsAPI.getDecisionAnalytics();
         const analytics = analyticsResponse.data?.data || analyticsResponse.data || {};
         setMetrics({
-          totalDecisions: analytics.totalDecisions || analytics.total_decisions || 148,
-          avgConfidence: analytics.averageConfidence || analytics.avg_confidence || 92.4,
-          successRate: analytics.successRate || analytics.success_rate || 96.8,
-          avgExecutionTime: analytics.avgExecution ? `${analytics.avgExecution}s` : (analytics.avg_execution_time || '1.4s'),
+          // `??` so a real value of 0 stays 0 — never a fabricated fallback
+          totalDecisions: analytics.totalDecisions ?? analytics.total_decisions ?? 0,
+          avgConfidence: analytics.averageConfidence ?? analytics.avg_confidence ?? 0,
+          successRate: analytics.successRate ?? analytics.success_rate ?? 0,
+          avgExecutionTime: analytics.avgExecution ? `${analytics.avgExecution}s` : (analytics.avg_execution_time ?? '—'),
         });
       } catch (err) {
         console.warn('Failed to fetch analytics:', err);
@@ -98,7 +99,7 @@ export const Decisions = () => {
             totalDecisions: decisionHistory.length,
             avgConfidence: Math.round(avgConf * 10) / 10,
             successRate: Math.round((successful / decisionHistory.length) * 100 * 10) / 10,
-            avgExecutionTime: '3.2s',
+            avgExecutionTime: '—',
           });
         }
       }

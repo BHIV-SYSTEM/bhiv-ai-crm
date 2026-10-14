@@ -23,11 +23,19 @@ const ProtectedRoute = ({ children }) => {
   }
 
   const role = user?.role;
-  const isCustomerPortal = location.pathname.startsWith('/customer-portal');
+  const path = location.pathname;
+  const isCustomerPortal = path.startsWith('/customer-portal');
+  const isSellerPortal = path.startsWith('/seller-portal');
 
-  // Customers are RESTRICTED to customer portal only
+  // Customers are RESTRICTED to the customer portal only
   if (role === 'customer' && !isCustomerPortal) {
     return <Navigate to="/customer-portal" replace />;
+  }
+
+  // Sellers are RESTRICTED to the seller portal only (no SETU products,
+  // no customer portal — the seller portal is their whole workspace).
+  if (role === 'seller' && !isSellerPortal) {
+    return <Navigate to="/seller-portal" replace />;
   }
 
   return children;

@@ -12,6 +12,14 @@ const orderSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  // The seller (delivery partner) this parcel is assigned to. Admin assigns a
+  // parcel to a seller; only that seller can then see and dispatch it. Null
+  // means unassigned (visible to admin/manager, invisible to every seller).
+  assignedSeller: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
   items: [{
     productId: {
       type: mongoose.Schema.Types.ObjectId,

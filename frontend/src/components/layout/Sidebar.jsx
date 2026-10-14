@@ -1,24 +1,55 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   LayoutDashboard, Package, Users, Building2, ShoppingCart, Bot,
   Workflow, Brain, GraduationCap, Bell, Mail, BarChart3, Settings,
   UsersRound, Menu, X, ChevronLeft, ChevronRight, TrendingUp, Zap,
-  FileText, Store, Activity, Database, Sparkles, LogOut
+  Store, Activity, Sparkles, LogOut, Truck
 } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { cn } from '@/utils/helpers';
 import { ROUTES } from '@/utils/constants';
 import Button from '../common/ui/Button';
 import { useAuth } from '@/context/MongoAuthContext';
+import notificationAPI from '@/services/api/notificationAPI';
+import financialAPI from '@/services/api/financialAPI';
 
 export const Sidebar = ({ isOpen, onToggle, isCollapsed, onCollapseToggle }) => {
   const { logout, isCustomer } = useAuth();
   const navigate = useNavigate();
+  const [unread, setUnread] = useState(0);
+
+  // Live unread badge for the customer notification centre (SETU + ARTHA).
+  useEffect(() => {
+    if (!isCustomer) {
+      setUnread(0);
+      return undefined;
+    }
+    let alive = true;
+    const load = async () => {
+      const [setu, artha] = await Promise.allSettled([
+        notificationAPI.unreadCount(),
+        financialAPI.unreadCount(),
+      ]);
+      if (!alive) return;
+      const a = setu.status === 'fulfilled' ? Number(setu.value.data?.data?.count || 0) : 0;
+      const b = artha.status === 'fulfilled' ? Number(artha.value.data?.data?.count || 0) : 0;
+      setUnread(a + b);
+    };
+    load().catch(() => {});
+    const timer = setInterval(load, 45000);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, [isCustomer]);
 
   // Role-based navigation
   const navigation = isCustomer
     ? [
-      { name: 'Customer Portal', icon: ShoppingCart, path: '/customer-portal' }
+      { name: 'Shop', icon: ShoppingCart, path: ROUTES.CUSTOMER_PORTAL },
+      { name: 'My Orders', icon: Package, path: ROUTES.CUSTOMER_ORDERS },
+      { name: 'Account', icon: Users, path: ROUTES.CUSTOMER_ACCOUNT },
+      { name: 'Notifications', icon: Bell, path: ROUTES.CUSTOMER_NOTIFICATIONS, badge: unread || undefined },
     ]
     : [
       { name: 'Overview', icon: LayoutDashboard, path: ROUTES.DASHBOARD },
@@ -34,6 +65,11 @@ export const Sidebar = ({ isOpen, onToggle, isCollapsed, onCollapseToggle }) => 
           { name: 'Supplier Management', icon: Building2, path: ROUTES.SUPPLIERS },
           { name: 'Product Catalog', icon: ShoppingCart, path: ROUTES.PRODUCTS },
           { name: 'Supplier Showcase', icon: Store, path: '/showcase' },
+          {
+            name: 'Sellers & Dispatch',
+            icon: Truck,
+            path: ROUTES.SELLER_PORTAL,
+          },
         ]
       },
       {
@@ -302,6 +338,17 @@ const NavItem = ({ item, isCollapsed, onClick }) => {
       {!isCollapsed && (
         <span className="font-medium text-sm whitespace-nowrap overflow-hidden text-ellipsis">
           {item.name}
+        </span>
+      )}
+
+      {item.badge && (
+        <span
+          className={cn(
+            'ml-auto min-w-[1.25rem] px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center h-5',
+            isCollapsed && 'absolute top-1 right-1 ml-0 min-w-0 h-4 w-4 px-0'
+          )}
+        >
+          {isCollapsed ? '' : item.badge}
         </span>
       )}
 

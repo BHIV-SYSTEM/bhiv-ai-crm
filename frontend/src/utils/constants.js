@@ -24,6 +24,13 @@ export const ROUTES = {
   SHOWCASE: '/showcase',
   AI_QUERY: '/ai-query',
   BRIGHT_CONNECTION: '/bright-connection',
+  CUSTOMER_PORTAL: '/customer-portal',
+  CUSTOMER_ORDERS: '/customer-portal/orders',
+  CUSTOMER_ACCOUNT: '/customer-portal/account',
+  CUSTOMER_NOTIFICATIONS: '/customer-portal/notifications',
+  CUSTOMER_PAY: '/customer-portal/pay/:orderId',
+  SELLER_PORTAL: '/seller-portal',
+  SHIPPING_PORTAL: '/shipping-portal', // legacy URL — redirects to SELLER_PORTAL
 };
 
 export const STATUS_COLORS = {

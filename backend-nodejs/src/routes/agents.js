@@ -1,7 +1,13 @@
 import express from 'express';
 import mongoose from 'mongoose';
+import { protect } from '../middleware/auth.js';
+import { denyPortalRoles } from '../middleware/authorize.js';
 
 const router = express.Router();
+
+// Agent endpoints expose company-wide operations/logs — staff only.
+router.use(protect);
+router.use(denyPortalRoles);
 
 // Mongoose Schema for Agent Logs
 const agentLogSchema = new mongoose.Schema({

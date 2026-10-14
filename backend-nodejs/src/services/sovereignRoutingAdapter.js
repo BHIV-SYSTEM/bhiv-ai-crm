@@ -52,6 +52,27 @@ export class SovereignRoutingAdapter {
     return { ok: true, governance: { gated_bridge: gated } };
   }
 
+/**
+   * Routing block handed to Sarathi. Mirrors buildSarathiPayload() in
+   * integration/sovereign_routing_adapter.js — keep the two in lockstep.
+   */
+  static buildSarathiPayload(execution = {}) {
+    return {
+      sarathi_version: '1.0',
+      execution_id: execution.execution_id,
+      trace_id: execution.trace_id,
+      tenant_id: execution.tenant_id,
+      intent_type: execution.intent_type,
+      source_system: execution.source_system,
+      target_system: execution.target_system,
+      parameters: execution.parameters,
+      priority: execution.priority,
+      timestamp: execution.timestamp,
+      schema_version: execution.schema_version,
+      actor: execution.actor,
+    };
+  }
+
   static toSarathiPayload(execution = {}) {
     this.assertRequiredFields(execution);
     return this.buildSarathiPayload(execution);

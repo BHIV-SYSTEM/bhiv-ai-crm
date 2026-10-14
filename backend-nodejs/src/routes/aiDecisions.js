@@ -1,10 +1,13 @@
 import express from 'express';
 import { protect } from '../middleware/auth.js';
+import { denyPortalRoles } from '../middleware/authorize.js';
 
 const router = express.Router();
 
 // All routes require authentication
 router.use(protect);
+// Staff-only: AI decisions/workflows expose company-wide operations
+router.use(denyPortalRoles);
 
 // @route   POST /api/ai-decisions/make
 // @desc    Make an AI decision

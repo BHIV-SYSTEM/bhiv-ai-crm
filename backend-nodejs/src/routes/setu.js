@@ -1,5 +1,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
+import crypto from 'node:crypto';
+import { protect } from '../middleware/auth.js';
 import { BrightConnectionConnector } from '../services/brightConnectionConnector.js';
 import { FailureHandlerService } from '../services/failureHandlerService.js';
 import { UiVisibilityService } from '../services/uiVisibilityService.js';
@@ -14,6 +16,48 @@ import Product from '../models/Product.js';
 import { Project, Milestone, Task, Assignment } from '../models/Project.js';
 
 const router = express.Router();
+
+/**
+ * SETU access control.
+ *
+ * Two accepted credentials (either one is sufficient):
+ *   1. `Authorization: Bearer <jwt>` — browser / staff callers. The frontend's
+ *      apiClient already sends this, so UI callers are unaffected.
+ *   2. `X-SETU-API-Key: <key>` — machine callers (Artha signal dispatch, SHAKTI
+ *      PMC, other ecosystem services) that cannot mint a user JWT. Matches
+ *      SETU_INTEGRATION_API_KEY with a timing-safe comparison, the same
+ *      convention routes/mitra.js uses.
+ *
+ * Anything else is rejected 401. This router was previously wide open.
+ */
+const timingSafeStringEqual = (provided, expected) => {
+  const a = Buffer.from(String(provided || ''), 'utf8');
+  const b = Buffer.from(String(expected || ''), 'utf8');
+  if (a.length !== b.length || a.length === 0) return false;
+  return crypto.timingSafeEqual(a, b);
+};
+
+const setuAuth = (req, res, next) => {
+  const integrationKey = process.env.SETU_INTEGRATION_API_KEY;
+  if (integrationKey && timingSafeStringEqual(req.get('X-SETU-API-Key'), integrationKey)) {
+    return next();
+  }
+
+  const authorization = req.headers.authorization || '';
+  if (authorization.startsWith('Bearer ') && authorization.slice(7).trim()) {
+    return protect(req, res, next);
+  }
+
+  return res.status(401).json({
+    success: false,
+    error: 'unauthorized',
+    message:
+      'SETU endpoints require either an "Authorization: Bearer <jwt>" header ' +
+      'or a valid "X-SETU-API-Key" integration credential',
+  });
+};
+
+router.use(setuAuth);
 
 
 // MongoDB Schema for SETU Ingested Signals
@@ -176,6 +220,71 @@ async function handleSignalIngest(req, res) {
 router.post('/signals/ingest', handleSignalIngest);
 router.post('/signals/:signal_type', handleSignalIngest);
 
+
+/**
+ * POST /setu/dealer-directory
+ * Partner directory export for ARTHA dealer sync.
+ * Machine-to-machine: request body must be signed with SETU_HMAC_SECRET
+ * (X-Setu-Signature = HMAC-SHA256 of the raw JSON body), same convention as
+ * the ARTHA event ingest endpoint. Returns shop customers only — no passwords,
+ * no fabricated fields.
+ */
+router.post('/dealer-directory', async (req, res) => {
+  try {
+    const secret = process.env.SETU_HMAC_SECRET || null;
+    if (!secret) {
+      return res.status(503).json({ success: false, error: 'not_configured', message: 'SETU_HMAC_SECRET is not configured' });
+    }
+
+    const signature = req.headers['x-setu-signature'] || req.headers['x-hmac-signature'];
+    if (!signature) {
+      return res.status(401).json({ success: false, error: 'missing_signature', message: 'Missing request signature' });
+    }
+
+    const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body ?? {});
+    const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
+    const a = Buffer.from(String(expected), 'utf8');
+    const b = Buffer.from(String(signature), 'utf8');
+    const valid = a.length === b.length && crypto.timingSafeEqual(a, b);
+    if (!valid) {
+      return res.status(401).json({ success: false, error: 'invalid_signature', message: 'Signature verification failed' });
+    }
+
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ success: false, error: 'db_unavailable', message: 'Database not connected' });
+    }
+
+    const customers = await User.find({ role: 'customer', isActive: true })
+      .select('name email phone shopDetails createdAt')
+      .lean();
+
+    const dealers = customers
+      .filter((u) => u.shopDetails && (u.shopDetails.shopName || u.shopDetails.gstNumber))
+      .map((u) => ({
+        setuCustomerId: String(u._id),
+        name: String(u.shopDetails.shopName || u.name || '').trim(),
+        contactPerson: u.name || '',
+        email: u.email || '',
+        phone: u.shopDetails.phone || u.phone || '',
+        gstin: String(u.shopDetails.gstNumber || '').trim(),
+        address: u.shopDetails.address || '',
+        createdAt: u.createdAt || null,
+      }))
+      .filter((d) => d.name);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        source: 'setu',
+        generated_at: new Date().toISOString(),
+        total: dealers.length,
+        dealers,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'directory_failed', message: error.message });
+  }
+});
 
 /**
  * GET /setu/signals/:trace_id

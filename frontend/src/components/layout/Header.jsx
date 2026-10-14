@@ -6,16 +6,40 @@ import { cn } from '@/utils/helpers';
 import Button from '../common/ui/Button';
 import Badge from '../common/ui/Badge';
 import { dashboardAPI } from '../../services/api/dashboardAPI';
+import { financialAPI } from '../../services/api/financialAPI';
+import { notificationAPI } from '../../services/api/notificationAPI';
 
 export const Header = ({ onMenuClick, isDark, onThemeToggle }) => {
   const [unreadCount, setUnreadCount] = React.useState(2);
   const [showUserMenu, setShowUserMenu] = React.useState(false);
   const [showSearch, setShowSearch] = React.useState(false);
   const [showNotifications, setShowNotifications] = React.useState(false);
-  const { user, profile, logout } = useAuth();
+  const { user, profile, logout, isCustomer } = useAuth();
   const navigate = useNavigate();
 
   const fetchUnreadAlerts = React.useCallback(async () => {
+    if (isCustomer) {
+      // Customer portal: ARTHA financial inbox (bridge may be unconfigured)
+      // PLUS the Mongo operational notifications where "order dispatched"
+      // messages actually land — both are best-effort.
+      let arthaUnread = 0;
+      try {
+        const res = await financialAPI.unreadCount();
+        arthaUnread = Number(res.data?.data?.count) || 0;
+      } catch {
+        arthaUnread = 0;
+      }
+      let personalUnread = 0;
+      try {
+        const res = await notificationAPI.unreadCount();
+        personalUnread = Number(res.data?.data?.count ?? res.data?.count) || 0;
+      } catch {
+        personalUnread = 0;
+      }
+      setUnreadCount(arthaUnread + personalUnread);
+      return;
+    }
+
     const override = localStorage.getItem('setu_unread_alerts');
     if (override !== null && override !== undefined && override !== '') {
       setUnreadCount(Number(override));
@@ -30,15 +54,26 @@ export const Header = ({ onMenuClick, isDark, onThemeToggle }) => {
       apiAlerts = [];
     }
 
+    // Per-user operational notifications (order shipped, parcel assigned to a
+    // seller, etc). SELLERS in particular only get these — dashboard alerts
+    // are staff-only, so without this their bell would never update.
+    let personalUnread = 0;
+    try {
+      const res = await notificationAPI.unreadCount();
+      personalUnread = Number(res.data?.data?.count ?? res.data?.count) || 0;
+    } catch {
+      personalUnread = 0;
+    }
+
     const readIds = new Set(JSON.parse(localStorage.getItem('setu_read_alert_ids') || '[]'));
     const unreadApi = apiAlerts.filter((a, idx) => !readIds.has(a.id || `api_alert_${idx + 1}`)).length;
 
     const customAlerts = JSON.parse(localStorage.getItem('setu_custom_notifications') || '[]');
     const unreadCustom = customAlerts.filter((a) => !a.read && !readIds.has(a.id)).length;
 
-    const totalUnread = unreadApi + unreadCustom;
+    const totalUnread = unreadApi + unreadCustom + personalUnread;
     setUnreadCount(totalUnread);
-  }, []);
+  }, [isCustomer]);
 
   React.useEffect(() => {
     fetchUnreadAlerts();
@@ -170,7 +205,7 @@ export const Header = ({ onMenuClick, isDark, onThemeToggle }) => {
               size="icon"
               onClick={() => {
                 setShowNotifications(!showNotifications);
-                navigate('/notifications');
+                navigate(isCustomer ? '/customer-portal/notifications' : '/notifications');
               }}
               className="hover:scale-110 transition-transform"
               aria-label="Notifications"

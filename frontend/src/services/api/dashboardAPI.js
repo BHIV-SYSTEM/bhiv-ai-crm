@@ -21,8 +21,10 @@ export const dashboardAPI = {
   // Get system alerts
   getAlerts: () => apiClient.get('/api/dashboard/alerts'),
   
-  // Dashboard Charts (aggregate from stats)
-  getCharts: () => apiClient.get('/api/dashboard/stats'),
+  // Dashboard Charts (order-status + inventory series from the charts endpoint;
+  // this previously pointed at /api/dashboard/stats, which has no chart data —
+  // so every chart built from it silently fell back to fabricated values)
+  getCharts: () => apiClient.get('/api/dashboard/charts'),
   
   // Orders
   getOrders: (params) => orderAPI.getOrders(params),

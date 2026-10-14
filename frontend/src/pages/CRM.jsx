@@ -60,7 +60,6 @@ export const CRM = () => {
   });
   const [metrics, setMetrics] = useState({
     totalAccounts: 0,
-    activeLeads: 0,
     opportunities: 0,
     conversionRate: 0,
     pipelineValue: 0,
@@ -68,6 +67,21 @@ export const CRM = () => {
     closedWon: 0,
     closedLost: 0,
   });
+
+  // Single source of truth for lead metrics: the Overview "Active Leads" card
+  // and every Leads-tab card read these exact numbers, so the two tabs cannot
+  // drift apart (previously each computed its own counts and the Leads
+  // "Inactive" card was a residual that always rendered 0).
+  const leadStats = useMemo(() => {
+    const active = leads.filter((l) => !!l.isActive).length;
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    return {
+      total: leads.length,
+      active,
+      inactive: leads.length - active,
+      newThisWeek: leads.filter((l) => new Date(l.created).getTime() >= weekAgo).length,
+    };
+  }, [leads]);
 
   // Fetch all CRM data
   const fetchCRMData = useCallback(async () => {
@@ -115,14 +129,17 @@ export const CRM = () => {
 
       // Fetch leads
       // Leads are not a separate collection in the MongoDB-only backend;
-      // we treat customer accounts as leads for display purposes.
-      setLeads(usersList.map(user => ({
+      // we treat customer accounts as leads for display purposes. (Accounts
+      // now include every role, so leads stay scoped to customers.)
+      const customerUsers = usersList.filter(user => (user.role || 'customer') === 'customer');
+      setLeads(customerUsers.map(user => ({
         id: user._id,
         name: user.name,
         company: user.shopDetails?.shopName || user.name,
         email: user.email,
         phone: user.shopDetails?.phone || '',
-        status: user.isActive ? 'qualified' : 'new',
+        status: user.isActive ? 'qualified' : 'inactive',
+        isActive: !!user.isActive,
         source: 'crm',
         budget: 0,
         territory: '',
@@ -160,31 +177,30 @@ export const CRM = () => {
         ordersList = [];
       }
 
-      // Update overview metrics using real backend counts
+      // Update overview metrics from real backend counts only — no
+      // hard-coded fallbacks (a fresh workspace honestly shows 0).
       if (activeTab === 'overview') {
-        const totalAccounts = dashboardStats?.users?.customerCount ?? accountsTotal ?? 2;
-        const activeLeads = dashboardStats?.users?.activeCustomers ?? usersList.filter(u => u.isActive).length ?? 2;
+        const totalAccounts = dashboardStats?.users?.total ?? accountsTotal ?? usersList.length;
         const totalOpps = dashboardStats?.orders?.total ?? ordersList.length;
         const closedWon = dashboardStats?.orders?.delivered ?? ordersList.filter(o => String(o.status || '').toUpperCase() === 'DELIVERED').length;
+        const closedLost = ordersList.filter(o => String(o.status || '').toUpperCase() === 'CANCELLED').length;
 
         const pipelineOrders = ordersList.filter(o => {
           const s = String(o.status || '').toUpperCase();
           return s === 'PLACED' || s === 'DISPATCHED';
         });
-        const calculatedPipeline = pipelineOrders.reduce((sum, o) => sum + Number(o.totalAmount ?? 0), 0);
-        const pipelineValue = calculatedPipeline > 0 ? calculatedPipeline : 1500000;
-        const avgDealSize = pipelineOrders.length > 0 ? pipelineValue / pipelineOrders.length : 75000;
-        const conversionRate = totalOpps > 0 ? (closedWon / totalOpps) * 100 : 78.5;
+        const pipelineValue = pipelineOrders.reduce((sum, o) => sum + Number(o.totalAmount ?? 0), 0);
+        const avgDealSize = pipelineOrders.length > 0 ? pipelineValue / pipelineOrders.length : 0;
+        const conversionRate = totalOpps > 0 ? (closedWon / totalOpps) * 100 : 0;
 
         setMetrics({
           totalAccounts,
-          activeLeads,
-          opportunities: totalOpps || 18,
+          opportunities: totalOpps,
           conversionRate: Math.round(conversionRate * 10) / 10,
           pipelineValue,
           avgDealSize,
-          closedWon: closedWon || 12,
-          closedLost: 2,
+          closedWon,
+          closedLost,
         });
       }
 
@@ -223,27 +239,22 @@ export const CRM = () => {
       contacted: 'warning',
       qualified: 'success',
       converted: 'success',
+      inactive: 'destructive',
     };
     return variants[status] || 'default';
   };
 
 
 
-  // Chart data (computed from real data)
+  // Chart data — always computed from real data. When a series is empty the
+  // chart card renders an honest "no data" note instead of fabricated numbers.
   const opportunityStageData = (() => {
     const stageCounts = {};
     opportunities.forEach(opp => {
       const stage = opp.stage || 'unknown';
       stageCounts[stage] = (stageCounts[stage] || 0) + 1;
     });
-    const result = Object.entries(stageCounts).map(([name, value]) => ({ name, value })).filter(item => item.value > 0);
-    if (result.length > 0) return result;
-    return [
-      { name: 'Qualification', value: 4 },
-      { name: 'Proposal', value: 6 },
-      { name: 'Negotiation', value: 3 },
-      { name: 'Closed Won', value: 5 }
-    ];
+    return Object.entries(stageCounts).map(([name, value]) => ({ name, value })).filter(item => item.value > 0);
   })();
 
   const leadSourceData = (() => {
@@ -252,31 +263,25 @@ export const CRM = () => {
       const source = lead.source || 'unknown';
       sourceCounts[source] = (sourceCounts[source] || 0) + 1;
     });
-    const result = Object.entries(sourceCounts).map(([name, count]) => ({ name: name.replace('_', ' '), count })).filter(item => item.count > 0);
-    if (result.length > 0) return result;
-    return [
-      { name: 'Website', count: 8 },
-      { name: 'Referral', count: 5 },
-      { name: 'LinkedIn', count: 4 },
-      { name: 'Partner', count: 3 }
-    ];
+    return Object.entries(sourceCounts).map(([name, count]) => ({ name: name.replace('_', ' '), count })).filter(item => item.count > 0);
   })();
 
-  const revenueByTerritory = (() => {
-    const territoryRevenue = {};
+  // Accounts per role — real data replacing the old fake "revenue by
+  // territory" chart (the User model has no territory/revenue fields).
+  const accountsByRole = (() => {
+    const roleCounts = {};
     accounts.forEach(acc => {
-      const territory = acc.territory || 'Unknown';
-      territoryRevenue[territory] = (territoryRevenue[territory] || 0) + (acc.revenue || 0);
+      const role = acc.accountType || 'unknown';
+      roleCounts[role] = (roleCounts[role] || 0) + 1;
     });
-    const result = Object.entries(territoryRevenue).map(([territory, revenue]) => ({ territory, revenue })).filter(item => item.revenue > 0);
-    if (result.length > 0) return result;
-    return [
-      { territory: 'North America', revenue: 650000 },
-      { territory: 'Europe', revenue: 480000 },
-      { territory: 'Asia Pacific', revenue: 320000 },
-      { territory: 'Latin America', revenue: 150000 }
-    ];
+    return Object.entries(roleCounts).map(([role, count]) => ({ role, count })).filter(item => item.count > 0);
   })();
+
+  const EmptyChartNote = () => (
+    <div className="h-[250px] flex items-center justify-center text-sm text-muted-foreground">
+      No data yet
+    </div>
+  );
 
   const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444'];
 
@@ -308,32 +313,24 @@ export const CRM = () => {
         <MetricCard
           title="Total Accounts"
           value={metrics.totalAccounts.toLocaleString()}
-          trend="up"
-          trendValue="+8.2%"
           icon={Users}
           variant="primary"
         />
         <MetricCard
           title="Active Leads"
-          value={metrics.activeLeads.toLocaleString()}
-          trend="up"
-          trendValue="+12.5%"
+          value={leadStats.active.toLocaleString()}
           icon={TrendingUp}
           variant="secondary"
         />
         <MetricCard
           title="Pipeline Value"
-          value={`${(metrics.pipelineValue / 1000000).toFixed(1)}M`}
-          trend="up"
-          trendValue="+15%"
+          value={`₹${(metrics.pipelineValue / 1000000).toFixed(2)}M`}
           icon={DollarSign}
           variant="accent"
         />
         <MetricCard
           title="Avg Deal Size"
-          value={`${(metrics.avgDealSize / 1000).toFixed(0)}K`}
-          trend="up"
-          trendValue="+8%"
+          value={`₹${(metrics.avgDealSize / 1000).toFixed(0)}K`}
           icon={Award}
           variant="success"
         />
@@ -350,6 +347,7 @@ export const CRM = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {opportunityStageData.length === 0 ? <EmptyChartNote /> : (
             <ResponsiveContainer width="100%" height={250}>
               <RechartsPie>
                 <Pie
@@ -369,6 +367,7 @@ export const CRM = () => {
                 <Tooltip />
               </RechartsPie>
             </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
@@ -381,6 +380,7 @@ export const CRM = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {leadSourceData.length === 0 ? <EmptyChartNote /> : (
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={leadSourceData}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -390,52 +390,55 @@ export const CRM = () => {
                 <Bar dataKey="count" fill="#8b5cf6" />
               </BarChart>
             </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Revenue by Territory - Reduced Width */}
+      {/* Accounts by Role - real counts from the user directory */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MapPin className="h-5 w-5 text-accent" />
-                Revenue by Territory
+                Accounts by Role
               </CardTitle>
             </CardHeader>
             <CardContent>
+              {accountsByRole.length === 0 ? <EmptyChartNote /> : (
               <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={revenueByTerritory}>
+                <BarChart data={accountsByRole}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="territory" />
+                  <XAxis dataKey="role" />
                   <YAxis />
-                  <Tooltip formatter={(value) => `${(value / 1000000).toFixed(1)}M`} />
-                  <Bar dataKey="revenue" fill="#10b981" />
+                  <Tooltip />
+                  <Bar dataKey="count" fill="#10b981" />
                 </BarChart>
               </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
         </div>
         
-        {/* Territory Summary Stats */}
+        {/* Pipeline Summary Stats — real numbers only */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Territory Summary</CardTitle>
+            <CardTitle className="text-lg">Pipeline Summary</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-muted-foreground">Total Revenue</p>
-                <p className="text-2xl font-bold">20.0M</p>
+                <p className="text-sm text-muted-foreground">Pipeline Value</p>
+                <p className="text-2xl font-bold">₹{(metrics.pipelineValue / 1000000).toFixed(2)}M</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Top Territory</p>
-                <p className="text-lg font-semibold">East Coast</p>
+                <p className="text-sm text-muted-foreground">Closed Won</p>
+                <p className="text-lg font-semibold">{metrics.closedWon.toLocaleString()}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Growth Rate</p>
-                <p className="text-lg font-semibold text-success">+12.5%</p>
+                <p className="text-sm text-muted-foreground">Conversion Rate</p>
+                <p className="text-lg font-semibold text-success">{metrics.conversionRate}%</p>
               </div>
             </div>
           </CardContent>
@@ -515,33 +518,36 @@ export const CRM = () => {
     </Card>
   );
 
-  const renderLeadsTab = () => (
+  const renderLeadsTab = () => {
+    // Lead metrics come from `leadStats` — the exact same source as the
+    // Overview "Active Leads" card, so both tabs always agree.
+    return (
     <div className="space-y-6">
       {/* Lead Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <MetricCard
-          title="New Leads"
-          value="42"
+          title="Total Leads"
+          value={leadStats.total.toLocaleString()}
           icon={UserCheck}
           variant="info"
         />
         <MetricCard
-          title="Contacted"
-          value="35"
+          title="New (7 Days)"
+          value={leadStats.newThisWeek.toLocaleString()}
           icon={Phone}
           variant="warning"
         />
         <MetricCard
-          title="Qualified"
-          value="28"
+          title="Active Leads"
+          value={leadStats.active.toLocaleString()}
           icon={CheckCircle2}
           variant="success"
         />
         <MetricCard
-          title="Total Budget"
-          value="850K"
-          icon={DollarSign}
-          variant="primary"
+          title="Inactive"
+          value={leadStats.inactive.toLocaleString()}
+          icon={TrendingDown}
+          variant="destructive"
         />
       </div>
 
@@ -599,7 +605,8 @@ export const CRM = () => {
         </CardContent>
       </Card>
     </div>
-  );
+    );
+  };
 
   const renderOpportunitiesTab = () => (
     <div className="space-y-6">
@@ -613,7 +620,7 @@ export const CRM = () => {
         />
         <MetricCard
           title="Pipeline Value"
-          value={`${(metrics.pipelineValue / 1000000).toFixed(1)}M`}
+          value={`₹${(metrics.pipelineValue / 1000000).toFixed(2)}M`}
           icon={DollarSign}
           variant="accent"
         />
@@ -1325,7 +1332,11 @@ export const CRM = () => {
                 }
               } catch (err) {
                 console.error('Error creating account:', err);
-                const errorMessage = err.response?.data?.message || err.response?.data?.detail || err.message || 'Failed to create account. Please try again.';
+                const backendErrors = err.response?.data?.errors;
+                const firstFieldError = Array.isArray(backendErrors) && backendErrors.length > 0
+                  ? backendErrors.map(e => e.message).join(', ')
+                  : null;
+                const errorMessage = firstFieldError || err.response?.data?.message || err.response?.data?.detail || err.message || 'Failed to create account. Please try again.';
                 setError(errorMessage);
               } finally {
                 setLoading(false);

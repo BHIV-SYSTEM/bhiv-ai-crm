@@ -349,58 +349,6 @@ router.get('/templates', async (req, res) => {
   }
 });
 
-// @route   GET /api/ems/scheduled
-// @desc    Get scheduled emails
-// @access  Admin/Manager
-router.get('/scheduled', async (req, res) => {
-  try {
-    res.json({
-      success: true,
-      data: {
-        scheduled: []
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-// @route   GET /api/ems/activity
-// @desc    Get email activity log
-// @access  Admin/Manager
-router.get('/activity', async (req, res) => {
-  try {
-    res.json({
-      success: true,
-      data: {
-        activity: []
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-// @route   GET /api/ems/stats
-// @desc    Get email statistics
-// @access  Admin/Manager
-router.get('/stats', async (req, res) => {
-  try {
-    res.json({
-      success: true,
-      data: {
-        emails_sent_today: 0,
-        today: 0,
-        success_rate: 95.5,
-        scheduled: 0,
-        templates: 5
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
 // @route   GET /api/ems/settings
 // @desc    Get email settings
 // @access  Admin/Manager

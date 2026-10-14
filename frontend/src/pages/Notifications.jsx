@@ -12,6 +12,7 @@ import Alert from '../components/common/ui/Alert';
 import { LoadingSpinner } from '../components/common/ui/Spinner';
 import { formatRelativeTime } from '@/utils/dateUtils';
 import { dashboardAPI } from '../services/api/dashboardAPI';
+import { notificationAPI } from '../services/api/notificationAPI';
 
 import { deviceNotificationService } from '@/services/deviceNotificationService';
 
@@ -70,7 +71,28 @@ export const Notifications = () => {
         timestamp: new Date(n.timestamp),
       }));
 
-      const allNotifications = [...formattedCustomAlerts, ...formattedApiAlerts];
+      // Per-user operational notifications from the backend (order shipped,
+      // parcel assigned to a seller, etc). These carry a server-side read
+      // flag; sellers in particular receive their "new work" assignments here.
+      let personalNotifications = [];
+      try {
+        const res = await notificationAPI.list({ limit: 50 });
+        const rows = res.data?.data || [];
+        personalNotifications = (Array.isArray(rows) ? rows : []).map((n) => ({
+          id: n._id || n.id,
+          type: n.level === 'critical' || n.level === 'error' ? 'error' :
+                n.level === 'warning' ? 'warning' : 'info',
+          title: n.title || 'Notification',
+          message: n.body || n.message || '',
+          timestamp: n.createdAt ? new Date(n.createdAt) : new Date(),
+          read: !!n.read,
+          severity: n.level || 'info',
+        }));
+      } catch (err) {
+        console.warn('Per-user notifications unavailable:', err);
+      }
+
+      const allNotifications = [...personalNotifications, ...formattedCustomAlerts, ...formattedApiAlerts];
 
       setNotifications(allNotifications);
 

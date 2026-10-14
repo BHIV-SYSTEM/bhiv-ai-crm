@@ -1,5 +1,6 @@
 import express from 'express';
 import { protect } from '../middleware/auth.js';
+import { denyPortalRoles } from '../middleware/authorize.js';
 import Product from '../models/Product.js';
 import Order from '../models/Order.js';
 
@@ -7,6 +8,8 @@ const router = express.Router();
 
 // All routes require authentication
 router.use(protect);
+// Staff-only: the query engine reads company-wide CRM data
+router.use(denyPortalRoles);
 
 // @route   POST /api/llm-query
 // @desc    Process a natural language query about the CRM data

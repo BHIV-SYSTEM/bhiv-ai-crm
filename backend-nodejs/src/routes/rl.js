@@ -1,10 +1,13 @@
 import express from 'express';
 import { protect } from '../middleware/auth.js';
+import { denyPortalRoles } from '../middleware/authorize.js';
 
 const router = express.Router();
 
 // All routes require authentication
 router.use(protect);
+// Staff-only: RL analytics/rankings are company-wide
+router.use(denyPortalRoles);
 
 // @route   GET /api/rl/analytics
 // @desc    Get RL analytics data

@@ -177,10 +177,12 @@ export const Emails = () => {
         const statsResponse = await emsAPI.getEmailStats();
         const stats = statsResponse.data?.data || statsResponse.data || {};
         setMetrics({
-          emailsSentToday: stats.emails_sent_today || stats.today || 0,
-          successRate: stats.success_rate || 95.5,
-          scheduled: stats.scheduled || 0,
-          templates: stats.templates || 5,
+          // `??` so real zeros (e.g. 0 emails today, 0 templates) are shown
+          // as 0 instead of the old fabricated 95.5% / 5 fallbacks
+          emailsSentToday: stats.emails_sent_today ?? stats.today ?? 0,
+          successRate: stats.success_rate ?? 0,
+          scheduled: stats.scheduled ?? 0,
+          templates: stats.templates ?? 0,
         });
       } catch (err) {
         console.warn('Failed to fetch email stats:', err);
