@@ -151,7 +151,7 @@ async function runEndToEndTests() {
     console.log('🎉 FULL END-TO-END ARTHA ---> SETU INTEGRATION TEST PASSED! 🎉');
     console.log('===============================================================\n');
 
-    process.exit(0);
+    
   } catch (err) {
     console.error('❌ End-to-End Test Failed:', err.message);
     process.exit(1);
