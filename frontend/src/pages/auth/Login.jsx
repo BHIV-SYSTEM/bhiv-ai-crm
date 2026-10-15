@@ -19,16 +19,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [showSplash, setShowSplash] = useState(true);
-
-  // Show splash screen for 5 seconds on initial load
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, 5000);
-    return () => clearTimeout(timer);
-  }, []);
+  const [showSplash, setShowSplash] = useState(false);
 
   const handleChange = (e) => {
     setFormData({

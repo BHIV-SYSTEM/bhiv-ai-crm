@@ -34,13 +34,13 @@ export const DeviceNotificationBanner = () => {
             <Bell className="h-5 w-5 animate-bounce" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <span>Enable Device Push Notifications</span>
-              <span className="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+              <span className="text-[10px] bg-blue-600/10 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border border-blue-200 dark:border-blue-500/30">
                 Recommended
               </span>
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-slate-600 dark:text-slate-300 font-medium mt-0.5">
               Get instant desktop & hardware screen alerts for every SETU order, OCR scan, and inventory notification.
             </p>
           </div>

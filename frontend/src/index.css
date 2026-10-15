@@ -4,56 +4,58 @@
 
 @layer base {
   :root {
-    --background: 220 17% 98%;
-    --foreground: 222 47% 11%;
+    --hairline: #dddddd;
+    --background: 0 0% 100%;
+    --foreground: 218 22% 12%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --primary: 160 84% 39%;
+    --card-foreground: 218 22% 12%;
+    --primary: 218 22% 12%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 262 83% 58%;
-    --secondary-foreground: 0 0% 100%;
-    --accent: 38 92% 50%;
+    --secondary: 210 40% 98%;
+    --secondary-foreground: 218 22% 12%;
+    --accent: 16 100% 33%;
     --accent-foreground: 0 0% 100%;
-    --info: 217 91% 60%;
+    --info: 221 64% 41%;
     --info-foreground: 0 0% 100%;
-    --success: 160 84% 39%;
+    --success: 120 100% 20%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
+    --warning: 40 68% 55%;
+    --warning-foreground: 218 22% 12%;
+    --destructive: 16 100% 33%;
     --destructive-foreground: 0 0% 100%;
-    --muted: 220 17% 96%;
-    --muted-foreground: 215 16% 47%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 160 84% 39%;
-    --radius: 0.5rem;
+    --muted: 210 40% 98%;
+    --muted-foreground: 218 9% 28%;
+    --border: 0 0% 87%;
+    --input: 0 0% 87%;
+    --ring: 218 22% 12%;
+    --radius: 0.75rem;
   }
 
   .dark {
-    --background: 222 47% 11%;
+    --hairline: #2d323b;
+    --background: 218 22% 12%;
     --foreground: 0 0% 100%;
-    --card: 222 47% 14%;
+    --card: 218 12% 13%;
     --card-foreground: 0 0% 100%;
-    --primary: 160 84% 39%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 262 83% 58%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 218 22% 12%;
+    --secondary: 218 12% 18%;
     --secondary-foreground: 0 0% 100%;
-    --accent: 38 92% 50%;
+    --accent: 16 100% 40%;
     --accent-foreground: 0 0% 100%;
-    --info: 217 91% 60%;
+    --info: 221 64% 50%;
     --info-foreground: 0 0% 100%;
-    --success: 160 84% 39%;
+    --success: 120 100% 30%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
+    --warning: 40 68% 55%;
+    --warning-foreground: 218 22% 12%;
+    --destructive: 16 100% 40%;
     --destructive-foreground: 0 0% 100%;
-    --muted: 222 47% 17%;
-    --muted-foreground: 215 20% 65%;
-    --border: 222 47% 20%;
-    --input: 222 47% 20%;
-    --ring: 160 84% 39%;
+    --muted: 218 12% 18%;
+    --muted-foreground: 218 9% 70%;
+    --border: 218 12% 22%;
+    --input: 218 12% 22%;
+    --ring: 0 0% 100%;
   }
 }
 
@@ -70,54 +72,61 @@
 }
 
 @layer utilities {
-  /* Gradient Utilities */
+  /* Enterprise Utilities */
   .gradient-primary {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(160 84% 50%) 100%);
+    background: #1e293b;
+    color: #ffffff;
   }
   
   .gradient-secondary {
-    background: linear-gradient(135deg, hsl(var(--secondary)) 0%, hsl(262 83% 68%) 100%);
+    background: #334155;
+    color: #ffffff;
   }
   
   .gradient-accent {
-    background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(38 92% 60%) 100%);
+    background: #0284c7;
+    color: #ffffff;
   }
   
   .gradient-card {
-    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--card) / 0.5) 100%);
+    background: #ffffff;
+  }
+  
+  .dark .gradient-card {
+    background: #0f172a;
   }
   
   /* Glass Effect */
   .glass-effect {
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
   }
   
   .dark .glass-effect {
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: #0f172a;
+    border: 1px solid #1e293b;
   }
   
-  /* Text Gradients */
+  /* Text Gradients -> Clean Enterprise text */
   .text-gradient-primary {
-    @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(160 84% 50%) 100%);
+    color: #0f172a;
+  }
+  
+  .dark .text-gradient-primary {
+    color: #f8fafc;
   }
   
   .text-gradient-secondary {
-    @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(var(--secondary)) 0%, hsl(262 83% 68%) 100%);
+    color: #334155;
   }
   
   /* Hover Effects */
   .hover-lift {
-    @apply transition-all duration-300 ease-out;
+    @apply transition-all duration-150 ease-out;
   }
   
   .hover-lift:hover {
-    @apply -translate-y-1 shadow-xl;
+    @apply -translate-y-[1px] shadow-sm;
   }
   
   /* Custom Scrollbar */

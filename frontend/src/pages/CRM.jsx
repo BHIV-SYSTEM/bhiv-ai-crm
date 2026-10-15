@@ -952,22 +952,29 @@ export const CRM = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-5 animate-fade-in select-none">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/80 dark:border-slate-800">
         <div>
-          <h1 className="text-3xl font-heading font-bold tracking-tight">CRM Dashboard</h1>
-          <p className="text-muted-foreground mt-1">
-            Comprehensive customer relationship management system
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+              Customer Relationship Management
+            </h1>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+              Live Accounts
+            </span>
+          </div>
+          <p className="text-slate-500 dark:text-slate-400 mt-1 text-xs">
+            Manage customer accounts, sales pipeline, deal velocity, and intelligent natural-language queries.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={fetchCRMData}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
+          <Button variant="outline" size="sm" onClick={fetchCRMData} className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-xs">
+            <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+            Sync
           </Button>
-          <Button onClick={() => setShowAddAccountModal(true)}>
-            <Plus className="h-4 w-4 mr-2" />
+          <Button onClick={() => setShowAddAccountModal(true)} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs">
+            <Plus className="h-3.5 w-3.5 mr-1.5" />
             New Account
           </Button>
         </div>
@@ -989,62 +996,62 @@ export const CRM = () => {
         </Alert>
       )}
 
-      {/* Tab Navigation */}
-      <div className="flex items-center gap-2 border-b border-border">
+      {/* Tab Navigation - Enterprise Tab Bar */}
+      <div className="flex items-center border-b border-slate-200 dark:border-slate-800 space-x-1">
         <button
           onClick={() => setActiveTab('overview')}
-          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+          className={`flex items-center px-4 py-2.5 text-xs font-medium transition-colors border-b-2 cursor-pointer ${
             activeTab === 'overview'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
+              ? 'border-blue-600 text-blue-600 dark:text-blue-400 font-semibold'
+              : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:border-slate-300'
           }`}
         >
-          <BarChart3 className="h-4 w-4 inline mr-2" />
+          <BarChart3 className="h-3.5 w-3.5 mr-2" />
           Overview
         </button>
         <button
           onClick={() => setActiveTab('accounts')}
-          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+          className={`flex items-center px-4 py-2.5 text-xs font-medium transition-colors border-b-2 cursor-pointer ${
             activeTab === 'accounts'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
+              ? 'border-blue-600 text-blue-600 dark:text-blue-400 font-semibold'
+              : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:border-slate-300'
           }`}
         >
-          <Building2 className="h-4 w-4 inline mr-2" />
-          Accounts
+          <Building2 className="h-3.5 w-3.5 mr-2" />
+          Accounts ({accounts.length})
         </button>
         <button
           onClick={() => setActiveTab('leads')}
-          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+          className={`flex items-center px-4 py-2.5 text-xs font-medium transition-colors border-b-2 cursor-pointer ${
             activeTab === 'leads'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
+              ? 'border-blue-600 text-blue-600 dark:text-blue-400 font-semibold'
+              : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:border-slate-300'
           }`}
         >
-          <Target className="h-4 w-4 inline mr-2" />
+          <Target className="h-3.5 w-3.5 mr-2" />
           Leads
         </button>
         <button
           onClick={() => setActiveTab('opportunities')}
-          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+          className={`flex items-center px-4 py-2.5 text-xs font-medium transition-colors border-b-2 cursor-pointer ${
             activeTab === 'opportunities'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
+              ? 'border-blue-600 text-blue-600 dark:text-blue-400 font-semibold'
+              : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:border-slate-300'
           }`}
         >
-          <DollarSign className="h-4 w-4 inline mr-2" />
+          <DollarSign className="h-3.5 w-3.5 mr-2" />
           Opportunities
         </button>
         <button
           onClick={() => setActiveTab('ai-query')}
-          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+          className={`flex items-center px-4 py-2.5 text-xs font-medium transition-colors border-b-2 cursor-pointer ${
             activeTab === 'ai-query'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
+              ? 'border-blue-600 text-blue-600 dark:text-blue-400 font-semibold'
+              : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:border-slate-300'
           }`}
         >
-          <Brain className="h-4 w-4 inline mr-2" />
-          AI Query
+          <Brain className="h-3.5 w-3.5 mr-2" />
+          Natural Query Assistant
         </button>
       </div>
 
