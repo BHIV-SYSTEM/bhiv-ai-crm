@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install only production dependencies
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 
 # Copy application code
 COPY . .
@@ -15,8 +15,8 @@ COPY . .
 # Stage 2: Lightweight runtime stage
 FROM node:18-alpine
 
-# Install curl for container health checks
-RUN apk add --no-cache curl
+# Install curl and libc6-compat for container health checks and native binary compatibility
+RUN apk add --no-cache curl libc6-compat
 
 WORKDIR /app
 

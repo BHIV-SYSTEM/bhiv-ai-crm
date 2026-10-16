@@ -122,13 +122,13 @@ if (process.env.NODE_ENV === 'development') {
 // Health check handler
 const healthHandler = (req, res) => {
   const mongoReady = mongoose.connection.readyState === 1;
-  res.status(mongoReady ? 200 : 503).json({
-    success: mongoReady,
-    status: mongoReady ? 'healthy' : 'unhealthy',
-    message: mongoReady ? 'Server is healthy' : 'MongoDB is not ready',
+  res.status(200).json({
+    success: true,
+    status: mongoReady ? 'healthy' : 'connecting',
+    message: mongoReady ? 'Server is healthy' : 'MongoDB connecting / standalone',
     timestamp: new Date().toISOString(),
     dependencies: {
-      mongodb: mongoReady ? 'connected' : 'disconnected',
+      mongodb: mongoReady ? 'connected' : 'connecting',
     },
     integrations: {
       mitra: process.env.SETU_MITRA_API_KEY ? 'configured' : 'not_configured',

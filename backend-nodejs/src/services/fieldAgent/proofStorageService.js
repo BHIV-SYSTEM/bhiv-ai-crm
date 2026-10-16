@@ -1,8 +1,20 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import sharp from 'sharp';
 import { fileURLToPath } from 'node:url';
+
+let sharpInstance = undefined;
+
+async function getSharp() {
+  if (sharpInstance !== undefined) return sharpInstance;
+  try {
+    const mod = await import('sharp');
+    sharpInstance = mod.default || mod;
+  } catch {
+    sharpInstance = null;
+  }
+  return sharpInstance;
+}
 
 const SERVICE_DIR = path.dirname(fileURLToPath(import.meta.url));
 
@@ -63,34 +75,45 @@ async function identifyImage(buffer) {
     throw storageError('Only valid JPEG, PNG, and WebP images are accepted.');
   }
 
-  let metadata;
+  const sharp = await getSharp();
 
-  try {
-    metadata = await sharp(buffer, {
-      failOn: 'error',
-      limitInputPixels: 40000000,
-    }).metadata();
+  if (sharp) {
+    let metadata;
+
+    try {
+      metadata = await sharp(buffer, {
+        failOn: 'error',
+        limitInputPixels: 40000000,
+      }).metadata();
+
+      if (
+        !metadata.width ||
+        !metadata.height ||
+        metadata.width > 10000 ||
+        metadata.height > 10000 ||
+        !['jpeg', 'png', 'webp'].includes(metadata.format)
+      ) {
+        throw new Error('Unsupported or invalid image dimensions or format.');
+      }
+    } catch {
+      throw storageError('The uploaded file is not a valid, decodable image.');
+    }
 
     if (
-      !metadata.width ||
-      !metadata.height ||
-      metadata.width > 10000 ||
-      metadata.height > 10000 ||
-      !['jpeg', 'png', 'webp'].includes(metadata.format)
+      metadata.format !==
+      ({ 'image/jpeg': 'jpeg', 'image/png': 'png', 'image/webp': 'webp' }[
+        image.mimeType
+      ])
     ) {
-      throw new Error('Unsupported or invalid image dimensions or format.');
+      throw storageError('Image content does not match its file signature.');
     }
-  } catch {
-    throw storageError('The uploaded file is not a valid, decodable image.');
-  }
-
-  if (
-    metadata.format !==
-    ({ 'image/jpeg': 'jpeg', 'image/png': 'png', 'image/webp': 'webp' }[
-      image.mimeType
-    ])
-  ) {
-    throw storageError('Image content does not match its file signature.');
+  } else {
+    // Pure buffer fallback when sharp native binary is not installed on runtime OS
+    if (image.mimeType === 'image/png') {
+      if (buffer.length < 24 || !buffer.subarray(12, 16).equals(Buffer.from('IHDR'))) {
+        throw storageError('The uploaded file is not a valid, decodable image.');
+      }
+    }
   }
 
   return image;

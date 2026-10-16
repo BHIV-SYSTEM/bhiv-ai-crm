@@ -39,5 +39,8 @@
   "devDependencies": {
     "nodemon": "^3.0.2",
     "supertest": "^7.3.1"
+  },
+  "optionalDependencies": {
+    "@img/sharp-linuxmusl-x64": "^0.35.5"
   }
 }
