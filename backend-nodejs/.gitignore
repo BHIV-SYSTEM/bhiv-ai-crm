@@ -27,3 +27,7 @@ logs/
 # Build
 dist/
 build/
+
+# Private Field Agent proof images
+private-storage/
+

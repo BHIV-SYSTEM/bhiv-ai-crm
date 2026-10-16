@@ -1,7 +1,13 @@
-import express from 'express';
+﻿import express from 'express';
+import multer from 'multer';
+
+import { storeProofImage, deleteProofImage } from '../services/fieldAgent/proofStorageService.js';
 import { randomUUID } from 'node:crypto';
 
 import { fieldAgentAuth } from '../middleware/fieldAgentAuth.js';
+
+import { fieldAgentReviewerAuth } from '../middleware/fieldAgentReviewerAuth.js';
+import { reviewPersistentAgentProof } from '../services/fieldAgent/persistentFieldAgentTaskService.js';
 
 import {
   listPersistentAgentTasks,
@@ -11,9 +17,102 @@ import {
   submitPersistentAgentProof,
 } from '../services/fieldAgent/persistentFieldAgentTaskService.js';
 
+const proofUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+    files: 1,
+  },
+  fileFilter: (req, file, callback) => {
+    const allowedMimeTypes = new Set([
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+    ]);
+
+    const allowedExtensions = /\.(jpe?g|png|webp)$/i;
+    const extensionMatches = allowedExtensions.test(file.originalname || '');
+
+    if (!allowedMimeTypes.has(file.mimetype) || !extensionMatches) {
+      const error = new Error('Only JPEG, PNG, and WebP images are accepted.');
+      error.status = 400;
+      return callback(error);
+    }
+
+    callback(null, true);
+  },
+});
 const router = express.Router();
 
+function handleProofUpload(req, res, next) {
+  proofUpload.single('file')(req, res, (error) => {
+    if (!error) {
+      return next();
+    }
+
+    if (error instanceof multer.MulterError) {
+      const status = error.code === 'LIMIT_FILE_SIZE' ? 413 : 400;
+      const message = error.code === 'LIMIT_FILE_SIZE'
+        ? 'Image must not exceed 5 MB.'
+        : 'Invalid proof upload. Upload one image using the "file" field.';
+
+      return res.status(status).json({
+        success: false,
+        message,
+      });
+    }
+
+    return handleError(res, error);
+  });
+}
+
 // All endpoints in this router require strict Field Agent authentication.
+
+/**
+ * PATCH /api/field-agent/reviews/:taskId
+ * Allows authorized reviewers to verify or reject submitted storefront proof.
+ */
+router.patch(
+  '/reviews/:taskId',
+  fieldAgentReviewerAuth,
+  async (req, res) => {
+    try {
+      const { decision, reason } = req.body ?? {};
+
+      if (typeof decision !== 'string') {
+        return res.status(400).json({
+          success: false,
+          message: 'decision must be VERIFIED or REJECTED.',
+        });
+      }
+
+      const result = await reviewPersistentAgentProof({
+        taskId: req.params.taskId,
+        reviewerId: req.user._id,
+        tenantId: req.user.tenant_id,
+        decision,
+        reason: reason ?? null,
+        correlationId: getCorrelationId(req),
+      });
+
+      if (!result.success) {
+        return res.status(result.status).json({
+          success: false,
+          message: result.message,
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        task: result.task,
+      });
+    } catch (error) {
+      return handleError(res, error);
+    }
+  },
+);
+
+
 router.use(fieldAgentAuth);
 
 function getAgentContext(req) {
@@ -183,28 +282,68 @@ router.post('/tasks/:taskId/arrival', async (req, res) => {
   }
 });
 
-router.post('/tasks/:taskId/proof', async (req, res) => {
+router.post('/tasks/:taskId/proof', handleProofUpload, async (req, res) => {
+  let storedProof = null;
+
   try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'An image file is required in the "file" field.',
+      });
+    }
+
+    storedProof = await storeProofImage(req.file.buffer);
+
     const result = await submitPersistentAgentProof({
       taskId: req.params.taskId,
       agentId: req.user._id,
       tenantId: req.user.tenant_id,
-      fileReference: req.body?.fileReference,
+      fileReference: storedProof.fileReference,
       correlationId: getCorrelationId(req),
     });
 
     if (!result.success) {
+      await deleteProofImage(storedProof.fileReference);
+
       return res.status(result.status).json({
         success: false,
         message: result.message,
       });
     }
 
-    return res.status(201).json(result);
+    return res.status(201).json({
+      ...result,
+      proofFile: {
+        fileReference: storedProof.fileReference,
+        mimeType: storedProof.mimeType,
+        sizeBytes: storedProof.sizeBytes,
+        sha256: storedProof.sha256,
+      },
+    });
   } catch (error) {
+    if (storedProof) {
+      try {
+        await deleteProofImage(storedProof.fileReference);
+      } catch (cleanupError) {
+        console.error('Failed to clean up proof image:', cleanupError.message);
+      }
+    }
+
+    if (error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE') {
+      return res.status(413).json({
+        success: false,
+        message: 'Image must not exceed 5 MB.',
+      });
+    }
+
     return handleError(res, error);
   }
 });
 
 export default router;
+
+
+
+
 

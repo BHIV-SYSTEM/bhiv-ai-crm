@@ -8,6 +8,7 @@ import {
   transitionPersistentAgentTask,
   recordPersistentAgentArrival,
   submitPersistentAgentProof,
+  reviewPersistentAgentProof,
 } from '../src/services/fieldAgent/persistentFieldAgentTaskService.js';
 
 test('rejects task listing when MongoDB is unavailable', async () => {
@@ -166,6 +167,96 @@ test('rejects invalid proof references', async () => {
       error =>
         error.status === 400 &&
         error.message === 'A valid authenticated agent ID is required',
+    );
+  } finally {
+    mongoose.connection.readyState = originalReadyState;
+  }
+});
+
+test('rejects proof review when MongoDB is unavailable', async () => {
+  const originalReadyState = mongoose.connection.readyState;
+
+  try {
+    mongoose.connection.readyState = 0;
+
+    await assert.rejects(
+      reviewPersistentAgentProof({
+        taskId: 'TASK-001',
+        reviewerId: new mongoose.Types.ObjectId().toString(),
+        tenantId: 'tenant_test',
+        decision: 'VERIFIED',
+      }),
+      error =>
+        error.status === 503 &&
+        error.message === 'Task database is unavailable',
+    );
+  } finally {
+    mongoose.connection.readyState = originalReadyState;
+  }
+});
+
+test('rejects invalid reviewer IDs before querying MongoDB', async () => {
+  const originalReadyState = mongoose.connection.readyState;
+
+  try {
+    mongoose.connection.readyState = 1;
+
+    await assert.rejects(
+      reviewPersistentAgentProof({
+        taskId: 'TASK-001',
+        reviewerId: 'invalid-reviewer-id',
+        tenantId: 'tenant_test',
+        decision: 'VERIFIED',
+      }),
+      error =>
+        error.status === 400 &&
+        error.message === 'A valid authenticated reviewer ID is required',
+    );
+  } finally {
+    mongoose.connection.readyState = originalReadyState;
+  }
+});
+
+test('rejects missing tenant IDs before querying MongoDB', async () => {
+  const originalReadyState = mongoose.connection.readyState;
+
+  try {
+    mongoose.connection.readyState = 1;
+
+    await assert.rejects(
+      reviewPersistentAgentProof({
+        taskId: 'TASK-001',
+        reviewerId: new mongoose.Types.ObjectId().toString(),
+        tenantId: '',
+        decision: 'VERIFIED',
+      }),
+      error =>
+        error.status === 400 &&
+        error.message === 'Authenticated tenant ID is required',
+    );
+  } finally {
+    mongoose.connection.readyState = originalReadyState;
+  }
+});
+
+test('rejects unsupported proof-review decisions', async () => {
+  const originalReadyState = mongoose.connection.readyState;
+
+  try {
+    mongoose.connection.readyState = 1;
+
+    const result = await reviewPersistentAgentProof({
+      taskId: 'TASK-001',
+      reviewerId: new mongoose.Types.ObjectId().toString(),
+      tenantId: 'tenant_test',
+      decision: 'APPROVED',
+    });
+
+    assert.equal(result.success, false);
+    assert.equal(result.status, 400);
+    assert.equal(
+      result.message,
+      'Decision must be VERIFIED or REJECTED',
     );
   } finally {
     mongoose.connection.readyState = originalReadyState;

@@ -1,6 +1,6 @@
-import React from 'react';
+﻿import React from 'react';
 import {
-  LayoutDashboard, Package, Users, Building2, ShoppingCart, Bot,
+  LayoutDashboard, Package, Users, Building2, ShoppingCart, Bot, MapPinned,
   Workflow, Brain, GraduationCap, Bell, Mail, BarChart3, Settings,
   UsersRound, Menu, X, ChevronLeft, ChevronRight, TrendingUp, Zap,
   FileText, Store, Activity, Database, Sparkles, LogOut
@@ -26,6 +26,7 @@ export const Sidebar = ({ isOpen, onToggle, isCollapsed, onCollapseToggle }) => 
         name: 'CRM & Logistics',
         items: [
           { name: 'Bright Connection Demo', icon: Zap, path: ROUTES.BRIGHT_CONNECTION },
+          { name: 'Field Agent', icon: MapPinned, path: ROUTES.FIELD_AGENT },
           { name: 'CRM Management', icon: Users, path: ROUTES.CRM },
           { name: 'Logistics & Inventory', icon: Package, path: ROUTES.LOGISTICS },
           { name: 'Infiverse Monitoring', icon: UsersRound, path: ROUTES.INFIVERSE },
@@ -316,3 +317,6 @@ const NavItem = ({ item, isCollapsed, onClick }) => {
 };
 
 export default Sidebar;
+
+
+

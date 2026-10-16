@@ -369,3 +369,141 @@ export async function submitPersistentAgentProof({
     task: safeTaskView(task),
   };
 }
+
+
+
+/**
+ * Review submitted storefront proof.
+ *
+ * Only an authenticated reviewer from the same tenant should call this
+ * service through the protected review route.
+ *
+ * Conditional update prevents conflicting concurrent review decisions.
+ */
+/**
+ * Review submitted storefront proof.
+ *
+ * Records both lifecycle transitions atomically:
+ * PROOF_SUBMITTED -> REVIEW_REQUIRED -> VERIFIED / REJECTED.
+ * Only one concurrent reviewer can successfully decide a pending proof.
+ */
+export async function reviewPersistentAgentProof({
+  taskId,
+  reviewerId,
+  tenantId,
+  decision,
+  reason = null,
+  correlationId = null,
+}) {
+  ensureDatabaseAvailable();
+
+  if (!reviewerId || !mongoose.isValidObjectId(reviewerId)) {
+    const error = new Error('A valid authenticated reviewer ID is required');
+    error.status = 400;
+    throw error;
+  }
+
+  if (typeof tenantId !== 'string' || !tenantId.trim()) {
+    const error = new Error('Authenticated tenant ID is required');
+    error.status = 400;
+    throw error;
+  }
+
+  if (!['VERIFIED', 'REJECTED'].includes(decision)) {
+    return {
+      success: false,
+      status: 400,
+      message: 'Decision must be VERIFIED or REJECTED',
+    };
+  }
+
+  if (
+    reason !== null &&
+    (typeof reason !== 'string' || reason.trim().length > 1000)
+  ) {
+    return {
+      success: false,
+      status: 400,
+      message: 'Review reason must be a string of at most 1000 characters',
+    };
+  }
+
+  const reviewerObjectId = new mongoose.Types.ObjectId(reviewerId);
+  const now = new Date();
+
+  const reviewRequiredEvent = buildAuditEvent({
+    actorId: reviewerObjectId,
+    eventType: 'PROOF_REVIEW_STARTED',
+    previousState: FIELD_TASK_STATES.PROOF_SUBMITTED,
+    currentState: FIELD_TASK_STATES.REVIEW_REQUIRED,
+    correlationId,
+    details: {},
+  });
+
+  const decisionEvent = buildAuditEvent({
+    actorId: reviewerObjectId,
+    eventType: decision === 'VERIFIED'
+      ? 'STOREFRONT_PROOF_VERIFIED'
+      : 'STOREFRONT_PROOF_REJECTED',
+    previousState: FIELD_TASK_STATES.REVIEW_REQUIRED,
+    currentState: decision,
+    correlationId,
+    details: {
+      decision,
+      reason: reason?.trim() || null,
+    },
+  });
+
+  // A single conditional update ensures only one reviewer can decide
+  // a proof, and both lifecycle events are stored with that decision.
+  const task = await FieldAgentTask.findOneAndUpdate(
+    {
+      taskId: String(taskId),
+      tenantId: tenantId.trim(),
+      state: FIELD_TASK_STATES.PROOF_SUBMITTED,
+      'proof.reviewState': FIELD_TASK_STATES.REVIEW_REQUIRED,
+    },
+    {
+      $set: {
+        state: decision,
+        'proof.reviewState': decision,
+        updatedAt: now,
+      },
+      $push: {
+        auditEvents: {
+          $each: [reviewRequiredEvent, decisionEvent],
+        },
+      },
+    },
+    {
+      new: true,
+      runValidators: true,
+    },
+  );
+
+  if (!task) {
+    const existingTask = await FieldAgentTask.findOne({
+      taskId: String(taskId),
+      tenantId: tenantId.trim(),
+    }).select('state proof.reviewState');
+
+    if (!existingTask) {
+      return {
+        success: false,
+        status: 404,
+        message: 'Task not found',
+      };
+    }
+
+    return {
+      success: false,
+      status: 409,
+      message: 'Task is not awaiting proof review',
+    };
+  }
+
+  return {
+    success: true,
+    task: safeTaskView(task),
+  };
+}

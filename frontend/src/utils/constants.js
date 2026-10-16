@@ -24,6 +24,7 @@ export const ROUTES = {
   SHOWCASE: '/showcase',
   AI_QUERY: '/ai-query',
   BRIGHT_CONNECTION: '/bright-connection',
+  FIELD_AGENT: '/field-agent',
 };
 
 export const STATUS_COLORS = {
@@ -43,3 +44,4 @@ export const PRIORITY_COLORS = {
   high: 'warning',
   urgent: 'destructive',
 };
+
