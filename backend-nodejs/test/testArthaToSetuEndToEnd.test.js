@@ -25,9 +25,8 @@ async function testArthaSignalDispatch(signalName, payload) {
     'x-trace-id': payload.trace_id,
     'x-tenant-id': payload.tenant_id,
   };
-  if (process.env.SETU_INTEGRATION_API_KEY) {
-    headers['X-SETU-API-Key'] = process.env.SETU_INTEGRATION_API_KEY;
-  }
+  const apiKey = process.env.SETU_INTEGRATION_API_KEY || 'dev-setu-integration-key-2026';
+  headers['X-SETU-API-Key'] = apiKey;
 
   const response = await fetch(`${SETU_BASE_URL}/setu/signals/ingest`, {
     method: 'POST',
@@ -150,10 +149,9 @@ async function runEndToEndTests() {
 
     // 3. Query Candidate Visibility for Trace 1
     console.log(`🔍 [Visibility Check] Querying UI candidate state for ${traceId1}...`);
-    const visHeaders = {};
-    if (process.env.SETU_INTEGRATION_API_KEY) {
-      visHeaders['X-SETU-API-Key'] = process.env.SETU_INTEGRATION_API_KEY;
-    }
+    const visHeaders = {
+      'X-SETU-API-Key': process.env.SETU_INTEGRATION_API_KEY || 'dev-setu-integration-key-2026',
+    };
     const visResponse = await fetch(`${SETU_BASE_URL}/setu/visibility/candidate/${traceId1}`, {
       headers: visHeaders,
     });
@@ -166,7 +164,7 @@ async function runEndToEndTests() {
     console.log('🎉 FULL END-TO-END ARTHA ---> SETU INTEGRATION TEST PASSED! 🎉');
     console.log('===============================================================\n');
 
-    process.exit(0);
+    
   } catch (err) {
     console.error('❌ End-to-End Test Failed:', err.message);
     process.exit(1);

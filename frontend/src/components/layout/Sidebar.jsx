@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import {
-  LayoutDashboard, Package, Users, Building2, ShoppingCart, Bot,
+  LayoutDashboard, Package, Users, Building2, ShoppingCart, Bot, MapPinned,
   Workflow, Brain, GraduationCap, Bell, Mail, BarChart3, Settings,
   UsersRound, Menu, X, ChevronLeft, ChevronRight, TrendingUp, Zap,
-  Store, Activity, Sparkles, LogOut, Truck
+  Store, Activity, Sparkles, LogOut, Truck, ShieldCheck
 } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { cn } from '@/utils/helpers';
@@ -14,7 +14,8 @@ import notificationAPI from '@/services/api/notificationAPI';
 import financialAPI from '@/services/api/financialAPI';
 
 export const Sidebar = ({ isOpen, onToggle, isCollapsed, onCollapseToggle }) => {
-  const { logout, isCustomer } = useAuth();
+  const { logout, isCustomer, user } = useAuth();
+  const isFieldAgent = user?.role === 'field_agent';
   const navigate = useNavigate();
   const [unread, setUnread] = useState(0);
 
@@ -51,11 +52,16 @@ export const Sidebar = ({ isOpen, onToggle, isCollapsed, onCollapseToggle }) => 
       { name: 'Account', icon: Users, path: ROUTES.CUSTOMER_ACCOUNT },
       { name: 'Notifications', icon: Bell, path: ROUTES.CUSTOMER_NOTIFICATIONS, badge: unread || undefined },
     ]
+    : isFieldAgent
+    ? [
+      { name: 'Field Agent Portal', icon: MapPinned, path: ROUTES.FIELD_AGENT },
+    ]
     : [
       { name: 'Overview', icon: LayoutDashboard, path: ROUTES.DASHBOARD },
       {
         name: 'CRM & Logistics',
         items: [
+          { name: 'Proof Approvals', icon: ShieldCheck, path: ROUTES.FIELD_REVIEWS },
           { name: 'Bright Connection Demo', icon: Zap, path: ROUTES.BRIGHT_CONNECTION },
           { name: 'CRM Management', icon: Users, path: ROUTES.CRM },
           { name: 'Logistics & Inventory', icon: Package, path: ROUTES.LOGISTICS },
@@ -363,3 +369,6 @@ const NavItem = ({ item, isCollapsed, onClick }) => {
 };
 
 export default Sidebar;
+
+
+

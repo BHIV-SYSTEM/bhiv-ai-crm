@@ -59,7 +59,10 @@ export const Notifications = () => {
           message: alert.message || alert.description || '',
           timestamp: alert.timestamp ? new Date(alert.timestamp) : new Date(),
           read: isRead,
-          severity: alert.severity || 'medium'
+          severity: alert.severity || 'medium',
+          taskId: alert.taskId || null,
+          storeName: alert.storeName || null,
+          targetUrl: alert.targetUrl || (alert.taskId ? `/field-reviews?taskId=${alert.taskId}` : null),
         };
       });
 
@@ -210,14 +213,26 @@ export const Notifications = () => {
 
     if (notification.targetUrl) {
       navigate(notification.targetUrl);
-    } else if (titleLower.includes('ocr') || titleLower.includes('storefront') || msgLower.includes('ocr') || msgLower.includes('bright connection') || msgLower.includes('raj prajapati') || msgLower.includes('rajesh')) {
+    } else if (notification.taskId) {
+      navigate(`/field-reviews?taskId=${encodeURIComponent(notification.taskId)}`);
+    } else if (
+      titleLower.includes('proof') ||
+      titleLower.includes('storefront') ||
+      titleLower.includes('signboard') ||
+      titleLower.includes('arrival') ||
+      msgLower.includes('storefront') ||
+      msgLower.includes('signboard') ||
+      msgLower.includes('field agent')
+    ) {
+      navigate('/field-reviews');
+    } else if (titleLower.includes('ocr') || msgLower.includes('ocr') || msgLower.includes('bright connection') || msgLower.includes('raj prajapati') || msgLower.includes('rajesh')) {
       navigate('/bright-connection');
     } else if (titleLower.includes('order') || msgLower.includes('order') || msgLower.includes('dispatched') || msgLower.includes('waiting')) {
       navigate('/logistics');
     } else if (titleLower.includes('stock') || titleLower.includes('product') || msgLower.includes('stock') || msgLower.includes('restock')) {
       navigate('/inventory');
     } else {
-      navigate('/bright-connection');
+      navigate('/field-reviews');
     }
   };
 
@@ -373,7 +388,9 @@ export const Notifications = () => {
                         {formatRelativeTime(notification.timestamp)}
                       </span>
                       <span className="font-bold text-primary hover:underline flex items-center gap-1">
-                        View Page Details →
+                        {notification.taskId || notification.targetUrl?.includes('/field-reviews')
+                          ? 'Review Store Proof & Accept →'
+                          : 'View Page Details →'}
                       </span>
                     </div>
                   </div>

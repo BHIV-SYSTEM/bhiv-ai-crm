@@ -37,6 +37,8 @@ import CustomerNotifications from './pages/customer/notifications/CustomerNotifi
 import PayNow from './pages/customer/PayNow';
 import ShippingPortal from './pages/ShippingPortal';
 import SellerShell from './components/layout/SellerShell';
+import FieldProofReviews from './pages/FieldProofReviews';
+import FieldAgent from './pages/FieldAgent';
 
 // Auth Pages
 import Login from './pages/auth/Login';
@@ -93,6 +95,8 @@ function App() {
             <Route path={ROUTES.USERS} element={<Users />} />
             <Route path={ROUTES.SHOWCASE} element={<SupplierShowcase />} />
             <Route path={ROUTES.BRIGHT_CONNECTION} element={<BrightConnectionDemo />} />
+            <Route path={ROUTES.FIELD_REVIEWS} element={<FieldProofReviews />} />
+            <Route path={ROUTES.FIELD_AGENT} element={<FieldAgent />} />
             <Route path="/customer-portal" element={<CustomerDashboard />} />
             <Route path="/customer-portal/orders" element={<CustomerOrders />} />
             <Route path="/customer-portal/account" element={<CustomerAccount />} />
@@ -153,3 +157,5 @@ function App() {
 }
 
 export default App;
+
+

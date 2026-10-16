@@ -3,6 +3,7 @@ import User from '../models/User.js';
 import Product from '../models/Product.js';
 import Order from '../models/Order.js';
 import RestockRequest from '../models/RestockRequest.js';
+import FieldAgentTask from '../models/FieldAgentTask.js';
 import { protect } from '../middleware/auth.js';
 import { isAdminOrManager, denyPortalRoles } from '../middleware/authorize.js';
 import { HTTP_STATUS, ORDER_STATUS, USER_ROLES, RESTOCK_STATUS } from '../config/constants.js';
@@ -200,10 +201,83 @@ router.get('/alerts', isAdminOrManager, async (req, res) => {
       });
     }
 
+    // Field Agent Proof & Arrival Alerts for Manager/Admin operational review
+    const pendingTasks = await FieldAgentTask.find({
+      $or: [
+        { state: { $in: ['PROOF_SUBMITTED', 'REVIEW_REQUIRED'] } },
+        { 'proof.reviewState': 'REVIEW_REQUIRED' },
+        { state: 'ARRIVED' }
+      ]
+    })
+      .populate('assignedAgentId', 'name email')
+      .sort({ updatedAt: -1 })
+      .limit(30);
+
+    pendingTasks.forEach(task => {
+      const isProof = task.state === 'PROOF_SUBMITTED' || task.proof?.reviewState === 'REVIEW_REQUIRED';
+      const agentName = task.assignedAgentId?.name || 'Field Agent';
+
+      if (isProof) {
+        alerts.push({
+          id: `fa_proof_${task.taskId}`,
+          type: 'field_proof',
+          severity: 'critical',
+          title: `Storefront Proof Submitted: ${task.store?.name || 'Retail Store'}`,
+          message: `${agentName} uploaded storefront signboard photo proof for ${task.store?.name || task.taskId}. Review and approval required.`,
+          taskId: task.taskId,
+          storeId: task.store?.storeId,
+          storeName: task.store?.name,
+          targetUrl: `/field-reviews?taskId=${task.taskId}`,
+          timestamp: task.proof?.submittedAt || task.updatedAt || new Date()
+        });
+      } else if (task.state === 'ARRIVED') {
+        alerts.push({
+          id: `fa_arrived_${task.taskId}`,
+          type: 'field_arrived',
+          severity: 'warning',
+          title: `Field Agent Arrived: ${task.store?.name || 'Retail Store'}`,
+          message: `${agentName} reached 50m geofence for ${task.store?.name || task.taskId}.`,
+          taskId: task.taskId,
+          storeId: task.store?.storeId,
+          storeName: task.store?.name,
+          targetUrl: `/field-reviews?taskId=${task.taskId}`,
+          timestamp: task.arrivalEvidence?.evaluatedAt || task.updatedAt || new Date()
+        });
+      }
+    });
+
+    // Recent Field Task Determinations (Verified or Rejected in last 24h)
+    const recentResolved = await FieldAgentTask.find({
+      state: { $in: ['VERIFIED', 'REJECTED'] },
+      updatedAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+    })
+      .populate('assignedAgentId', 'name email')
+      .sort({ updatedAt: -1 })
+      .limit(10);
+
+    recentResolved.forEach(task => {
+      const isVerified = task.state === 'VERIFIED';
+      alerts.push({
+        id: `fa_resolved_${task.taskId}`,
+        type: isVerified ? 'field_verified' : 'field_rejected',
+        severity: isVerified ? 'info' : 'warning',
+        title: `Storefront Proof ${isVerified ? 'Verified ✓' : 'Rejected ✗'}: ${task.store?.name}`,
+        message: `Task ${task.taskId} for ${task.store?.name} was marked ${task.state}.`,
+        taskId: task.taskId,
+        storeId: task.store?.storeId,
+        storeName: task.store?.name,
+        targetUrl: `/field-reviews?taskId=${task.taskId}`,
+        timestamp: task.updatedAt || new Date()
+      });
+    });
+
     // Sort by severity and timestamp
     alerts.sort((a, b) => {
       const severityOrder = { critical: 0, warning: 1, info: 2 };
-      return severityOrder[a.severity] - severityOrder[b.severity];
+      const sevA = severityOrder[a.severity] ?? 3;
+      const sevB = severityOrder[b.severity] ?? 3;
+      if (sevA !== sevB) return sevA - sevB;
+      return new Date(b.timestamp) - new Date(a.timestamp);
     });
 
     res.json({

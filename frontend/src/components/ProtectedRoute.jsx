@@ -26,16 +26,21 @@ const ProtectedRoute = ({ children }) => {
   const path = location.pathname;
   const isCustomerPortal = path.startsWith('/customer-portal');
   const isSellerPortal = path.startsWith('/seller-portal');
+  const isFieldAgentPortal = path.startsWith('/field-agent');
 
   // Customers are RESTRICTED to the customer portal only
   if (role === 'customer' && !isCustomerPortal) {
     return <Navigate to="/customer-portal" replace />;
   }
 
-  // Sellers are RESTRICTED to the seller portal only (no SETU products,
-  // no customer portal — the seller portal is their whole workspace).
+  // Sellers are RESTRICTED to the seller portal only
   if (role === 'seller' && !isSellerPortal) {
     return <Navigate to="/seller-portal" replace />;
+  }
+
+  // Field agents are RESTRICTED to Field Agent portal only (zero financial data access)
+  if (role === 'field_agent' && !isFieldAgentPortal) {
+    return <Navigate to="/field-agent" replace />;
   }
 
   return children;
