@@ -1,9 +1,9 @@
-﻿import React from 'react';
+import React from 'react';
 import {
   LayoutDashboard, Package, Users, Building2, ShoppingCart, Bot, MapPinned,
   Workflow, Brain, GraduationCap, Bell, Mail, BarChart3, Settings,
   UsersRound, Menu, X, ChevronLeft, ChevronRight, TrendingUp, Zap,
-  FileText, Store, Activity, Database, Sparkles, LogOut
+  FileText, Store, Activity, Database, Sparkles, LogOut, ShieldCheck
 } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { cn } from '@/utils/helpers';
@@ -12,7 +12,8 @@ import Button from '../common/ui/Button';
 import { useAuth } from '@/context/MongoAuthContext';
 
 export const Sidebar = ({ isOpen, onToggle, isCollapsed, onCollapseToggle }) => {
-  const { logout, isCustomer } = useAuth();
+  const { logout, isCustomer, user } = useAuth();
+  const isFieldAgent = user?.role === 'field_agent';
   const navigate = useNavigate();
 
   // Role-based navigation
@@ -20,13 +21,17 @@ export const Sidebar = ({ isOpen, onToggle, isCollapsed, onCollapseToggle }) => 
     ? [
       { name: 'Customer Portal', icon: ShoppingCart, path: '/customer-portal' }
     ]
+    : isFieldAgent
+    ? [
+      { name: 'Field Agent Portal', icon: MapPinned, path: ROUTES.FIELD_AGENT },
+    ]
     : [
       { name: 'Overview', icon: LayoutDashboard, path: ROUTES.DASHBOARD },
       {
         name: 'CRM & Logistics',
         items: [
+          { name: 'Proof Approvals', icon: ShieldCheck, path: ROUTES.FIELD_REVIEWS },
           { name: 'Bright Connection Demo', icon: Zap, path: ROUTES.BRIGHT_CONNECTION },
-          { name: 'Field Agent', icon: MapPinned, path: ROUTES.FIELD_AGENT },
           { name: 'CRM Management', icon: Users, path: ROUTES.CRM },
           { name: 'Logistics & Inventory', icon: Package, path: ROUTES.LOGISTICS },
           { name: 'Infiverse Monitoring', icon: UsersRound, path: ROUTES.INFIVERSE },

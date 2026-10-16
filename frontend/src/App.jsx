@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Layout from './components/layout/Layout';
@@ -30,6 +30,7 @@ import Users from './pages/Users';
 import SupplierShowcase from './pages/SupplierShowcase';
 import CustomerDashboard from './pages/CustomerDashboard';
 import BrightConnectionDemo from './pages/BrightConnectionDemo';
+import FieldProofReviews from './pages/FieldProofReviews';
 import FieldAgent from './pages/FieldAgent';
 
 // Auth Pages
@@ -85,6 +86,7 @@ function App() {
             <Route path={ROUTES.USERS} element={<Users />} />
             <Route path={ROUTES.SHOWCASE} element={<SupplierShowcase />} />
             <Route path={ROUTES.BRIGHT_CONNECTION} element={<BrightConnectionDemo />} />
+            <Route path={ROUTES.FIELD_REVIEWS} element={<FieldProofReviews />} />
             <Route path={ROUTES.FIELD_AGENT} element={<FieldAgent />} />
             <Route path="/customer-portal" element={<CustomerDashboard />} />
           </Route>

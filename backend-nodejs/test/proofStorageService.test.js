@@ -1,4 +1,4 @@
-﻿import test from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
@@ -15,6 +15,7 @@ process.env.FIELD_AGENT_PROOF_STORAGE_DIR = testStorageDir;
 const {
   storeProofImage,
   deleteProofImage,
+  getProofImage,
 } = await import('../src/services/fieldAgent/proofStorageService.js');
 
 const validPng = await sharp({
@@ -85,6 +86,25 @@ test('rejects invalid references during deletion', async () => {
   await assert.rejects(
     deleteProofImage('../private-file'),
     /Invalid application-managed proof reference/,
+  );
+});
+
+test('retrieves a stored proof image with correct buffer and mimeType', async () => {
+  const stored = await storeProofImage(validPng);
+  const retrieved = await getProofImage(stored.fileReference);
+
+  assert.equal(retrieved.mimeType, 'image/png');
+  assert.deepEqual(retrieved.buffer, validPng);
+});
+
+test('rejects missing or invalid proof reference on retrieval', async () => {
+  await assert.rejects(
+    getProofImage('not-a-valid-proof-ref'),
+    /Invalid application-managed proof reference/,
+  );
+  await assert.rejects(
+    getProofImage('proof:00000000-0000-0000-0000-000000000000'),
+    /Stored proof image was not found/,
   );
 });
 

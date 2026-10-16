@@ -70,10 +70,10 @@ export const fieldAgentAuth = async (req, res, next) => {
       });
     }
 
-    if (user.role !== 'field_agent') {
+    if (user.role !== 'field_agent' && user.role !== 'admin' && user.role !== 'manager') {
       return res.status(403).json({
         success: false,
-        message: 'Field Agent access is required.',
+        message: 'Field Agent, Admin, or Manager access is required.',
       });
     }
 

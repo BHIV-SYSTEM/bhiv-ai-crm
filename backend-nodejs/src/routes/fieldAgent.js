@@ -1,7 +1,7 @@
-﻿import express from 'express';
+import express from 'express';
 import multer from 'multer';
 
-import { storeProofImage, deleteProofImage } from '../services/fieldAgent/proofStorageService.js';
+import { storeProofImage, deleteProofImage, getProofImage } from '../services/fieldAgent/proofStorageService.js';
 import { randomUUID } from 'node:crypto';
 
 import { fieldAgentAuth } from '../middleware/fieldAgentAuth.js';
@@ -113,12 +113,42 @@ router.patch(
 );
 
 
+/**
+ * GET /api/field-agent/proof/:reference
+ * Serves stored storefront proof image. Publicly accessible by proof reference ID
+ * so browsers can render <img> tags directly without custom auth headers.
+ */
+router.get('/proof/:reference', async (req, res) => {
+  try {
+    let { reference } = req.params;
+    if (!reference) {
+      return res.status(400).json({
+        success: false,
+        message: 'Proof reference is required.',
+      });
+    }
+
+    if (!reference.startsWith('proof:')) {
+      reference = `proof:${reference}`;
+    }
+
+    const { buffer, mimeType } = await getProofImage(reference);
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Content-Length', buffer.length);
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    return res.status(200).send(buffer);
+  } catch (error) {
+    return handleError(res, error);
+  }
+});
+
 router.use(fieldAgentAuth);
 
 function getAgentContext(req) {
   return {
     agentId: String(req.user._id),
     tenantId: req.user.tenant_id,
+    role: req.user.role,
   };
 }
 
@@ -299,6 +329,7 @@ router.post('/tasks/:taskId/proof', handleProofUpload, async (req, res) => {
       taskId: req.params.taskId,
       agentId: req.user._id,
       tenantId: req.user.tenant_id,
+      role: req.user.role,
       fileReference: storedProof.fileReference,
       correlationId: getCorrelationId(req),
     });

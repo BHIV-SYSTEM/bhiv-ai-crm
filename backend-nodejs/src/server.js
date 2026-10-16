@@ -27,6 +27,7 @@ import setuRoutes from './routes/setu.js';
 import deliveryRoutes from './routes/delivery.js';
 import agentRoutes from './routes/agents.js';
 import fieldAgentRoutes from './routes/fieldAgent.js';
+import fieldReviewsRoutes from './routes/fieldReviews.js';
 
 // Load environment variables
 dotenv.config();
@@ -151,6 +152,7 @@ app.use('/api/ai-decisions', aiDecisionRoutes);
 app.use('/api/llm-query', llmQueryRoutes);
 app.use('/api/mitra', mitraRoutes);
 app.use('/api/field-agent', fieldAgentRoutes);
+app.use('/api/field-reviews', fieldReviewsRoutes);
 app.use('/setu', setuRoutes);
 app.use('/api/setu', setuRoutes);
 app.use('/v1/setu', setuRoutes);

@@ -24,6 +24,7 @@ export const ROUTES = {
   SHOWCASE: '/showcase',
   AI_QUERY: '/ai-query',
   BRIGHT_CONNECTION: '/bright-connection',
+  FIELD_REVIEWS: '/field-reviews',
   FIELD_AGENT: '/field-agent',
 };
 

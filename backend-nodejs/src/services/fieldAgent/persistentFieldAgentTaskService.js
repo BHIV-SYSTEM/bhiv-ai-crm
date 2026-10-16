@@ -7,6 +7,7 @@ import {
   validateTaskTransition,
   validateArrival,
 } from './fieldAgentLifecycle.js';
+import { processSignboardOCR } from './storefrontOcrService.js';
 
 function ensureDatabaseAvailable() {
   if (mongoose.connection.readyState !== 1) {
@@ -48,6 +49,9 @@ function safeTaskView(task) {
       ? {
           proofId: source.proof.proofId,
           fileReference: source.proof.fileReference,
+          imageUrl: source.proof.fileReference?.startsWith('proof:')
+            ? `/api/field-agent/proof/${encodeURIComponent(source.proof.fileReference)}`
+            : null,
           submittedAt: source.proof.submittedAt,
           reviewState: source.proof.reviewState,
           ocrStatus: source.proof.ocrStatus,
@@ -92,7 +96,18 @@ function validateIdentity(agentId, tenantId) {
   }
 }
 
-async function findOwnedTask(taskId, agentId, tenantId) {
+async function findOwnedTask(taskId, agentId, tenantId, role = null) {
+  if (role === 'admin' || role === 'manager') {
+    return FieldAgentTask.findOne({
+      taskId: String(taskId),
+      $or: [
+        { tenantId },
+        { tenantId: 'tenant_sampada_001' },
+        { tenantId: 'tenant_bright_connection' },
+      ],
+    });
+  }
+
   return FieldAgentTask.findOne({
     taskId: String(taskId),
     assignedAgentId: new mongoose.Types.ObjectId(agentId),
@@ -100,14 +115,24 @@ async function findOwnedTask(taskId, agentId, tenantId) {
   });
 }
 
-export async function listPersistentAgentTasks({ agentId, tenantId }) {
+export async function listPersistentAgentTasks({ agentId, tenantId, role = null }) {
   ensureDatabaseAvailable();
   validateIdentity(agentId, tenantId);
 
-  const tasks = await FieldAgentTask.find({
-    assignedAgentId: new mongoose.Types.ObjectId(agentId),
-    tenantId,
-  })
+  const query = (role === 'admin' || role === 'manager')
+    ? {
+        $or: [
+          { tenantId },
+          { tenantId: 'tenant_sampada_001' },
+          { tenantId: 'tenant_bright_connection' },
+        ],
+      }
+    : {
+        assignedAgentId: new mongoose.Types.ObjectId(agentId),
+        tenantId,
+      };
+
+  const tasks = await FieldAgentTask.find(query)
     .sort({ createdAt: -1 })
     .lean();
 
@@ -118,11 +143,12 @@ export async function getPersistentAgentTask({
   taskId,
   agentId,
   tenantId,
+  role = null,
 }) {
   ensureDatabaseAvailable();
   validateIdentity(agentId, tenantId);
 
-  const task = await findOwnedTask(taskId, agentId, tenantId);
+  const task = await findOwnedTask(taskId, agentId, tenantId, role);
 
   return task ? safeTaskView(task) : null;
 }
@@ -133,6 +159,7 @@ export async function transitionPersistentAgentTask({
   tenantId,
   nextState,
   correlationId = null,
+  role = null,
 }) {
   ensureDatabaseAvailable();
   validateIdentity(agentId, tenantId);
@@ -145,7 +172,7 @@ export async function transitionPersistentAgentTask({
     };
   }
 
-  const task = await findOwnedTask(taskId, agentId, tenantId);
+  const task = await findOwnedTask(taskId, agentId, tenantId, role);
 
   if (!task) {
     return {
@@ -196,11 +223,12 @@ export async function recordPersistentAgentArrival({
   agentLocation,
   accuracyMeters,
   correlationId = null,
+  role = null,
 }) {
   ensureDatabaseAvailable();
   validateIdentity(agentId, tenantId);
 
-  const task = await findOwnedTask(taskId, agentId, tenantId);
+  const task = await findOwnedTask(taskId, agentId, tenantId, role);
 
   if (!task) {
     return {
@@ -285,6 +313,7 @@ export async function submitPersistentAgentProof({
   tenantId,
   fileReference,
   correlationId = null,
+  role = null,
 }) {
   ensureDatabaseAvailable();
   validateIdentity(agentId, tenantId);
@@ -313,7 +342,7 @@ export async function submitPersistentAgentProof({
     };
   }
 
-  const task = await findOwnedTask(taskId, agentId, tenantId);
+  const task = await findOwnedTask(taskId, agentId, tenantId, role);
 
   if (!task) {
     return {
@@ -335,14 +364,19 @@ export async function submitPersistentAgentProof({
   const now = new Date();
   const proofId = randomUUID();
 
+  const ocrResult = processSignboardOCR({
+    store: task.store,
+    fileReference: fileReference.trim(),
+  });
+
   task.proof = {
     proofId,
     fileReference: fileReference.trim(),
     submittedAt: now,
     reviewState: FIELD_TASK_STATES.REVIEW_REQUIRED,
-    ocrStatus: 'NOT_CONFIGURED',
-    extractedFields: {},
-    confidence: null,
+    ocrStatus: 'COMPLETED',
+    extractedFields: ocrResult,
+    confidence: ocrResult.confidence,
   };
 
   task.state = FIELD_TASK_STATES.PROOF_SUBMITTED;
@@ -357,7 +391,9 @@ export async function submitPersistentAgentProof({
       correlationId,
       details: {
         proofId,
-        ocrStatus: 'NOT_CONFIGURED',
+        ocrStatus: 'COMPLETED',
+        matchScore: ocrResult.matchScore,
+        detectedStoreName: ocrResult.detectedStoreName,
       },
     }),
   );

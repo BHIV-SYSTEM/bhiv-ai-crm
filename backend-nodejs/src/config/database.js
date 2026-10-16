@@ -6,7 +6,7 @@ dotenv.config();
 const connectDatabase = async () => {
   try {
     const options = {
-      serverSelectionTimeoutMS: 2500,
+      serverSelectionTimeoutMS: 10000,
       socketTimeoutMS: 30000,
     };
 

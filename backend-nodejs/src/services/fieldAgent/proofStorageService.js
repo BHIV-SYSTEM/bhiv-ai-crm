@@ -1,4 +1,4 @@
-﻿import crypto from 'node:crypto';
+import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
@@ -153,9 +153,40 @@ export async function deleteProofImage(fileReference) {
   return false;
 }
 
+export async function getProofImage(fileReference) {
+  if (
+    typeof fileReference !== 'string' ||
+    !/^proof:[0-9a-f-]{36}$/i.test(fileReference)
+  ) {
+    throw storageError('Invalid application-managed proof reference.', 400);
+  }
+
+  const proofReferenceId = fileReference.slice('proof:'.length);
+  const candidates = [
+    { ext: '.jpg', mimeType: 'image/jpeg' },
+    { ext: '.png', mimeType: 'image/png' },
+    { ext: '.webp', mimeType: 'image/webp' },
+  ];
+
+  for (const { ext, mimeType } of candidates) {
+    const filePath = path.join(STORAGE_DIR, `${proofReferenceId}${ext}`);
+    try {
+      const buffer = await fs.readFile(filePath);
+      return { buffer, mimeType };
+    } catch (error) {
+      if (error.code !== 'ENOENT') {
+        throw storageError('Could not read stored proof image.', 500);
+      }
+    }
+  }
+
+  throw storageError('Stored proof image was not found.', 404);
+}
+
 export default {
   storeProofImage,
   deleteProofImage,
+  getProofImage,
 };
 
 
