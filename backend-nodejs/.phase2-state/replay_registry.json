@@ -12,7 +12,7 @@
         "product_id": "BC-HAMMER-03",
         "qty": 3
       },
-      "created_at": "2026-10-14T08:31:04.263Z",
+      "created_at": "2026-10-31T12:15:17.609Z",
       "duplicate": false
     }
   ],
@@ -25,7 +25,7 @@
       "original_ingestion_present": true,
       "replay_registered": true,
       "duplicate_guard": false,
-      "replayed_at": "2026-10-14T08:31:04.265Z"
+      "replayed_at": "2026-10-31T12:15:17.611Z"
     }
   ]
 }

@@ -35,15 +35,21 @@ def _generate_development_keys() -> tuple[str, str]:
     return private_pem, public_pem
 
 
+_DEV_KEYS: tuple[str, str] | None = None
+
+
 def load_jwt_keys() -> tuple[str, str]:
-    """Load configured RSA keys, using ephemeral keys only outside production."""
+    """Load configured RSA keys, using cached ephemeral keys outside production."""
+    global _DEV_KEYS
     private_key = os.getenv("JWT_PRIVATE_KEY")
     public_key = os.getenv("JWT_PUBLIC_KEY")
     if private_key and public_key:
         return private_key.replace("\\n", "\n"), public_key.replace("\\n", "\n")
     if os.getenv("ENVIRONMENT", "development").lower() == "production":
         raise SecurityConfigurationError("JWT_PRIVATE_KEY and JWT_PUBLIC_KEY are required in production")
-    return _generate_development_keys()
+    if _DEV_KEYS is None:
+        _DEV_KEYS = _generate_development_keys()
+    return _DEV_KEYS
 
 
 class ReplayDetectedError(ValueError):

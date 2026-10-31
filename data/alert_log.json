@@ -1,16 +1,209 @@
 [
   {
-    "timestamp": "2026-09-12T17:08:22.573547",
+    "timestamp": "2026-10-31T17:32:31.146357",
     "level": "info",
-    "title": "Field Visit Alert - Andheri Electronics Live (LOC_MUMBAI_WEST)",
-    "message": "Agent AGENT_77 has checked in at Andheri Electronics Live. Evidence recorded.",
+    "title": "Restock Processing Started",
+    "message": "Processing 2 restock requests",
     "details": {
-      "Company": "Bright Connection",
-      "Store ID": "STR_ANDHERI_LIVE_01",
-      "Location": "LOC_MUMBAI_WEST",
-      "Agent ID": "AGENT_77",
-      "Photo Evidence": "https://s3.brightconnection.tally/proof/live_str_andheri_01.jpg",
-      "Provenance Timestamp": "2026-09-12T11:38:22.573482Z"
+      "total_requests": 2,
+      "timestamp": "2026-10-31T17:32:31.146156"
     }
+  },
+  {
+    "timestamp": "2026-10-31T17:32:31.183748",
+    "level": "success",
+    "title": "Restocks Approved",
+    "message": "Successfully processed 2 automatic restocks",
+    "details": {
+      "approved_count": 2,
+      "products": [
+        "A101",
+        "C303"
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-10-31T17:32:31.208085",
+    "level": "info",
+    "title": "Restock Processing Started",
+    "message": "Processing 1 restock requests",
+    "details": {
+      "total_requests": 1,
+      "timestamp": "2026-10-31T17:32:31.207955"
+    }
+  },
+  {
+    "timestamp": "2026-10-31T17:32:31.208871",
+    "level": "warning",
+    "title": "Human Review Required",
+    "message": "Restock for A101 requires human review",
+    "details": {
+      "product_id": "A101",
+      "quantity": 25,
+      "review_id": "test_review_id"
+    }
+  },
+  {
+    "timestamp": "2026-10-31T17:32:31.209453",
+    "level": "warning",
+    "title": "Email Not Configured",
+    "message": "Email notifications are disabled or not configured properly",
+    "details": {}
+  },
+  {
+    "timestamp": "2026-10-31T17:32:31.467554",
+    "level": "info",
+    "title": "Agent Cycle Started",
+    "message": "Restock agent beginning processing cycle",
+    "details": {}
+  },
+  {
+    "timestamp": "2026-10-31T17:32:31.478684",
+    "level": "info",
+    "title": "Restock Processing Started",
+    "message": "Processing 3 restock requests",
+    "details": {
+      "total_requests": 3,
+      "timestamp": "2026-10-31T17:32:31.478592"
+    }
+  },
+  {
+    "timestamp": "2026-10-31T17:32:31.479471",
+    "level": "warning",
+    "title": "Human Review Required",
+    "message": "Restock for C303 requires human review",
+    "details": {
+      "product_id": "C303",
+      "quantity": 25,
+      "review_id": "test_review_id"
+    }
+  },
+  {
+    "timestamp": "2026-10-31T17:32:31.480064",
+    "level": "warning",
+    "title": "Email Not Configured",
+    "message": "Email notifications are disabled or not configured properly",
+    "details": {}
+  },
+  {
+    "timestamp": "2026-10-31T17:32:31.493670",
+    "level": "success",
+    "title": "Restocks Approved",
+    "message": "Successfully processed 2 automatic restocks",
+    "details": {
+      "approved_count": 2,
+      "products": [
+        "A101",
+        "E505"
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-10-31T17:32:31.494397",
+    "level": "success",
+    "title": "Agent Cycle Complete",
+    "message": "Restock agent completed processing cycle successfully",
+    "details": {}
+  },
+  {
+    "timestamp": "2026-10-31T17:32:31.604276",
+    "level": "info",
+    "title": "Agent Cycle Started",
+    "message": "Restock agent beginning processing cycle",
+    "details": {}
+  },
+  {
+    "timestamp": "2026-10-31T17:32:31.610052",
+    "level": "info",
+    "title": "Restock Processing Started",
+    "message": "Processing 3 restock requests",
+    "details": {
+      "total_requests": 3,
+      "timestamp": "2026-10-31T17:32:31.609964"
+    }
+  },
+  {
+    "timestamp": "2026-10-31T17:32:31.621261",
+    "level": "success",
+    "title": "Restocks Approved",
+    "message": "Successfully processed 3 automatic restocks",
+    "details": {
+      "approved_count": 3,
+      "products": [
+        "A101",
+        "C303",
+        "E505"
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-10-31T17:32:31.622042",
+    "level": "success",
+    "title": "Agent Cycle Complete",
+    "message": "Restock agent completed processing cycle successfully",
+    "details": {}
+  },
+  {
+    "timestamp": "2026-10-31T17:32:31.657676",
+    "level": "info",
+    "title": "Agent Cycle Started",
+    "message": "Restock agent beginning processing cycle",
+    "details": {}
+  },
+  {
+    "timestamp": "2026-10-31T17:32:31.658661",
+    "level": "critical",
+    "title": "Agent Error",
+    "message": "Agent error: File not found",
+    "details": {
+      "error_type": "Exception",
+      "error_details": "File not found",
+      "timestamp": "2026-10-31T17:32:31.658574"
+    }
+  },
+  {
+    "timestamp": "2026-10-31T17:32:31.659374",
+    "level": "warning",
+    "title": "Email Not Configured",
+    "message": "Email notifications are disabled or not configured properly",
+    "details": {}
+  },
+  {
+    "timestamp": "2026-10-31T17:32:31.671795",
+    "level": "info",
+    "title": "Agent Cycle Started",
+    "message": "Restock agent beginning processing cycle",
+    "details": {}
+  },
+  {
+    "timestamp": "2026-10-31T17:32:31.678317",
+    "level": "info",
+    "title": "Restock Processing Started",
+    "message": "Processing 3 restock requests",
+    "details": {
+      "total_requests": 3,
+      "timestamp": "2026-10-31T17:32:31.678227"
+    }
+  },
+  {
+    "timestamp": "2026-10-31T17:32:31.690054",
+    "level": "success",
+    "title": "Restocks Approved",
+    "message": "Successfully processed 3 automatic restocks",
+    "details": {
+      "approved_count": 3,
+      "products": [
+        "A101",
+        "C303",
+        "E505"
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-10-31T17:32:31.691058",
+    "level": "success",
+    "title": "Agent Cycle Complete",
+    "message": "Restock agent completed processing cycle successfully",
+    "details": {}
   }
 ]

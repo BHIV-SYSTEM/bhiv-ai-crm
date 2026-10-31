@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import json
 from datetime import datetime
@@ -48,15 +49,30 @@ class HumanReviewSystem:
         except:
             return False
     
-    def requires_human_review(self, action_type: str, data: Dict) -> bool:
+    def requires_human_review(self, action_type: str, data: Optional[Dict] = None) -> bool:
         """Determine if action requires human review"""
-        confidence = self.calculate_confidence(action_type, data)
+        if data is None and isinstance(action_type, dict):
+            data = action_type
+            action_type = "restock"
+        elif data is None and isinstance(action_type, str):
+            data = {"query": action_type}
+            action_type = "chatbot_response"
+        confidence = self.calculate_confidence(action_type, data or {})
         return confidence < self.confidence_threshold
     
-    def submit_for_review(self, action_type: str, data: Dict, agent_decision: str) -> str:
+    def submit_for_review(self, action_type: str, data: Optional[Dict] = None, agent_decision: Optional[str] = None) -> str:
         """Submit decision for human review"""
-        review_id = f"{action_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        confidence = self.calculate_confidence(action_type, data)
+        if data is None and isinstance(action_type, str) and agent_decision is None:
+            data = {"query": action_type}
+            action_type = "chatbot_response"
+            agent_decision = "Handle urgent customer query"
+        elif data is None and isinstance(action_type, dict):
+            data = action_type
+            action_type = "restock"
+            agent_decision = "Restock decision"
+
+        review_id = f"{action_type}_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}"
+        confidence = self.calculate_confidence(action_type, data or {})
         
         review_item = {
             "review_id": review_id,
@@ -64,23 +80,28 @@ class HumanReviewSystem:
             "action_type": action_type,
             "confidence": confidence,
             "data": data,
-            "agent_decision": agent_decision,
+            "agent_decision": agent_decision or "Requires review",
             "status": "pending",
             "human_decision": None,
             "human_notes": None
         }
         
+        # Ensure parent dir exists
+        parent_dir = os.path.dirname(self.pending_reviews_file)
+        if parent_dir and not os.path.exists(parent_dir):
+            os.makedirs(parent_dir, exist_ok=True)
+
         # Load existing pending reviews
         try:
-            with open(self.pending_reviews_file, 'r') as f:
+            with open(self.pending_reviews_file, 'r', encoding='utf-8') as f:
                 pending_reviews = json.load(f)
-        except FileNotFoundError:
+        except (FileNotFoundError, json.JSONDecodeError):
             pending_reviews = []
         
         pending_reviews.append(review_item)
         
         # Save updated pending reviews
-        with open(self.pending_reviews_file, 'w') as f:
+        with open(self.pending_reviews_file, 'w', encoding='utf-8') as f:
             json.dump(pending_reviews, f, indent=2)
         
         print(f"⚠️  Action submitted for human review (ID: {review_id}, Confidence: {confidence:.2f})")
@@ -89,9 +110,9 @@ class HumanReviewSystem:
     def get_pending_reviews(self) -> List[Dict]:
         """Get all pending reviews"""
         try:
-            with open(self.pending_reviews_file, 'r') as f:
+            with open(self.pending_reviews_file, 'r', encoding='utf-8') as f:
                 return json.load(f)
-        except FileNotFoundError:
+        except (FileNotFoundError, json.JSONDecodeError):
             return []
     
     def approve_decision(self, review_id: str, notes: str = "") -> bool:
@@ -120,7 +141,7 @@ class HumanReviewSystem:
                 pending_reviews.remove(review)
                 
                 # Save updated pending reviews
-                with open(self.pending_reviews_file, 'w') as f:
+                with open(self.pending_reviews_file, 'w', encoding='utf-8') as f:
                     json.dump(pending_reviews, f, indent=2)
                 
                 print(f"✅ Review {review_id} {decision}")
@@ -131,23 +152,23 @@ class HumanReviewSystem:
     
     def _log_review(self, review: Dict):
         """Log completed review to CSV"""
+        parent_dir = os.path.dirname(self.review_log_file)
+        if parent_dir and not os.path.exists(parent_dir):
+            os.makedirs(parent_dir, exist_ok=True)
+
         log_entry = {
-            "timestamp": review["reviewed_at"],
+            "timestamp": review.get("reviewed_at", datetime.now().isoformat()),
             "review_id": review["review_id"],
             "action_type": review["action_type"],
             "confidence": review["confidence"],
-            "agent_decision": review["agent_decision"],
+            "agent_decision": review.get("agent_decision", ""),
             "human_decision": review["human_decision"],
-            "notes": review["human_notes"]
+            "notes": review.get("human_notes", "")
         }
         
         df = pd.DataFrame([log_entry])
-        try:
-            # Append to existing log
-            df.to_csv(self.review_log_file, mode='a', index=False, header=False)
-        except FileNotFoundError:
-            # Create new log with header
-            df.to_csv(self.review_log_file, mode='w', index=False, header=True)
+        file_exists = os.path.exists(self.review_log_file)
+        df.to_csv(self.review_log_file, mode='a' if file_exists else 'w', index=False, header=not file_exists)
 
 # Global instance
 review_system = HumanReviewSystem()
