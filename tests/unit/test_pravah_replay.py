@@ -84,3 +84,4 @@ async def test_pravah_asynchronous_event_streaming(ledger):
     assert received_events[0].event_type == "INIT"
     assert received_events[1].event_type == "PROCESSING"
     assert received_events[2].event_type == "COMPLETED"
+

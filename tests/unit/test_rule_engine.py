@@ -87,3 +87,4 @@ def test_full_evaluation_flow_produces_deterministic_state_hash(rule_engine):
     # State hash must be identical
     assert eval1.state_hash == eval2.state_hash
     assert len(eval1.state_hash) == 64
+

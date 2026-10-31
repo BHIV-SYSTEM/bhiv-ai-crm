@@ -124,3 +124,4 @@ def test_concurrent_multi_thread_state_transitions(orchestrator):
     # Exactly 1 thread must succeed; 9 must be rejected due to optimistic lock
     assert results["successes"] == 1
     assert results["conflicts"] == 9
+

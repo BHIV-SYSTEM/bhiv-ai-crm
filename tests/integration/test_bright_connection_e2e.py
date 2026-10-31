@@ -132,3 +132,4 @@ def test_complete_bright_connection_chain(e2e_context):
     assert f_resp.status_code == 200
     assert f_resp.json()["success"] is False
     assert "Cross-tenant access is blocked" in f_resp.json()["response"]
+
