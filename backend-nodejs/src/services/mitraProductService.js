@@ -13,7 +13,7 @@ const clampLimit = (value, fallback = 20) => {
   return Math.min(Math.max(parsed, 1), 100);
 };
 
-export const createMongoSetuRepository = () => ({
+export const createMongoSetuRepository = (context = {}) => ({
   async inventory({ query, sku, lowStockOnly, limit }) {
     const filter = { isActive: true };
     if (sku) filter.sku = String(sku).trim().toUpperCase();
@@ -51,8 +51,9 @@ export const createMongoSetuRepository = () => ({
       await Promise.all([
         Product.countDocuments({ isActive: true }),
         Product.countDocuments(lowStockFilter),
-        Order.countDocuments({}),
+        Order.countDocuments(context.account_id ? { customerId: context.account_id } : {}),
         Order.aggregate([
+          ...(context.account_id ? [{ $match: { customerId: new mongoose.Types.ObjectId(context.account_id) } }] : []),
           { $group: { _id: '$status', count: { $sum: 1 } } },
           { $sort: { _id: 1 } },
         ]),
@@ -69,7 +70,11 @@ export const createMongoSetuRepository = () => ({
   },
 
   async order(orderNumber) {
-    return Order.findOne({ orderNumber: String(orderNumber).trim() })
+    const filter = { orderNumber: String(orderNumber).trim() };
+    if (context.account_id) {
+      filter.customerId = context.account_id;
+    }
+    return Order.findOne(filter)
       .select(
         'orderNumber status totalAmount items tracking.placedAt tracking.dispatchedAt tracking.deliveredAt createdAt updatedAt',
       )
@@ -103,9 +108,14 @@ const requireEnvelope = (envelope) => {
 
 export const executeMitraProduct = async (
   envelope,
-  repository = createMongoSetuRepository(),
+  repositoryFactory = createMongoSetuRepository,
 ) => {
   requireEnvelope(envelope);
+
+  // Extract account/store context scoping
+  const context = { account_id: envelope.context?.account_id || envelope.tenant_id };
+  const repository = repositoryFactory(context);
+
   const payload = envelope.payload;
   const query = String(payload.query || '').trim();
   const base = {

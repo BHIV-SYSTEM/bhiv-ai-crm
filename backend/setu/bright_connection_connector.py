@@ -20,7 +20,7 @@ class BrightConnectionConnector:
     TENANT_ID = "tenant_bright_connection"
 
     @classmethod
-    def transform_product_catalog(cls, raw_items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def transform_product_catalog(cls, raw_items: List[Dict[str, Any]], tally_provenance: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """Transforms Bright Connection raw catalog into Canonical MDU Product format"""
         canonical_products = []
         for item in raw_items:
@@ -36,11 +36,13 @@ class BrightConnectionConnector:
                 "canonical_version": "1.0",
                 "transformed_at": datetime.utcnow().isoformat()
             }
+            if tally_provenance:
+                mdu_product["tally_provenance"] = tally_provenance
             canonical_products.append(mdu_product)
         return canonical_products
 
     @classmethod
-    def transform_order_payload(cls, raw_order: Dict[str, Any]) -> Dict[str, Any]:
+    def transform_order_payload(cls, raw_order: Dict[str, Any], tally_provenance: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Transforms Bright Connection order payload into Canonical MDU Order format"""
         order_id = raw_order.get("order_id") or f"ORD-BC-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
         items = []
@@ -72,13 +74,18 @@ class BrightConnectionConnector:
             "canonical_version": "1.0",
             "transformed_at": datetime.utcnow().isoformat()
         }
+        if tally_provenance:
+            result["tally_provenance"] = tally_provenance
+        return result
 
     @classmethod
-    def transform_field_visit_evidence(cls, raw_visit: Dict[str, Any]) -> Dict[str, Any]:
+    def transform_field_visit_evidence(cls, raw_visit: Dict[str, Any], tally_provenance: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Transforms Bright Connection field visit evidence into Canonical MDU Evidence format"""
-        return {
+        result = {
             "mdu_type": "field_visit_evidence",
             "tenant_id": cls.TENANT_ID,
+            "account_id": raw_visit.get("account_id") or raw_visit.get("tally_account_id"),
+            "store_id": raw_visit.get("store_id") or raw_visit.get("tally_store_id"),
             "visit_id": raw_visit.get("visit_id") or f"VIS-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
             "route_id": raw_visit.get("route_id") or raw_visit.get("beat_id"),
             "dealer_id": raw_visit.get("dealer_id"),
@@ -96,3 +103,6 @@ class BrightConnectionConnector:
             "canonical_version": "1.0",
             "transformed_at": datetime.utcnow().isoformat()
         }
+        if tally_provenance:
+            result["tally_provenance"] = tally_provenance
+        return result

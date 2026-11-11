@@ -1,0 +1,49 @@
+[
+  {
+    "timestamp": "2026-09-04T14:52:38.459535",
+    "level": "info",
+    "title": "New Field Visit: ACC_TALLY_001 / STORE_HQ_TEST",
+    "message": "Agent AGENT_007 visited at 19.076, 72.8777.",
+    "details": {
+      "mdu_type": "field_visit_evidence",
+      "tenant_id": "tenant_bright_connection",
+      "account_id": "ACC_TALLY_001",
+      "store_id": "STORE_HQ_TEST",
+      "visit_id": "VIS-129d919b",
+      "route_id": "ROUTE_A1",
+      "dealer_id": null,
+      "agent_id": "AGENT_007",
+      "location_proof": {
+        "lat": 19.076,
+        "lng": 72.8777,
+        "verified": true
+      },
+      "display_photo_url": "https://storage.test/tally_display.jpg",
+      "damaged_goods_report": [],
+      "invoice_capture_url": null,
+      "payment_collected": 0.0,
+      "parikshak_reviewed": false,
+      "canonical_version": "1.0",
+      "transformed_at": "2026-09-04T09:22:38.457165",
+      "tally_provenance": {
+        "company_name": "Tally Solutions Local",
+        "account_id": "ACC_TALLY_001",
+        "store_id": "STORE_HQ_TEST",
+        "location_id": "LOC_01",
+        "source_entity": "Tally_ERP_9_Connector",
+        "timestamp": "2026-09-04T09:22:38.457165",
+        "raw_input": {
+          "visit_id": "VIS-129d919b",
+          "route_id": "ROUTE_A1",
+          "tally_account_id": "ACC_TALLY_001",
+          "tally_store_id": "STORE_HQ_TEST",
+          "submitted_by": "AGENT_007",
+          "location_verified": true,
+          "lat": 19.076,
+          "lng": 72.8777,
+          "shelf_image": "https://storage.test/tally_display.jpg"
+        }
+      }
+    }
+  }
+]
