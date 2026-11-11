@@ -2,7 +2,7 @@ import React from 'react';
 import { ExternalLink, RefreshCw } from 'lucide-react';
 import Button from '../components/common/ui/Button';
 
-const SAMPADA_DASHBOARD_URL = 'https://sampada.blackholeinfiverse.com';
+const SAMPADA_DASHBOARD_URL = import.meta.env.VITE_SAMPADA_URL || 'http://localhost:5175/';
 
 export const SampadaEmbedded = () => {
   const handleOpenInNewTab = () => {

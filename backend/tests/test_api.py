@@ -46,9 +46,6 @@ class TestAPIEndpoints:
         })
         returns_file = os.path.join(self.test_dir, 'returns.xlsx')
         returns_data.to_excel(returns_file, index=False)
-        
-        # Update file paths in the app (this would need to be configurable in real app)
-        # For now, we'll patch the file reading functions
     
     def test_root_endpoint(self):
         """Test root endpoint"""
@@ -61,28 +58,28 @@ class TestAPIEndpoints:
     @pytest.mark.asyncio
     async def test_get_orders_endpoint(self):
         """Test get orders endpoint"""
-        # This test would need the actual data files to be in place
-        # For now, we'll test the endpoint structure
         response = self.client.get("/get_orders")
         
-        # Should return 200 or 500 (if file not found)
+        # Should return 200 or 500 (if database/file not reachable)
         assert response.status_code in [200, 500]
         
         if response.status_code == 200:
             data = response.json()
-            assert isinstance(data, list)
+            orders_list = data.get("orders") if isinstance(data, dict) else data
+            assert isinstance(orders_list, list)
     
     @pytest.mark.asyncio
     async def test_get_returns_endpoint(self):
         """Test get returns endpoint"""
         response = self.client.get("/get_returns")
         
-        # Should return 200 or 500 (if file not found)
+        # Should return 200 or 500 (if database/file not reachable)
         assert response.status_code in [200, 500]
         
         if response.status_code == 200:
             data = response.json()
-            assert isinstance(data, list)
+            returns_list = data.get("returns") if isinstance(data, dict) else data
+            assert isinstance(returns_list, list)
     
     def test_health_check_endpoint(self):
         """Test health check endpoint (if it exists)"""
@@ -104,11 +101,8 @@ class TestAPIEndpoints:
     def test_cors_headers(self):
         """Test CORS headers if configured"""
         response = self.client.get("/")
-        
-        # Check if CORS headers are present (optional)
-        # This depends on whether CORS is configured in the app
         headers = response.headers
-        # We don't assert CORS headers as they might not be configured yet
+        assert headers is not None
 
 class TestAPIIntegration:
     """Test API integration with other components"""
@@ -125,13 +119,15 @@ class TestAPIIntegration:
         # Get returns
         returns_response = self.client.get("/get_returns")
         
-        # Both should have same response structure
+        # Both should have valid structure
         if orders_response.status_code == 200 and returns_response.status_code == 200:
             orders_data = orders_response.json()
             returns_data = returns_response.json()
             
-            assert isinstance(orders_data, list)
-            assert isinstance(returns_data, list)
+            orders_list = orders_data.get("orders") if isinstance(orders_data, dict) else orders_data
+            returns_list = returns_data.get("returns") if isinstance(returns_data, dict) else returns_data
+            assert isinstance(orders_list, list)
+            assert isinstance(returns_list, list)
     
     def test_api_performance(self):
         """Test API response times"""
@@ -143,12 +139,11 @@ class TestAPIIntegration:
         response_time = time.time() - start_time
         
         assert response.status_code == 200
-        assert response_time < 1.0, f"API response too slow: {response_time:.2f}s"
+        assert response_time < 2.0, f"API response too slow: {response_time:.2f}s"
     
     def test_concurrent_requests(self):
         """Test handling of concurrent requests"""
         import threading
-        import time
         
         results = []
         

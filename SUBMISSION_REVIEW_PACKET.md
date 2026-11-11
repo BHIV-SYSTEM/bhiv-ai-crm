@@ -26,14 +26,14 @@ $$\text{CUSTOMER\_EMPLOYEE} \xrightarrow{} \text{MITRA} \xrightarrow{} \text{INT
 - **Trace Immutability**: `trace_id` preserved across all request hops.
 
 ### 2. Automated Task Ingestion
-- **Service**: [taskIngestionService.js](file:///d:/Internship%20Task/Niyantran-Workflow-BHIV/bhiv-workflow-blackhole/server/services/taskIngestionService.js)
-- **Route**: [taskIngestion.js](file:///d:/Internship%20Task/Niyantran-Workflow-BHIV/bhiv-workflow-blackhole/server/routes/taskIngestion.js)
+- **Service**: `backend-nodejs/src/services/taskIngestionService.js` (or similar)
+- **Route**: `backend-nodejs/src/routes/taskIngestion.js` (or similar)
 - Parses PDF/DOCX/MD/TXT documents, cleans OCR noise, builds canonical task packets, and detects candidate assignees.
 - **Malformed Input Protection**: Empty or unreadable files are explicitly rejected with HTTP 400 (`MALFORMED_DOCUMENT_REJECTED`) errors instead of inventing dummy data.
 - **Provenance**: Original files stored in bucket storage (`bucketClient.js`) as evidence.
 
 ### 3. PARIKSHAK Review & MasterDB Dispatch
-- **Services**: [parikshakService.js](file:///d:/Internship%20Task/Niyantran-Workflow-BHIV/bhiv-workflow-blackhole/server/services/parikshakService.js) & [sampada_dispatcher.py](file:///d:/Internship%20Task/bhiv-setu/backend/setu/sampada_dispatcher.py)
+- **Services**: `backend-nodejs/src/services/parikshakService.js` & `backend/setu/sampada_dispatcher.py`
 - Submissions pass through PARIKSHAK automated review before committing `TaskEvaluation` records to MasterDB.
 
 ---
@@ -41,11 +41,11 @@ $$\text{CUSTOMER\_EMPLOYEE} \xrightarrow{} \text{MITRA} \xrightarrow{} \text{INT
 ## ⚡ PART B — Bright Connection Tenant / Live Delivery Execution
 
 ### 1. Multi-Tenant Boundary Isolation (No Code Forking)
-- **Files**: [traceContinuityValidator.js](file:///d:/Internship%20Task/bhiv-setu/middleware/traceContinuityValidator.js) & [trace_continuity.py](file:///d:/Internship%20Task/bhiv-setu/backend/setu/trace_continuity.py)
+- **Files**: `backend-nodejs/src/middleware/traceContinuityValidator.js` & [trace_continuity.py](file:///v:/New%20folder/niyantran-prana/bhiv-ai-crm/backend/setu/trace_continuity.py)
 - `tenant_bright_connection` registered as an enterprise tenant running natively on SETU. Cross-tenant data bleed is strictly rejected.
 
 ### 2. Real API Integration & Canonical MDU Pipeline
-- **Adapter**: [bright_connection_connector.py](file:///d:/Internship%20Task/bhiv-setu/backend/setu/bright_connection_connector.py)
+- **Adapter**: [bright_connection_connector.py](file:///v:/New%20folder/niyantran-prana/bhiv-ai-crm/backend/setu/bright_connection_connector.py)
 - Pipeline: $\text{Bright Connection API} \xrightarrow{} \text{BrightConnectionConnector} \xrightarrow{} \text{Canonical MDU Data} \xrightarrow{} \text{SETU Capability} \xrightarrow{} \text{Result}$
 
 ### 3. Audit Matrix of All 17 Business Runtime Capabilities
@@ -99,13 +99,13 @@ node create_and_submit_bc_task.js
 
 ## 📦 Deliverables File Map
 
-1. **Master Certification Report**: [walkthrough.md](file:///C:/Users/HP/.gemini/antigravity-ide/brain/c4b5ab97-54f0-46f9-84da-4f9cd0f80cce/walkthrough.md)
-2. **Review Packet**: [SUBMISSION_REVIEW_PACKET.md](file:///d:/Internship%20Task/bhiv-setu/SUBMISSION_REVIEW_PACKET.md)
-3. **Code Packet**: [CODE_PACKET.md](file:///d:/Internship%20Task/Niyantran-Workflow-BHIV/bhiv-workflow-blackhole/CODE_PACKET.md)
-4. **Bright Connection API Connector**: [bright_connection_connector.py](file:///d:/Internship%20Task/bhiv-setu/backend/setu/bright_connection_connector.py)
-5. **Task Ingestion Engine**: [taskIngestionService.js](file:///d:/Internship%20Task/Niyantran-Workflow-BHIV/bhiv-workflow-blackhole/server/services/taskIngestionService.js)
-6. **SETU EOS Convergence Core**: [setuConvergenceService.js](file:///d:/Internship%20Task/Niyantran-Workflow-BHIV/bhiv-workflow-blackhole/server/services/setuConvergenceService.js)
-7. **CI/CD Hardening Evidence**: [YOTTA_SECURITY_HARDENING.md](file:///d:/Internship%20Task/Niyantran-Workflow-BHIV/bhiv-workflow-blackhole/YOTTA_SECURITY_HARDENING.md)
+1. **Master Certification Report**: [walkthrough.md](walkthrough.md)
+2. **Review Packet**: [SUBMISSION_REVIEW_PACKET.md](SUBMISSION_REVIEW_PACKET.md)
+3. **Code Packet**: [CODE_PACKET.md](CODE_PACKET.md)
+4. **Bright Connection API Connector**: [bright_connection_connector.py](backend/setu/bright_connection_connector.py)
+5. **Task Ingestion Engine**: `backend-nodejs/src/services/taskIngestionService.js`
+6. **SETU EOS Convergence Core**: `backend-nodejs/src/services/setuConvergenceService.js`
+7. **CI/CD Hardening Evidence**: `YOTTA_SECURITY_HARDENING.md`
 
 ---
 

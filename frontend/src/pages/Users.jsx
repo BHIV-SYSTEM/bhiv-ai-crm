@@ -30,7 +30,7 @@ export const Users = () => {
     totalUsers: 0,
     activeUsers: 0,
     adminUsers: 0,
-    operatorUsers: 0,
+    managerUsers: 0,
   });
 
   // Form state
@@ -38,7 +38,7 @@ export const Users = () => {
     username: '',
     email: '',
     password: '',
-    role: 'operator',
+    role: 'manager',
   });
 
   // Fetch users
@@ -47,35 +47,39 @@ export const Users = () => {
       setLoading(true);
       setError(null);
 
-      const response = await userAPI.getUsers();
-      const usersData = response.data?.users || response.data || [];
-      
+      // Backend responds { success, data: { users, pagination } }
+      const response = await userAPI.getUsers({ limit: 500 });
+      const payload = response.data?.data || {};
+      const usersData = Array.isArray(payload.users)
+        ? payload.users
+        : (Array.isArray(response.data) ? response.data : []);
+
       setUsers(usersData.map(user => ({
-        id: user.user_id || user.id || user.username,
-        username: user.username || user.email?.split('@')[0] || 'Unknown',
+        id: user._id || user.user_id || user.id || user.username,
+        username: user.name || user.username || user.email?.split('@')[0] || 'Unknown',
         email: user.email || '',
-        role: user.role || 'operator',
-        status: user.is_active !== false ? 'active' : 'inactive',
-        lastLogin: user.last_login ? new Date(user.last_login) : null,
-        createdAt: user.created_at ? new Date(user.created_at) : new Date(),
+        role: user.role || 'customer',
+        status: user.isActive !== false ? 'active' : 'inactive',
+        lastLogin: user.lastLogin ? new Date(user.lastLogin) : null,
+        createdAt: user.createdAt ? new Date(user.createdAt) : null,
       })));
 
       // Calculate metrics
-      const totalUsers = usersData.length;
-      const activeUsers = usersData.filter(u => u.is_active !== false).length;
-      const adminUsers = usersData.filter(u => (u.role || 'operator') === 'admin').length;
-      const operatorUsers = usersData.filter(u => (u.role || 'operator') === 'operator').length;
+      const totalUsers = payload.pagination?.total ?? usersData.length;
+      const activeUsers = usersData.filter(u => u.isActive !== false).length;
+      const adminUsers = usersData.filter(u => (u.role || 'customer') === 'admin').length;
+      const managerUsers = usersData.filter(u => (u.role || 'customer') === 'manager').length;
 
       setMetrics({
         totalUsers,
         activeUsers,
         adminUsers,
-        operatorUsers,
+        managerUsers,
       });
 
     } catch (err) {
       console.error('Error fetching users:', err);
-      setError(err.response?.data?.detail || err.message || 'Failed to load users');
+      setError(err.response?.data?.message || err.response?.data?.detail || err.message || 'Failed to load users');
     } finally {
       setLoading(false);
     }
@@ -93,31 +97,40 @@ export const Users = () => {
   }, [fetchUsers]);
 
   const handleCreateUser = async () => {
+    // Validate before calling the API (the backend would reject these anyway,
+    // but a clear message beats a generic "Validation failed").
+    if (!userForm.username.trim()) {
+      setError('Username is required');
+      return;
+    }
+    if (!userForm.email.trim()) {
+      setError('Email is required');
+      return;
+    }
+    if (userForm.password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
     try {
       setLoading(true);
       setError(null);
-      // Map username to name for MongoDB backend and map roles
-      const roleMap = {
-        'operator': 'manager',
-        'user': 'customer',
-        'admin': 'admin'
-      };
+      // Roles are the backend's own (admin / manager / customer / seller)
       const userData = {
-        name: userForm.username,
-        email: userForm.email,
+        name: userForm.username.trim(),
+        email: userForm.email.trim(),
         password: userForm.password,
-        role: roleMap[userForm.role] || 'customer'
+        role: userForm.role
       };
       await userAPI.createUser(userData);
-      setSuccess('User created successfully');
+      setSuccess(`User "${userData.name}" created successfully — they can sign in now`);
       setShowAddModal(false);
-      setUserForm({ username: '', email: '', password: '', role: 'operator' });
+      setUserForm({ username: '', email: '', password: '', role: 'manager' });
       setTimeout(() => {
         fetchUsers();
         setSuccess(null);
       }, 1000);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Failed to create user');
+      setError(err.response?.data?.message || err.response?.data?.errors?.[0]?.message || err.message || 'Failed to create user');
     } finally {
       setLoading(false);
     }
@@ -128,17 +141,11 @@ export const Users = () => {
     try {
       setLoading(true);
       setError(null);
-      // Map username to name for MongoDB backend and map roles
-      const roleMap = {
-        'operator': 'manager',
-        'user': 'customer',
-        'admin': 'admin'
-      };
       const userData = {
         ...(userForm.username && { name: userForm.username }),
         ...(userForm.email && { email: userForm.email }),
         ...(userForm.password && { password: userForm.password }),
-        ...(userForm.role && { role: roleMap[userForm.role] || userForm.role })
+        ...(userForm.role && { role: userForm.role })
       };
       await userAPI.updateUser(selectedUser.id, userData);
       setSuccess('User updated successfully');
@@ -150,7 +157,7 @@ export const Users = () => {
         setSuccess(null);
       }, 1000);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Failed to update user');
+      setError(err.response?.data?.message || err.response?.data?.errors?.[0]?.message || err.message || 'Failed to update user');
     } finally {
       setLoading(false);
     }
@@ -168,7 +175,7 @@ export const Users = () => {
         setSuccess(null);
       }, 1000);
     } catch (err) {
-      setError(err.response?.data?.detail || err.message || 'Failed to delete user');
+      setError(err.response?.data?.message || err.response?.data?.detail || err.message || 'Failed to delete user');
     } finally {
       setLoading(false);
     }
@@ -180,7 +187,9 @@ export const Users = () => {
       username: user.username,
       email: user.email,
       password: '',
-      role: user.role,
+      // Normalise to a role the select actually offers (older rows may hold
+      // legacy values like 'operator'/'user')
+      role: { operator: 'manager', user: 'customer' }[user.role] || user.role,
     });
     setShowEditModal(true);
   };
@@ -188,8 +197,9 @@ export const Users = () => {
   const getRoleVariant = (role) => {
     const variants = {
       admin: 'destructive',
-      operator: 'primary',
-      user: 'secondary',
+      manager: 'primary',
+      customer: 'secondary',
+      seller: 'success',
     };
     return variants[role] || 'default';
   };
@@ -218,7 +228,7 @@ export const Users = () => {
             Refresh
           </Button>
           <Button onClick={() => {
-            setUserForm({ username: '', email: '', password: '', role: 'operator' });
+            setUserForm({ username: '', email: '', password: '', role: 'manager' });
             setShowAddModal(true);
           }}>
             <Plus className="h-4 w-4 mr-2" />
@@ -262,8 +272,8 @@ export const Users = () => {
           variant="destructive"
         />
         <MetricCard
-          title="Operator Users"
-          value={metrics.operatorUsers.toLocaleString()}
+          title="Manager Users"
+          value={metrics.managerUsers.toLocaleString()}
           icon={UsersRound}
           variant="secondary"
         />
@@ -287,8 +297,9 @@ export const Users = () => {
             >
               <option value="all">All Roles</option>
               <option value="admin">Admin</option>
-              <option value="operator">Operator</option>
-              <option value="user">User</option>
+              <option value="manager">Manager</option>
+              <option value="seller">Seller</option>
+              <option value="customer">Customer</option>
             </select>
             <Button variant="outline">
               <Filter className="h-4 w-4 mr-2" />
@@ -343,7 +354,7 @@ export const Users = () => {
                       {user.lastLogin ? formatDate(user.lastLogin) : 'Never'}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {formatDate(user.createdAt)}
+                      {user.createdAt ? formatDate(user.createdAt) : '—'}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -411,8 +422,9 @@ export const Users = () => {
             onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}
             options={[
               { value: 'admin', label: 'Admin' },
-              { value: 'operator', label: 'Manager' },
-              { value: 'user', label: 'Customer' },
+              { value: 'manager', label: 'Manager' },
+              { value: 'customer', label: 'Customer' },
+              { value: 'seller', label: 'Seller (delivery partner)' },
             ]}
           />
         </div>
@@ -458,8 +470,9 @@ export const Users = () => {
             onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}
             options={[
               { value: 'admin', label: 'Admin' },
-              { value: 'operator', label: 'Manager' },
-              { value: 'user', label: 'Customer' },
+              { value: 'manager', label: 'Manager' },
+              { value: 'customer', label: 'Customer' },
+              { value: 'seller', label: 'Seller (delivery partner)' },
             ]}
           />
         </div>

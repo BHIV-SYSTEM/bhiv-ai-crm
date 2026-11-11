@@ -34,24 +34,9 @@ export const SupplierShowcase = () => {
       // Fetch products
       const productsResponse = await productAPI.getProducts({ limit: 1000, isActive: 'true' });
       
-      // Handle different response structures
-      let productsData = [];
-      if (productsResponse.data?.products) {
-        productsData = productsResponse.data.products;
-      } else if (productsResponse.data?.data) {
-        productsData = productsResponse.data.data;
-      } else if (Array.isArray(productsResponse.data)) {
-        productsData = productsResponse.data;
-      } else {
-        console.warn('Unexpected products response structure:', productsResponse);
-        productsData = [];
-      }
-      
-      // Ensure productsData is an array before mapping
-      if (!Array.isArray(productsData)) {
-        console.error('Products data is not an array:', productsData);
-        productsData = [];
-      }
+      // Extract products array safely
+      const rawProducts = productsResponse.data?.data?.products || productsResponse.data?.products || (Array.isArray(productsResponse.data?.data) ? productsResponse.data.data : (Array.isArray(productsResponse.data) ? productsResponse.data : []));
+      const productsData = Array.isArray(rawProducts) ? rawProducts : [];
       
       // Transform products to match frontend format
       const formattedProducts = productsData.map(product => ({
@@ -60,7 +45,11 @@ export const SupplierShowcase = () => {
         category: product.category || product.Category || 'Uncategorized',
         price: parseFloat(product.sellingPrice || product.UnitPrice || product.unit_price || product.price || 0),
         stock: product.stockQuantity || product.CurrentStock || product.current_stock || product.stock || 0,
-        image: product.primaryImageURL || product.PrimaryImageURL || product.primary_image_url || product.image || 'https://via.placeholder.com/300',
+        image: (product.primaryImageURL && !product.primaryImageURL.includes('placeholder') && !product.primaryImageURL.includes('via.'))
+          ? product.primaryImageURL 
+          : (product.image && !product.image.includes('placeholder') && !product.image.includes('via.'))
+          ? product.image 
+          : 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400&auto=format&fit=crop&q=80',
         supplier: product.supplier?.name || product.SupplierName || product.supplier_name || product.supplier || 'Unknown Supplier',
         weight: parseFloat(product.weight || product.Weight || 0),
         dimensions: product.dimensions || product.Dimensions || 'N/A',

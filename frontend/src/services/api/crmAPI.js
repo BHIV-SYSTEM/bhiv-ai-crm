@@ -7,8 +7,10 @@ const generateDefaultPassword = () => {
 
 // CRM API mapped to MongoDB Logistics Backend
 export const crmAPI = {
-  // Accounts (mapped to Users with role=customer)
-  getAccounts: (params) => apiClient.get('/api/users', { params: { role: 'customer', ...params } }),
+  // Accounts (mapped to Users of ANY role). The New Account modal creates
+  // admin / manager / customer accounts, so the list must not filter to
+  // customers only — otherwise freshly created admins/managers never appear.
+  getAccounts: (params) => apiClient.get('/api/users', { params: { ...params } }),
   getAccount: (id) => apiClient.get(`/api/users/${id}`),
   createAccount: (data) => {
     // Transform CRM account data to User API format

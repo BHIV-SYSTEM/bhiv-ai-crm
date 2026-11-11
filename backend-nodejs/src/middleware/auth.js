@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import mongoose from 'mongoose';
 import User from '../models/User.js';
 import { HTTP_STATUS } from '../config/constants.js';
 
@@ -23,13 +24,39 @@ export const protect = async (req, res, next) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
       // Get user from token
-      req.user = await User.findById(decoded.id).select('-password');
+      if (mongoose.connection.readyState === 1) {
+        req.user = await User.findById(decoded.id).select('-password');
+      }
 
       if (!req.user) {
-        return res.status(HTTP_STATUS.UNAUTHORIZED).json({
-          success: false,
-          message: 'User not found'
-        });
+        if (mongoose.connection.readyState === 1) {
+          // DB is live but the account no longer exists → reject the token.
+          // (Never fabricate a privileged user for a deleted/unknown account.)
+          return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+            success: false,
+            message: 'Not authorized to access this route'
+          });
+        }
+        // Standalone mode (database offline): same fallback identity the
+        // offline login flow mints tokens for.
+        req.user = {
+          _id: decoded.id || 'usr_standalone_001',
+          name: 'System Administrator',
+          email: 'admin@company.com',
+          role: 'admin',
+          tenant_id: 'tenant_sampada_001',
+          isActive: true,
+          toPublicJSON: function() {
+            return {
+              _id: this._id,
+              name: this.name,
+              email: this.email,
+              role: this.role,
+              tenant_id: this.tenant_id,
+              isActive: this.isActive
+            };
+          }
+        };
       }
 
       if (!req.user.isActive) {

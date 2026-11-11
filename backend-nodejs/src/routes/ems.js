@@ -1,10 +1,12 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import { protect } from '../middleware/auth.js';
 import { isAdminOrManager } from '../middleware/authorize.js';
 import emailService from '../services/emailService.js';
 import Product from '../models/Product.js';
 import RestockRequest from '../models/RestockRequest.js';
 import Order from '../models/Order.js';
+import EmailLog from '../models/EmailLog.js';
 
 const router = express.Router();
 
@@ -34,6 +36,16 @@ router.post('/send-to-supplier', async (req, res) => {
       emailType: emailType || 'general'
     });
 
+    // Log email to DB for real-time tracking
+    await EmailLog.create({
+      recipient: supplierEmail,
+      subject,
+      emailType: emailType || 'supplier',
+      status: result.success ? 'sent' : 'failed',
+      messageId: result.messageId,
+      error: result.message
+    });
+
     res.json({
       success: result.success,
       message: result.success ? 'Email sent successfully' : 'Failed to send email',
@@ -53,30 +65,46 @@ router.post('/send-to-supplier', async (req, res) => {
 // @access  Admin/Manager
 router.post('/restock-alert', async (req, res) => {
   try {
-    const { productId, quantity, supplierEmail, message } = req.body;
+    const { productId, productName, quantity, currentStock, supplierEmail, message } = req.body;
 
-    const product = await Product.findById(productId).populate('supplier');
-    if (!product) {
-      return res.status(404).json({ success: false, message: 'Product not found' });
+    let product = null;
+    if (productId && mongoose.Types.ObjectId.isValid(productId)) {
+      product = await Product.findById(productId).populate('supplier');
     }
 
-    const recipientEmail = supplierEmail || product.supplier?.email;
+    const recipientEmail = supplierEmail || product?.supplier?.email;
     if (!recipientEmail) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Supplier email not found' 
+        message: 'Supplier email is required' 
       });
     }
 
     const restockRequest = {
-      currentStock: product.stock,
-      threshold: product.minStock || 10,
-      requestedQuantity: quantity || (product.minStock * 2),
+      currentStock: currentStock || product?.stock || 0,
+      threshold: product?.minStock || 10,
+      requestedQuantity: quantity || 20,
       supplierEmail: recipientEmail,
       message: message || 'Urgent restock request'
     };
 
-    const result = await emailService.sendRestockEmail(product, restockRequest);
+    const targetProduct = product || {
+      name: productName || 'Requested Product',
+      sku: productId || 'PROD-ALERT',
+      unit: 'units'
+    };
+
+    const result = await emailService.sendRestockEmail(targetProduct, restockRequest);
+
+    // Log email to DB for real-time tracking
+    await EmailLog.create({
+      recipient: recipientEmail,
+      subject: `🔔 Urgent: Restock Request for ${targetProduct.name}`,
+      emailType: 'restock',
+      status: result.success ? 'sent' : 'failed',
+      messageId: result.messageId,
+      error: result.message
+    });
 
     res.json({
       success: result.success,
@@ -106,12 +134,22 @@ router.post('/purchase-order', async (req, res) => {
       });
     }
 
+    const poNum = orderNumber || `PO-${Date.now()}`;
     const result = await emailService.sendPurchaseOrderEmail({
       supplierEmail,
       supplierName: supplierName || 'Valued Supplier',
       items,
-      orderNumber: orderNumber || `PO-${Date.now()}`,
+      orderNumber: poNum,
       deliveryDate: deliveryDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    });
+
+    await EmailLog.create({
+      recipient: supplierEmail,
+      subject: `Purchase Order #${poNum}`,
+      emailType: 'purchase',
+      status: result.success ? 'sent' : 'failed',
+      messageId: result.messageId,
+      error: result.message
     });
 
     res.json({
@@ -141,6 +179,15 @@ router.post('/shipment-notification', async (req, res) => {
       estimatedDelivery
     });
 
+    await EmailLog.create({
+      recipient: recipientEmail,
+      subject: '📦 Your Order Has Been Shipped',
+      emailType: 'shipment',
+      status: result.success ? 'sent' : 'failed',
+      messageId: result.messageId,
+      error: result.message
+    });
+
     res.json({
       success: result.success,
       message: result.success ? 'Shipment notification sent' : 'Failed to send notification',
@@ -159,17 +206,21 @@ router.post('/shipment-notification', async (req, res) => {
 // @access  Admin/Manager
 router.get('/stats', async (req, res) => {
   try {
-    // Get restock requests sent today
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const restockRequests = await RestockRequest.find({
-      createdAt: { $gte: today }
+    const sentTodayCount = await EmailLog.countDocuments({
+      createdAt: { $gte: today },
+      status: 'sent'
     });
 
+    const totalLogs = await EmailLog.countDocuments();
+    const successfulLogs = await EmailLog.countDocuments({ status: 'sent' });
+    const successRate = totalLogs > 0 ? Math.round((successfulLogs / totalLogs) * 100 * 10) / 10 : 100;
+
     const stats = {
-      emails_sent_today: restockRequests.length,
-      success_rate: 95.5, // Placeholder - implement actual tracking
+      emails_sent_today: sentTodayCount,
+      success_rate: successRate,
       scheduled: 0,
       templates: 5
     };
@@ -191,20 +242,18 @@ router.get('/activity', async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 50;
 
-    const restockRequests = await RestockRequest.find()
-      .populate('product', 'name sku')
+    const logs = await EmailLog.find()
       .sort({ createdAt: -1 })
       .limit(limit);
 
-    const activity = restockRequests.map(request => ({
-      id: request._id,
-      type: 'Restock Alert',
-      email_type: 'restock',
-      recipient: request.supplierEmail,
-      to: request.supplierEmail,
-      status: request.emailSent ? 'sent' : 'pending',
-      timestamp: request.createdAt,
-      product: request.product?.name || 'Unknown Product'
+    const activity = logs.map(log => ({
+      id: log._id,
+      type: log.subject || 'Email',
+      email_type: log.emailType,
+      recipient: log.recipient,
+      to: log.recipient,
+      status: log.status,
+      timestamp: log.createdAt
     }));
 
     res.json({ activity });

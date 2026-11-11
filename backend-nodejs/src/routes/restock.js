@@ -6,6 +6,7 @@ import { isAdminOrManager } from '../middleware/authorize.js';
 import { HTTP_STATUS, RESTOCK_STATUS, INVENTORY_CHANGE_TYPE } from '../config/constants.js';
 import emailService from '../services/emailService.js';
 import InventoryLog from '../models/InventoryLog.js';
+import { publishPurchaseApproved } from '../services/arthaEventPublisher.js';
 
 const router = express.Router();
 
@@ -291,6 +292,16 @@ router.put('/:id/complete', isAdminOrManager, async (req, res) => {
     request.restockedBy = req.user._id;
     request.notes = notes;
     await request.save();
+
+    // Create the ARTHA vendor bill/payable (fire-and-forget, idempotent by restock id)
+    setImmediate(() => {
+      publishPurchaseApproved({
+        request,
+        product,
+        receivedQuantity: receivedQuantity || request.requestedQuantity,
+        actorUser: req.user,
+      }).catch((e) => console.warn('Failed to publish supplier.purchase-approved to ARTHA:', e.message));
+    });
 
     const populatedRequest = await RestockRequest.findById(request._id)
       .populate('productId', 'name sku stockQuantity minThreshold')

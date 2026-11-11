@@ -21,6 +21,54 @@ const POLL_INTERVAL = 5000;
 const RETRY_DELAY = 3000;
 const MAX_RETRIES = 3;
 
+const DEFAULT_PRODUCT_IMAGES = {
+  coffee: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400&auto=format&fit=crop&q=80',
+  tea: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=400&auto=format&fit=crop&q=80',
+  sugar: 'https://images.unsplash.com/photo-1581441363689-1f3c3c414635?w=400&auto=format&fit=crop&q=80',
+  groceries: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&auto=format&fit=crop&q=80',
+  tools: 'https://images.unsplash.com/photo-1530124566582-a618bc2615dc?w=400&auto=format&fit=crop&q=80',
+  electrical: 'https://images.unsplash.com/photo-1555680202-c86f0e12f086?w=400&auto=format&fit=crop&q=80',
+  default: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400&auto=format&fit=crop&q=80'
+};
+
+const getProductImage = (product) => {
+  if (product?.image && !product.image.includes('placeholder') && !product.image.includes('via.')) {
+    return product.image;
+  }
+  if (product?.primary_image_url && !product.primary_image_url.includes('placeholder') && !product.primary_image_url.includes('via.')) {
+    return product.primary_image_url;
+  }
+
+  const name = String(product?.name || '').toLowerCase();
+  const category = String(product?.category || '').toLowerCase();
+
+  if (name.includes('coffee') || category.includes('coffee')) return DEFAULT_PRODUCT_IMAGES.coffee;
+  if (name.includes('tea') || category.includes('tea')) return DEFAULT_PRODUCT_IMAGES.tea;
+  if (name.includes('sugar') || category.includes('sugar')) return DEFAULT_PRODUCT_IMAGES.sugar;
+  if (name.includes('tool') || category.includes('tool') || category.includes('hardware')) return DEFAULT_PRODUCT_IMAGES.tools;
+  if (name.includes('electr') || category.includes('electr')) return DEFAULT_PRODUCT_IMAGES.electrical;
+  if (name.includes('groc') || category.includes('groc')) return DEFAULT_PRODUCT_IMAGES.groceries;
+
+  return DEFAULT_PRODUCT_IMAGES.default;
+};
+
+const getProductStatus = (product) => {
+  if (product?.status && product.status !== 'Unknown') return product.status.replace(/_/g, ' ');
+  if (product?.isActive === false) return 'Inactive';
+  const qty = product?.stockQuantity ?? product?.CurrentStock ?? 0;
+  const threshold = product?.minThreshold ?? 10;
+  if (qty === 0) return 'Out of Stock';
+  if (qty < threshold) return 'Low Stock';
+  return 'In Stock';
+};
+
+const getStatusVariant = (statusStr) => {
+  const s = String(statusStr || '').toLowerCase();
+  if (s.includes('out') || s.includes('inactive')) return 'destructive';
+  if (s.includes('low')) return 'warning';
+  return 'success';
+};
+
 export const Products = () => {
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState([]);
@@ -560,11 +608,11 @@ export const Products = () => {
                 <Card key={product._id || product.id} hover className="overflow-hidden">
                   <div className="relative h-48 bg-muted flex items-center justify-center">
                     <img 
-                      src={product.image || product.primary_image_url || 'https://via.placeholder.com/200'} 
+                      src={getProductImage(product)} 
                       alt={product.name}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/200';
+                        e.target.src = DEFAULT_PRODUCT_IMAGES.default;
                       }}
                     />
                     <Badge 
@@ -633,11 +681,11 @@ export const Products = () => {
                       <TableRow key={product._id || product.id}>
                         <TableCell>
                           <img 
-                            src={product.image || product.primary_image_url || 'https://via.placeholder.com/200'} 
+                            src={getProductImage(product)} 
                             alt={product.name} 
                             className="w-12 h-12 rounded object-cover"
                             onError={(e) => {
-                              e.target.src = 'https://via.placeholder.com/200';
+                              e.target.src = DEFAULT_PRODUCT_IMAGES.default;
                             }}
                           />
                         </TableCell>
@@ -749,11 +797,11 @@ export const Products = () => {
                     <TableRow key={product._id || product.id}>
                       <TableCell>
                         <img 
-                          src={product.image || product.primary_image_url || 'https://via.placeholder.com/200'} 
+                          src={getProductImage(product)} 
                           alt={product.name} 
                           className="w-12 h-12 rounded object-cover"
                           onError={(e) => {
-                            e.target.src = 'https://via.placeholder.com/200';
+                            e.target.src = DEFAULT_PRODUCT_IMAGES.default;
                           }}
                         />
                       </TableCell>
@@ -768,8 +816,8 @@ export const Products = () => {
                       <TableCell>{product.stockQuantity || 0}</TableCell>
                       <TableCell>{product.supplier?.name || 'N/A'}</TableCell>
                       <TableCell>
-                        <Badge variant={getStatusVariant(product.status)}>
-                          {product.status?.replace('_', ' ') || 'Unknown'}
+                        <Badge variant={getStatusVariant(getProductStatus(product))}>
+                          {getProductStatus(product)}
                         </Badge>
                       </TableCell>
                       <TableCell>

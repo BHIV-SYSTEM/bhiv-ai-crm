@@ -9,14 +9,15 @@ import bcrypt
 import uuid
 from datetime import datetime, timedelta
 from typing import Optional, Dict, List
-from fastapi import HTTPException, Depends, status
+from fastapi import HTTPException, Depends, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 import os
+from phase2_security import audit_log, load_jwt_keys, replay_store, ReplayDetectedError
 
 # JWT Configuration
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "ai-agent-logistics-secret-key-2025")
-ALGORITHM = "HS256"
+JWT_PRIVATE_KEY, JWT_PUBLIC_KEY = load_jwt_keys()
+ALGORITHM = "RS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 
@@ -193,9 +194,12 @@ class AuthSystem:
             "permissions": user.permissions,
             "exp": expire,
             "iat": datetime.utcnow(),
+            "jti": str(uuid.uuid4()),
             "type": "access"
         }
-        return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+        token = jwt.encode(payload, JWT_PRIVATE_KEY, algorithm=ALGORITHM)
+        audit_log.append({"event_type": "access_token_issued", "user_id": user.user_id, "jti": payload["jti"]})
+        return token
     
     def create_refresh_token(self, user: User) -> str:
         """Create JWT refresh token"""
@@ -208,10 +212,11 @@ class AuthSystem:
             "token_id": token_id,
             "exp": expire,
             "iat": datetime.utcnow(),
+            "jti": token_id,
             "type": "refresh"
         }
         
-        refresh_token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+        refresh_token = jwt.encode(payload, JWT_PRIVATE_KEY, algorithm=ALGORITHM)
         self.refresh_tokens[token_id] = {
             "user_id": user.user_id,
             "created_at": datetime.utcnow(),
@@ -220,11 +225,26 @@ class AuthSystem:
         
         return refresh_token
     
-    def verify_token(self, token: str) -> Dict:
+    def verify_token(self, token: str, request_id: Optional[str] = None) -> Dict:
         """Verify and decode JWT token"""
         try:
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            payload = jwt.decode(token, JWT_PUBLIC_KEY, algorithms=[ALGORITHM])
+            if not payload.get("jti"):
+                raise jwt.InvalidTokenError("Missing token identifier")
+            if request_id:
+                replay_store.claim(payload["jti"], request_id, float(payload["exp"]))
+            audit_log.append({
+                "event_type": "token_verified",
+                "subject": payload.get("sub"),
+                "jti": payload["jti"],
+                "request_id": request_id,
+            })
             return payload
+        except ReplayDetectedError as e:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Duplicate request rejected",
+            ) from e
         except jwt.ExpiredSignatureError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -236,10 +256,15 @@ class AuthSystem:
                 detail="Invalid token"
             )
     
-    def get_current_user(self, credentials: HTTPAuthorizationCredentials = Depends(security)) -> User:
+    def get_current_user(
+        self,
+        credentials: HTTPAuthorizationCredentials = Depends(security),
+        request: Request = None,
+    ) -> User:
         """Get current authenticated user"""
         token = credentials.credentials
-        payload = self.verify_token(token)
+        request_id = request.headers.get("X-Request-ID") if request else None
+        payload = self.verify_token(token, request_id=request_id)
         
         if payload.get("type") != "access":
             raise HTTPException(
@@ -309,6 +334,7 @@ class AuthSystem:
         
         access_token = self.create_access_token(user)
         refresh_token = self.create_refresh_token(user)
+        audit_log.append({"event_type": "login_succeeded", "user_id": user.user_id, "username": user.username})
         
         return Token(
             access_token=access_token,
@@ -378,8 +404,11 @@ class AuthSystem:
 auth_system = AuthSystem()
 
 # Dependency functions for FastAPI
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> User:
-    return auth_system.get_current_user(credentials)
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    request: Request = None,
+) -> User:
+    return auth_system.get_current_user(credentials, request)
 
 def require_permission(permission: str):
     return auth_system.require_permission(permission)

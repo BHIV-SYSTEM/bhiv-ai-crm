@@ -23,6 +23,16 @@ export const ROUTES = {
   USERS: '/users',
   SHOWCASE: '/showcase',
   AI_QUERY: '/ai-query',
+  BRIGHT_CONNECTION: '/bright-connection',
+  CUSTOMER_PORTAL: '/customer-portal',
+  CUSTOMER_ORDERS: '/customer-portal/orders',
+  CUSTOMER_ACCOUNT: '/customer-portal/account',
+  CUSTOMER_NOTIFICATIONS: '/customer-portal/notifications',
+  CUSTOMER_PAY: '/customer-portal/pay/:orderId',
+  SELLER_PORTAL: '/seller-portal',
+  SHIPPING_PORTAL: '/shipping-portal', // legacy URL — redirects to SELLER_PORTAL
+  FIELD_REVIEWS: '/field-reviews',
+  FIELD_AGENT: '/field-agent',
 };
 
 export const STATUS_COLORS = {
@@ -42,3 +52,4 @@ export const PRIORITY_COLORS = {
   high: 'warning',
   urgent: 'destructive',
 };
+

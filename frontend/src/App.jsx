@@ -16,6 +16,7 @@ import Infiverse from './pages/InfiverseEmbedded';
 import Sampada from './pages/SampadaEmbedded';
 import AIArtha from './pages/AIArthaEmbedded';
 import Inventory from './pages/Inventory';
+import AIQuery from './pages/AIQuery';
 import Suppliers from './pages/Suppliers';
 import Products from './pages/Products';
 import Agents from './pages/Agents';
@@ -29,6 +30,15 @@ import Settings from './pages/Settings';
 import Users from './pages/Users';
 import SupplierShowcase from './pages/SupplierShowcase';
 import CustomerDashboard from './pages/CustomerDashboard';
+import CustomerOrders from './pages/customer/CustomerOrders';
+import CustomerAccount from './pages/customer/CustomerAccount';
+import BrightConnectionDemo from './pages/BrightConnectionDemo';
+import CustomerNotifications from './pages/customer/notifications/CustomerNotifications';
+import PayNow from './pages/customer/PayNow';
+import ShippingPortal from './pages/ShippingPortal';
+import SellerShell from './components/layout/SellerShell';
+import FieldProofReviews from './pages/FieldProofReviews';
+import FieldAgent from './pages/FieldAgent';
 
 // Auth Pages
 import Login from './pages/auth/Login';
@@ -65,11 +75,12 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path={ROUTES.UNIFIED} element={<UnifiedDashboard />} />
             <Route path={ROUTES.LOGISTICS} element={<Logistics />} />
+            <Route path={ROUTES.INVENTORY} element={<Inventory />} />
+            <Route path={ROUTES.AI_QUERY} element={<AIQuery />} />
             <Route path={ROUTES.CRM} element={<CRM />} />
             <Route path={ROUTES.INFIVERSE} element={<Infiverse />} />
             <Route path={ROUTES.SAMPADA} element={<Sampada />} />
             <Route path={ROUTES.AI_ARTHA} element={<AIArtha />} />
-            <Route path={ROUTES.INVENTORY} element={<Inventory />} />
             <Route path={ROUTES.SUPPLIERS} element={<Suppliers />} />
             <Route path={ROUTES.PRODUCTS} element={<Products />} />
             <Route path={ROUTES.AGENTS} element={<Agents />} />
@@ -79,19 +90,72 @@ function App() {
             <Route path={ROUTES.NOTIFICATIONS} element={<Notifications />} />
             <Route path={ROUTES.EMAILS} element={<Emails />} />
             <Route path={ROUTES.REPORTS} element={<Reports />} />
+            <Route path="/analytics" element={<Reports />} />
             <Route path={ROUTES.SETTINGS} element={<Settings />} />
             <Route path={ROUTES.USERS} element={<Users />} />
             <Route path={ROUTES.SHOWCASE} element={<SupplierShowcase />} />
+            <Route path={ROUTES.BRIGHT_CONNECTION} element={<BrightConnectionDemo />} />
+            <Route path={ROUTES.FIELD_REVIEWS} element={<FieldProofReviews />} />
+            <Route path={ROUTES.FIELD_AGENT} element={<FieldAgent />} />
             <Route path="/customer-portal" element={<CustomerDashboard />} />
+            <Route path="/customer-portal/orders" element={<CustomerOrders />} />
+            <Route path="/customer-portal/account" element={<CustomerAccount />} />
+            <Route path="/customer-portal/notifications" element={<CustomerNotifications />} />
+            <Route path="/customer-portal/pay/:orderId" element={<PayNow />} />
           </Route>
+
+          {/* Seller Portal — its own portal & shell (not part of the SETU admin
+              layout). Sellers land here after login and never see SETU products. */}
+          <Route
+            path={ROUTES.SELLER_PORTAL}
+            element={
+              <ProtectedRoute>
+                <SellerShell />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<ShippingPortal />} />
+          </Route>
+
+          {/* Legacy tab URL from earlier builds */}
+          <Route
+            path={ROUTES.SHIPPING_PORTAL}
+            element={<Navigate to={ROUTES.SELLER_PORTAL} replace />}
+          />
 
           {/* Catch all - redirect to dashboard in dev mode */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-        <Toaster position="top-right" />
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            style: {
+              background: '#0f172a',
+              color: '#f8fafc',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              borderRadius: '0.75rem',
+              fontSize: '0.875rem',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5)',
+            },
+            success: {
+              iconTheme: {
+                primary: '#10b981',
+                secondary: '#0f172a',
+              },
+            },
+            error: {
+              iconTheme: {
+                primary: '#ef4444',
+                secondary: '#0f172a',
+              },
+            },
+          }}
+        />
       </AuthProvider>
     </Router>
   );
 }
 
 export default App;
+
+

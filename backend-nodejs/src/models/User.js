@@ -9,6 +9,11 @@ const userSchema = new mongoose.Schema({
     required: true,
     default: USER_ROLES.CUSTOMER
   },
+  tenant_id: {
+    type: String,
+    default: 'tenant_sampada_001',
+    trim: true
+  },
   name: {
     type: String,
     required: [true, 'Name is required'],

@@ -89,20 +89,57 @@ class LLMQuerySystem:
         if pattern_result:
             return pattern_result
         
-        # If no pattern matches, use LLM to understand the query
-        if self.openai_api_key:
-            return self.process_with_llm(query, user_context)
-        else:
+        # Dispatch unhandled queries to UniGuru AI service
+        return self.process_with_uniguru(query, user_context)
+
+    def process_with_uniguru(self, query: str, user_context: Optional[Dict] = None) -> Dict:
+        """Query UniGuru AI reasoning engine"""
+        uniguru_url = os.getenv('UNIGURU_SERVICE_URL', 'http://163.128.209.18:8007').rstrip('/')
+        api_token = os.getenv('UNIGURU_API_TOKEN', '')
+        caller = os.getenv('UNIGURU_CALLER_NAME', 'bhiv-setu')
+        
+        headers = {
+            'Content-Type': 'application/json',
+            'X-Caller-Name': caller
+        }
+        if api_token:
+            headers['Authorization'] = f'Bearer {api_token}'
+            headers['X-Service-Token'] = api_token
+
+        payload = {
+            'query': query,
+            'context': {
+                'caller': caller,
+                'domain': 'CRM & Logistics',
+                **(user_context or {})
+            }
+        }
+        
+        try:
+            import urllib.request
+            req = urllib.request.Request(
+                f"{uniguru_url}/ask",
+                data=json.dumps(payload).encode('utf-8'),
+                headers=headers,
+                method='POST'
+            )
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+                return {
+                    'success': True,
+                    'query_type': 'uniguru_ai',
+                    'data': data,
+                    'message': data.get('answer', 'Query processed by UniGuru AI')
+                }
+        except Exception as e:
             return {
                 'success': False,
-                'message': 'Query not recognized. Please try a more specific query.',
+                'message': f'UniGuru AI query unavailable ({str(e)}). Please try a standard query.',
                 'suggestions': [
                     'Show me opportunities closing this month',
                     'What are the pending tasks for John?',
-                    'List all leads from trade shows not yet converted',
                     'Account summary for TechCorp',
-                    'Pipeline analysis',
-                    'Recent activities'
+                    'Pipeline analysis'
                 ]
             }
     

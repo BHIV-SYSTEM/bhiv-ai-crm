@@ -1,0 +1,15 @@
+source_id,works_across_multiple_states,adapter_or_configuration_state_specific,data_model_reusable,access_legally_operationally_confirmed,replacement_in_another_state,portability_notes
+SRC-001,Yes,No,Yes,No,Equivalent approved database boundary,Do not couple AIAIC to this product's physical database schema
+SRC-002,Yes,No,Partly,No,Equivalent approved service API,Keep AIAIC consumer contracts separate from backend implementation
+SRC-003,Yes,No,Partly,No,Equivalent approved service API,Node model differences require mapping at a boundary
+SRC-004,Yes,No,Yes,No,Equivalent provenance service,Canonical provenance semantics should remain stable
+SRC-005,Yes,No,Yes,No,State-neutral workflow provider,Use contract adapter and preserve external authority
+SRC-006,Yes,No,Yes,No,Equivalent SETU gateway,No direct integration should be assumed
+SRC-007,Yes,No,Yes,No,Equivalent verification provider,Adapter is replaceable; authority is external
+SRC-008,Potentially,Yes,Potentially,No,Equivalent accounting source or state ERP,Do not encode Tally or MP assumptions in the AIAIC model
+SRC-009,Yes,Configuration only,Yes,No,Equivalent geospatial provider,Geospatial capability should consume a provider-neutral contract
+SRC-010,Yes,Configuration and tenant consent,Potentially,No,Equivalent office/workflow provider,Scopes and tenant policy vary by deployment
+SRC-011,Yes,Configuration and policy,Yes,No,Approved equivalent LLM provider,Keep model/provider details outside canonical business identity
+SRC-012,Potentially,Yes,Potentially,No,Equivalent government source in target state,Source and adapter must be selected per state without changing capability model
+SRC-013,No single source assumption,Yes,Potentially,No,Target state's approved registry,State source replacement is expected and must be explicit
+SRC-014,Yes as reference,No,Reference only,No,Equivalent official publication,Public visibility does not establish consumption rights

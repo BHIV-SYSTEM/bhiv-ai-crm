@@ -1,0 +1,37 @@
+services:
+  backend:
+    image: bhiv/crm-backend:IMG_TAG
+    container_name: crm_backend
+    restart: unless-stopped
+    ports:
+      - "8014:8000"
+    env_file:
+      - .env
+    environment:
+      - MONGODB_URL=${MONGODB_URL}
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - crm_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  frontend:
+    image: bhiv/crm-frontend:IMG_TAG
+    container_name: crm_frontend
+    restart: unless-stopped
+    ports:
+      - "5177:80"
+    networks:
+      - crm_network
+    depends_on:
+      backend:
+        condition: service_healthy
+
+networks:
+  crm_network:
+    driver: bridge

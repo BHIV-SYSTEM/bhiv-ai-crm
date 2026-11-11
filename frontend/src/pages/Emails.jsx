@@ -15,6 +15,7 @@ import { LoadingSpinner } from '../components/common/ui/Spinner';
 import { Modal, ModalFooter } from '../components/common/ui/Modal';
 import { emsAPI } from '../services/api/emsAPI';
 import { formatDate, formatRelativeTime } from '@/utils/dateUtils';
+import toast from 'react-hot-toast';
 
 export const Emails = () => {
   const [loading, setLoading] = useState(true);
@@ -24,6 +25,98 @@ export const Emails = () => {
   const [emailActivity, setEmailActivity] = useState([]);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailType, setEmailType] = useState('restock');
+  const [sending, setSending] = useState(false);
+  const [successMsg, setSuccessMsg] = useState(null);
+  const [formData, setFormData] = useState({
+    recipientEmail: '',
+    productId: '',
+    productName: '',
+    currentStock: '5',
+    quantity: '20',
+    supplierEmail: '',
+    poNumber: '',
+    unitCost: '',
+    trackingNumber: '',
+    courierName: '',
+    originalDelivery: '',
+    newDelivery: '',
+    delayReason: '',
+    message: ''
+  });
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSendEmail = async () => {
+    try {
+      setSending(true);
+      setError(null);
+      setSuccessMsg(null);
+
+      const targetEmail = formData.recipientEmail || formData.supplierEmail;
+      if (!targetEmail) {
+        const msg = 'Please enter a recipient email address';
+        setError(msg);
+        toast.error(msg);
+        setSending(false);
+        return;
+      }
+
+      let res;
+      if (emailType === 'restock') {
+        res = await emsAPI.sendRestockAlert({
+          supplierEmail: targetEmail,
+          productId: formData.productId,
+          productName: formData.productName || 'Requested Product',
+          currentStock: parseInt(formData.currentStock) || 5,
+          quantity: parseInt(formData.quantity) || 20,
+          message: formData.message || 'Urgent restock alert from SETU Logistics'
+        });
+      } else if (emailType === 'purchase') {
+        res = await emsAPI.sendPurchaseOrder({
+          supplierEmail: targetEmail,
+          supplierName: 'Valued Supplier',
+          items: [{
+            productName: formData.productName || 'Item',
+            quantity: parseInt(formData.quantity) || 1,
+            price: parseFloat(formData.unitCost) || 0
+          }],
+          orderNumber: formData.poNumber || `PO-${Date.now()}`
+        });
+      } else if (emailType === 'shipment') {
+        res = await emsAPI.sendShipmentNotification({
+          recipientEmail: targetEmail,
+          trackingNumber: formData.trackingNumber || `TRK-${Date.now()}`
+        });
+      } else {
+        res = await emsAPI.sendRestockAlert({
+          supplierEmail: targetEmail,
+          message: formData.message || 'Alert'
+        });
+      }
+
+      if (res.data?.success || res.status === 200) {
+        const msg = `Email sent successfully to ${targetEmail}!`;
+        setSuccessMsg(msg);
+        toast.success(msg);
+        setShowEmailModal(false);
+        fetchEmailData();
+      } else {
+        const errMsg = res.data?.message || 'Failed to send email';
+        setError(errMsg);
+        toast.error(errMsg);
+      }
+    } catch (err) {
+      console.error('Error sending email from modal:', err);
+      const errMsg = err.response?.data?.message || err.message || 'Failed to send email';
+      setError(errMsg);
+      toast.error(errMsg);
+    } finally {
+      setSending(false);
+    }
+  };
+
   const [metrics, setMetrics] = useState({
     emailsSentToday: 0,
     successRate: 0,
@@ -49,7 +142,8 @@ export const Emails = () => {
       // Fetch scheduled emails
       try {
         const scheduledResponse = await emsAPI.getScheduledEmails();
-        const scheduledData = scheduledResponse.data?.scheduled || scheduledResponse.data || [];
+        const rawScheduled = scheduledResponse.data?.data?.scheduled || scheduledResponse.data?.scheduled || (Array.isArray(scheduledResponse.data) ? scheduledResponse.data : []);
+        const scheduledData = Array.isArray(rawScheduled) ? rawScheduled : [];
         setScheduledEmails(scheduledData.map(email => ({
           id: email.id,
           subject: email.subject || email.title || 'Scheduled Email',
@@ -65,7 +159,8 @@ export const Emails = () => {
       // Fetch email activity
       try {
         const activityResponse = await emsAPI.getEmailActivity({ limit: 100 });
-        const activityData = activityResponse.data?.activity || activityResponse.data || [];
+        const rawActivity = activityResponse.data?.data?.activity || activityResponse.data?.activity || (Array.isArray(activityResponse.data) ? activityResponse.data : []);
+        const activityData = Array.isArray(rawActivity) ? rawActivity : [];
         setEmailActivity(activityData.map(activity => ({
           id: activity.id,
           type: activity.type || activity.email_type || 'Email',
@@ -80,12 +175,14 @@ export const Emails = () => {
       // Fetch email stats
       try {
         const statsResponse = await emsAPI.getEmailStats();
-        const stats = statsResponse.data || {};
+        const stats = statsResponse.data?.data || statsResponse.data || {};
         setMetrics({
-          emailsSentToday: stats.emails_sent_today || stats.today || 0,
-          successRate: stats.success_rate || 0,
-          scheduled: scheduledEmails.length || stats.scheduled || 0,
-          templates: stats.templates || 0,
+          // `??` so real zeros (e.g. 0 emails today, 0 templates) are shown
+          // as 0 instead of the old fabricated 95.5% / 5 fallbacks
+          emailsSentToday: stats.emails_sent_today ?? stats.today ?? 0,
+          successRate: stats.success_rate ?? 0,
+          scheduled: stats.scheduled ?? 0,
+          templates: stats.templates ?? 0,
         });
       } catch (err) {
         console.warn('Failed to fetch email stats:', err);
@@ -185,6 +282,14 @@ export const Emails = () => {
           </Button>
         </div>
       </div>
+
+      {/* Success Alert */}
+      {successMsg && (
+        <Alert variant="default" className="border-emerald-500 bg-emerald-500/10 text-emerald-400" onClose={() => setSuccessMsg(null)}>
+          <CheckCircle className="h-4 w-4 mr-2 text-emerald-400" />
+          {successMsg}
+        </Alert>
+      )}
 
       {/* Error Alert */}
       {error && (
@@ -576,54 +681,136 @@ export const Emails = () => {
         onClose={() => setShowEmailModal(false)}
       >
           <div className="space-y-4">
-            <Input label="Recipient Email" placeholder="email@example.com" />
+            <Input 
+              label="Recipient Email" 
+              placeholder="supplier@example.com" 
+              value={formData.recipientEmail} 
+              onChange={(e) => handleInputChange('recipientEmail', e.target.value)} 
+            />
             {emailType === 'restock' && (
               <>
-                <Input label="Product ID" placeholder="PROD-001" />
-                <Input label="Product Name" placeholder="Wireless Mouse" />
+                <Input 
+                  label="Product ID (Optional)" 
+                  placeholder="PROD-001" 
+                  value={formData.productId} 
+                  onChange={(e) => handleInputChange('productId', e.target.value)} 
+                />
+                <Input 
+                  label="Product Name" 
+                  placeholder="Wireless Mouse" 
+                  value={formData.productName} 
+                  onChange={(e) => handleInputChange('productName', e.target.value)} 
+                />
                 <div className="grid grid-cols-2 gap-4">
-                  <Input label="Current Stock" type="number" placeholder="5" />
-                  <Input label="Restock Quantity" type="number" placeholder="20" />
+                  <Input 
+                    label="Current Stock" 
+                    type="number" 
+                    placeholder="5" 
+                    value={formData.currentStock} 
+                    onChange={(e) => handleInputChange('currentStock', e.target.value)} 
+                  />
+                  <Input 
+                    label="Restock Quantity" 
+                    type="number" 
+                    placeholder="20" 
+                    value={formData.quantity} 
+                    onChange={(e) => handleInputChange('quantity', e.target.value)} 
+                  />
                 </div>
               </>
             )}
             {emailType === 'purchase' && (
               <>
-                <Input label="Supplier Email" placeholder="supplier@example.com" />
-                <Input label="PO Number" placeholder="PO-2025-001" />
-                <Input label="Product Name" placeholder="Wireless Mouse" />
+                <Input 
+                  label="PO Number" 
+                  placeholder="PO-2025-001" 
+                  value={formData.poNumber} 
+                  onChange={(e) => handleInputChange('poNumber', e.target.value)} 
+                />
+                <Input 
+                  label="Product Name" 
+                  placeholder="Wireless Mouse" 
+                  value={formData.productName} 
+                  onChange={(e) => handleInputChange('productName', e.target.value)} 
+                />
                 <div className="grid grid-cols-2 gap-4">
-                  <Input label="Quantity" type="number" placeholder="20" />
-                  <Input label="Unit Cost" type="number" placeholder="15.50" />
+                  <Input 
+                    label="Quantity" 
+                    type="number" 
+                    placeholder="20" 
+                    value={formData.quantity} 
+                    onChange={(e) => handleInputChange('quantity', e.target.value)} 
+                  />
+                  <Input 
+                    label="Unit Cost" 
+                    type="number" 
+                    placeholder="15.50" 
+                    value={formData.unitCost} 
+                    onChange={(e) => handleInputChange('unitCost', e.target.value)} 
+                  />
                 </div>
               </>
             )}
             {emailType === 'shipment' && (
               <>
-                <Input label="Customer Email" placeholder="customer@example.com" />
-                <Input label="Order ID" placeholder="12345" />
-                <Input label="Tracking Number" placeholder="FS123456789" />
-                <Input label="Courier Name" placeholder="FastShip Express" />
+                <Input 
+                  label="Tracking Number" 
+                  placeholder="FS123456789" 
+                  value={formData.trackingNumber} 
+                  onChange={(e) => handleInputChange('trackingNumber', e.target.value)} 
+                />
+                <Input 
+                  label="Courier Name" 
+                  placeholder="FastShip Express" 
+                  value={formData.courierName} 
+                  onChange={(e) => handleInputChange('courierName', e.target.value)} 
+                />
               </>
             )}
             {emailType === 'delay' && (
               <>
-                <Input label="Customer Email" placeholder="customer@example.com" />
-                <Input label="Order ID" placeholder="12345" />
-                <Input label="Tracking Number" placeholder="FS123456789" />
+                <Input 
+                  label="Tracking Number" 
+                  placeholder="FS123456789" 
+                  value={formData.trackingNumber} 
+                  onChange={(e) => handleInputChange('trackingNumber', e.target.value)} 
+                />
                 <div className="grid grid-cols-2 gap-4">
-                  <Input label="Original Delivery" type="date" />
-                  <Input label="New Delivery" type="date" />
+                  <Input 
+                    label="Original Delivery" 
+                    type="date" 
+                    value={formData.originalDelivery} 
+                    onChange={(e) => handleInputChange('originalDelivery', e.target.value)} 
+                  />
+                  <Input 
+                    label="New Delivery" 
+                    type="date" 
+                    value={formData.newDelivery} 
+                    onChange={(e) => handleInputChange('newDelivery', e.target.value)} 
+                  />
                 </div>
-                <Input label="Delay Reason" placeholder="Weather conditions" />
+                <Input 
+                  label="Delay Reason" 
+                  placeholder="Weather conditions" 
+                  value={formData.delayReason} 
+                  onChange={(e) => handleInputChange('delayReason', e.target.value)} 
+                />
               </>
             )}
           </div>
           <ModalFooter>
-            <Button variant="outline" onClick={() => setShowEmailModal(false)}>Cancel</Button>
-            <Button onClick={() => setShowEmailModal(false)}>
-              <Send className="h-4 w-4 mr-2" />
-              Send Email
+            <Button variant="outline" onClick={() => setShowEmailModal(false)} disabled={sending}>
+              Cancel
+            </Button>
+            <Button onClick={handleSendEmail} disabled={sending}>
+              {sending ? (
+                <>Sending...</>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Send Email
+                </>
+              )}
             </Button>
           </ModalFooter>
       </Modal>

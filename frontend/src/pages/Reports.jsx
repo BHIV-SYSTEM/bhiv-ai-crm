@@ -6,6 +6,7 @@ import {
 import Card, { CardHeader, CardTitle, CardContent } from '../components/common/ui/Card';
 import Button from '../components/common/ui/Button';
 import Input from '../components/common/forms/Input';
+import Badge from '../components/common/ui/Badge';
 import Alert from '../components/common/ui/Alert';
 import { LoadingSpinner } from '../components/common/ui/Spinner';
 import { LineChart, Line, BarChart, Bar, PieChart as RechartsPie, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -30,43 +31,62 @@ export const Reports = () => {
 
       // Fetch charts data for sales report
       if (selectedReport === 'sales') {
+        // Real sales/orders trend from actual orders (last 6 days).
+        // The old code filled this chart with Math.random() numbers.
+        try {
+          const activityResponse = await dashboardAPI.getRecentActivity({ limit: 500 });
+          const recentOrders = activityResponse.data?.data?.recentOrders || [];
+          const buckets = [];
+          for (let i = 5; i >= 0; i--) {
+            const start = new Date();
+            start.setHours(0, 0, 0, 0);
+            start.setDate(start.getDate() - i);
+            const end = new Date(start);
+            end.setDate(end.getDate() + 1);
+            const dayOrders = recentOrders.filter((o) => {
+              const t = new Date(o.createdAt || o.created_at || 0).getTime();
+              return t >= start.getTime() && t < end.getTime();
+            });
+            buckets.push({
+              name: `${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}`,
+              sales: dayOrders.reduce((sum, o) => sum + Number(o.totalAmount ?? o.total_amount ?? 0), 0),
+              orders: dayOrders.length,
+            });
+          }
+          setSalesData(buckets);
+        } catch (err) {
+          console.warn('Failed to fetch orders for sales trend:', err);
+          setSalesData([]);
+        }
+
+        // Real stock-by-category data (no fabricated fallback categories)
         try {
           const chartsResponse = await dashboardAPI.getCharts();
-          const charts = chartsResponse.data || {};
-
-          // Process order status for sales data
-          const orderStatus = charts.orderStatus || {};
-          const totalOrders = Object.values(orderStatus).reduce((sum, val) => sum + val, 0);
-          
-          // Create sales trend (last 6 months)
-          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-          const processedSalesData = months.map((name, index) => ({
-            name,
-            sales: Math.floor(totalOrders * (0.8 + Math.random() * 0.4) / 6),
-            orders: Math.floor(totalOrders / 6) + Math.floor(Math.random() * 50)
-          }));
-          setSalesData(processedSalesData);
-
-          // Process category data from inventory
+          const charts = chartsResponse.data?.data || chartsResponse.data || {};
           const inventory = charts.inventory || {};
-          if (inventory.labels && inventory.currentStock) {
-            const processedCategoryData = inventory.labels.slice(0, 4).map((label, index) => ({
+          const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+          if (inventory.labels && Array.isArray(inventory.labels) && inventory.labels.length > 0) {
+            const processedCategoryData = inventory.labels.map((label, index) => ({
               name: label,
-              value: inventory.currentStock[index] || 0,
-              color: ['#8884d8', '#82ca9d', '#ffc658', '#ff7300'][index]
+              value: inventory.currentStock?.[index] ?? 0,
+              color: colors[index % colors.length]
             }));
             setCategoryData(processedCategoryData);
+          } else {
+            setCategoryData([]);
           }
         } catch (err) {
           console.warn('Failed to fetch charts data:', err);
+          setCategoryData([]);
         }
       }
 
       // Fetch inventory data for inventory report
       if (selectedReport === 'inventory') {
         try {
-          const inventoryResponse = await dashboardAPI.getInventory();
-          const inventory = inventoryResponse.data?.inventory || inventoryResponse.data || [];
+          const inventoryResponse = await productAPI.getProducts();
+          const rawInventory = inventoryResponse.data?.data?.products || inventoryResponse.data?.products || (Array.isArray(inventoryResponse.data) ? inventoryResponse.data : []);
+          const inventory = Array.isArray(rawInventory) ? rawInventory : [];
           setInventoryData(inventory.slice(0, 10));
         } catch (err) {
           console.warn('Failed to fetch inventory data:', err);
@@ -77,7 +97,8 @@ export const Reports = () => {
       if (selectedReport === 'logistics') {
         try {
           const shipmentsResponse = await logisticsAPI.getShipments();
-          const shipments = shipmentsResponse.data?.shipments || shipmentsResponse.data || [];
+          const rawShipments = shipmentsResponse.data?.data?.shipments || shipmentsResponse.data?.shipments || (Array.isArray(shipmentsResponse.data) ? shipmentsResponse.data : []);
+          const shipments = Array.isArray(rawShipments) ? rawShipments : [];
           setLogisticsData(shipments.slice(0, 10));
         } catch (err) {
           console.warn('Failed to fetch logistics data:', err);
@@ -142,64 +163,100 @@ export const Reports = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card 
           hover 
-          className={selectedReport === 'sales' ? 'border-l-4 border-primary' : ''}
+          className={`cursor-pointer transition-all duration-200 ${
+            selectedReport === 'sales' 
+              ? 'border-2 border-primary bg-primary/10 shadow-lg shadow-primary/20 scale-[1.02]' 
+              : 'border border-border opacity-80 hover:opacity-100'
+          }`}
           onClick={() => setSelectedReport('sales')}
         >
           <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <TrendingUp className="h-8 w-8 text-primary" />
-              <div>
-                <h3 className="font-semibold">Sales Report</h3>
-                <p className="text-sm text-muted-foreground">Revenue & orders</p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <TrendingUp className="h-8 w-8 text-primary" />
+                <div>
+                  <h3 className="font-semibold text-foreground">Sales Report</h3>
+                  <p className="text-sm text-muted-foreground">Revenue & orders</p>
+                </div>
               </div>
+              {selectedReport === 'sales' && (
+                <Badge variant="success" className="text-xs">Selected</Badge>
+              )}
             </div>
           </CardContent>
         </Card>
 
         <Card 
           hover 
-          className={selectedReport === 'inventory' ? 'border-l-4 border-primary' : ''}
+          className={`cursor-pointer transition-all duration-200 ${
+            selectedReport === 'inventory' 
+              ? 'border-2 border-accent bg-accent/10 shadow-lg shadow-accent/20 scale-[1.02]' 
+              : 'border border-border opacity-80 hover:opacity-100'
+          }`}
           onClick={() => setSelectedReport('inventory')}
         >
           <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <BarChart3 className="h-8 w-8 text-accent" />
-              <div>
-                <h3 className="font-semibold">Inventory Report</h3>
-                <p className="text-sm text-muted-foreground">Stock levels</p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <BarChart3 className="h-8 w-8 text-accent" />
+                <div>
+                  <h3 className="font-semibold text-foreground">Inventory Report</h3>
+                  <p className="text-sm text-muted-foreground">Stock levels</p>
+                </div>
               </div>
+              {selectedReport === 'inventory' && (
+                <Badge variant="success" className="text-xs">Selected</Badge>
+              )}
             </div>
           </CardContent>
         </Card>
 
         <Card 
           hover 
-          className={selectedReport === 'crm' ? 'border-l-4 border-primary' : ''}
+          className={`cursor-pointer transition-all duration-200 ${
+            selectedReport === 'crm' 
+              ? 'border-2 border-secondary bg-secondary/10 shadow-lg shadow-secondary/20 scale-[1.02]' 
+              : 'border border-border opacity-80 hover:opacity-100'
+          }`}
           onClick={() => setSelectedReport('crm')}
         >
           <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <FileText className="h-8 w-8 text-secondary" />
-              <div>
-                <h3 className="font-semibold">CRM Report</h3>
-                <p className="text-sm text-muted-foreground">Leads & opportunities</p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <FileText className="h-8 w-8 text-secondary" />
+                <div>
+                  <h3 className="font-semibold text-foreground">CRM Report</h3>
+                  <p className="text-sm text-muted-foreground">Leads & opportunities</p>
+                </div>
               </div>
+              {selectedReport === 'crm' && (
+                <Badge variant="success" className="text-xs">Selected</Badge>
+              )}
             </div>
           </CardContent>
         </Card>
 
         <Card 
           hover 
-          className={selectedReport === 'logistics' ? 'border-l-4 border-primary' : ''}
+          className={`cursor-pointer transition-all duration-200 ${
+            selectedReport === 'logistics' 
+              ? 'border-2 border-emerald-500 bg-emerald-500/10 shadow-lg shadow-emerald-500/20 scale-[1.02]' 
+              : 'border border-border opacity-80 hover:opacity-100'
+          }`}
           onClick={() => setSelectedReport('logistics')}
         >
           <CardContent className="pt-6">
-      <div className="flex items-center gap-3">
-              <LineChartIcon className="h-8 w-8 text-success" />
-              <div>
-                <h3 className="font-semibold">Logistics Report</h3>
-                <p className="text-sm text-muted-foreground">Shipments & deliveries</p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <LineChartIcon className="h-8 w-8 text-emerald-400" />
+                <div>
+                  <h3 className="font-semibold text-foreground">Logistics Report</h3>
+                  <p className="text-sm text-muted-foreground">Shipments & deliveries</p>
+                </div>
               </div>
+              {selectedReport === 'logistics' && (
+                <Badge variant="success" className="text-xs">Selected</Badge>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -213,6 +270,11 @@ export const Reports = () => {
               <CardTitle>Sales & Orders Trend</CardTitle>
             </CardHeader>
             <CardContent>
+              {salesData.length === 0 ? (
+                <div className="h-[300px] flex items-center justify-center text-sm text-muted-foreground">
+                  No order data yet
+                </div>
+              ) : (
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={salesData}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -224,6 +286,7 @@ export const Reports = () => {
                   <Line type="monotone" dataKey="orders" stroke="#82ca9d" strokeWidth={2} />
                 </LineChart>
               </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
 
@@ -232,6 +295,11 @@ export const Reports = () => {
               <CardTitle>Sales by Category</CardTitle>
             </CardHeader>
             <CardContent>
+              {categoryData.length === 0 ? (
+                <div className="h-[300px] flex items-center justify-center text-sm text-muted-foreground">
+                  No data yet
+                </div>
+              ) : (
               <ResponsiveContainer width="100%" height={300}>
                 <RechartsPie>
                   <Pie
@@ -251,6 +319,7 @@ export const Reports = () => {
                   <Tooltip />
                 </RechartsPie>
               </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -267,17 +336,21 @@ export const Reports = () => {
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">Top {inventoryData.length} inventory items</p>
                 <div className="space-y-2">
-                  {inventoryData.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{item.ProductID || item.product_id || 'N/A'}</p>
-                        <p className="text-sm text-muted-foreground">Stock: {item.CurrentStock || item.current_stock || 0}</p>
+                  {inventoryData.map((item, index) => {
+                    const stock = item.stockQuantity ?? item.CurrentStock ?? item.current_stock ?? 0;
+                    const name = item.name || item.ProductID || item.product_id || 'N/A';
+                    return (
+                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <p className="font-medium">{name}</p>
+                          <p className="text-sm text-muted-foreground">Category: {item.category || 'General'} | Stock: {stock}</p>
+                        </div>
+                        <Badge variant={stock < 20 ? 'destructive' : 'success'}>
+                          {stock < 20 ? 'Low Stock' : 'In Stock'}
+                        </Badge>
                       </div>
-                      <Badge variant={item.CurrentStock < 20 ? 'destructive' : 'success'}>
-                        {item.CurrentStock < 20 ? 'Low Stock' : 'In Stock'}
-                      </Badge>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             ) : (

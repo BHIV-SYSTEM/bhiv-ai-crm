@@ -23,16 +23,24 @@ const ProtectedRoute = ({ children }) => {
   }
 
   const role = user?.role;
-  const isCustomerPortal = location.pathname.startsWith('/customer-portal');
+  const path = location.pathname;
+  const isCustomerPortal = path.startsWith('/customer-portal');
+  const isSellerPortal = path.startsWith('/seller-portal');
+  const isFieldAgentPortal = path.startsWith('/field-agent');
 
-  // Customers are RESTRICTED to customer portal only
+  // Customers are RESTRICTED to the customer portal only
   if (role === 'customer' && !isCustomerPortal) {
     return <Navigate to="/customer-portal" replace />;
   }
 
-  // Non-customers should NOT use the customer portal
-  if (role !== 'customer' && isCustomerPortal) {
-    return <Navigate to="/" replace />;
+  // Sellers are RESTRICTED to the seller portal only
+  if (role === 'seller' && !isSellerPortal) {
+    return <Navigate to="/seller-portal" replace />;
+  }
+
+  // Field agents are RESTRICTED to Field Agent portal only (zero financial data access)
+  if (role === 'field_agent' && !isFieldAgentPortal) {
+    return <Navigate to="/field-agent" replace />;
   }
 
   return children;

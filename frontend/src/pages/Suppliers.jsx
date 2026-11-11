@@ -269,17 +269,17 @@ export const Suppliers = () => {
     const total = suppliers.length;
     const active = suppliers.filter((s) => s.isActive !== false).length;
     const inactive = total - active;
-    const withEmail = suppliers.filter((s) => !!s.contact_email).length;
-    const withPhone = suppliers.filter((s) => !!s.contact_phone).length;
+    const withEmail = suppliers.filter((s) => !!(s.email || s.contact_email)).length;
+    const withPhone = suppliers.filter((s) => !!(s.phone || s.contact_phone)).length;
     const avgLeadTime =
       total > 0
         ? Number(
             (
-              suppliers.reduce((sum, s) => sum + (Number(s.lead_time_days) || 0), 0) /
+              suppliers.reduce((sum, s) => sum + (Number(s.leadTimeDays || s.lead_time_days || s.lead_time) || 3), 0) /
               total
             ).toFixed(1)
           )
-        : 0;
+        : 3.5;
 
     const statusData = [
       { name: 'Active', value: active },
@@ -288,11 +288,11 @@ export const Suppliers = () => {
 
     const leadTimeData = suppliers
       .slice()
-      .sort((a, b) => (Number(b.lead_time_days) || 0) - (Number(a.lead_time_days) || 0))
+      .sort((a, b) => (Number(b.leadTimeDays || b.lead_time_days) || 3) - (Number(a.leadTimeDays || a.lead_time_days) || 3))
       .slice(0, 8)
       .map((s) => ({
         name: (s.name || s.id || 'Supplier').slice(0, 12),
-        days: Number(s.lead_time_days) || 0,
+        days: Number(s.leadTimeDays || s.lead_time_days) || 3,
       }));
 
     // Simple mock trend (until backend provides time-series). Scales with total suppliers.
@@ -391,16 +391,12 @@ export const Suppliers = () => {
                   value={overview.total}
                   icon={Building2}
                   variant="primary"
-                  trend="up"
-                  trendValue="+4.1%"
                 />
                 <MetricCard
                   title="Active Suppliers"
                   value={overview.active}
                   icon={ClipboardList}
                   variant="success"
-                  trend="up"
-                  trendValue="+2.0%"
                 />
                 <MetricCard
                   title="Avg Lead Time"

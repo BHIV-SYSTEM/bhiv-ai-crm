@@ -2293,6 +2293,6 @@ if __name__ == "__main__":
     import uvicorn
     print("Starting AI Agent Logistics API Server...")
     print("Dashboard: http://localhost:8501")
-    print("API Docs: http://localhost:8000/docs")
+    print("API Docs: http://localhost:8001/docs")
     print("Authentication: JWT enabled")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8001)

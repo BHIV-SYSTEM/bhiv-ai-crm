@@ -187,4 +187,27 @@
       min-width: 44px;
     }
   }
+
+  /* Leaflet Map isolation: prevent map panes from floating over fixed bottom docks, navbars, or modals */
+  .leaflet-container {
+    z-index: 0 !important;
+    isolation: isolate !important;
+  }
+
+  .leaflet-pane,
+  .leaflet-map-pane,
+  .leaflet-tile-pane,
+  .leaflet-overlay-pane,
+  .leaflet-shadow-pane,
+  .leaflet-marker-pane,
+  .leaflet-tooltip-pane,
+  .leaflet-popup-pane {
+    z-index: 1 !important;
+  }
+
+  .leaflet-top,
+  .leaflet-bottom,
+  .leaflet-control {
+    z-index: 2 !important;
+  }
 }

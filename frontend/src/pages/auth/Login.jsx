@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, Loader2, AlertCircle, Info } from 'lucide-react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Eye, EyeOff, Mail, Lock, Loader2, AlertCircle, Info, Truck } from 'lucide-react';
 import AuthLayout from '../../components/auth/AuthLayout';
 import Button from '../../components/common/ui/Button';
 import Input from '../../components/common/forms/Input';
@@ -11,6 +11,11 @@ import { useAuth } from '../../context/MongoAuthContext';
 const Login = () => {
   const navigate = useNavigate();
   const { login, loginWithOAuth } = useAuth();
+  // `/auth/login?portal=seller` — the delivery-partner entry point. Sellers
+  // are created by their admin (no self-signup); they use the same endpoint
+  // and land in their own Seller Portal thanks to role-based routing above.
+  const [searchParams] = useSearchParams();
+  const sellerMode = searchParams.get('portal') === 'seller';
   
   const [formData, setFormData] = useState({
     email: '',
@@ -46,7 +51,11 @@ const Login = () => {
     try {
       const result = await login(formData.email, formData.password);
       const role = result?.user?.role;
-      navigate(role === 'customer' ? '/customer-portal' : '/');
+      // One login, three homes: customer -> shop, seller -> seller portal,
+      // staff/admin -> the SETU dashboard (owner of every product).
+      if (role === 'customer') navigate('/customer-portal');
+      else if (role === 'seller') navigate('/seller-portal');
+      else navigate('/');
     } catch (err) {
       console.error('Login error:', err);
       
@@ -104,13 +113,15 @@ const Login = () => {
 
   return (
     <AuthLayout
-      title="Welcome Back!"
-      subtitle="Sign in to access your AI-powered logistics dashboard"
+      title={sellerMode ? 'Seller Portal' : 'Welcome Back!'}
+      subtitle={sellerMode
+        ? 'Sign in to see the parcels assigned to you'
+        : 'Sign in to access your AI-powered logistics dashboard'}
     >
       <div className="space-y-6">
         <div className="text-center lg:text-left">
           <h2 className="text-2xl font-heading font-bold tracking-tight">
-            Sign in to your account
+            {sellerMode ? 'Sign in to your seller account' : 'Sign in to your account'}
           </h2>
           <p className="text-muted-foreground mt-2">
             Enter your credentials to continue
@@ -216,17 +227,41 @@ const Login = () => {
           onGitHubLogin={handleGitHubLogin}
         />
 
-        <div className="text-center">
-          <p className="text-sm text-muted-foreground">
-            Don't have an account?{' '}
+        {sellerMode ? (
+          <div className="text-center space-y-2">
+            <p className="text-sm text-muted-foreground">
+              Sellers are created by their SETU administrator — no self sign-up.
+            </p>
             <Link
-              to="/auth/signup"
-              className="text-primary hover:underline font-medium"
+              to="/auth/login"
+              className="text-sm text-primary hover:underline font-medium inline-flex items-center gap-1.5"
             >
-              Create one now
+              Staff or customer? Sign in normally
             </Link>
-          </p>
-        </div>
+          </div>
+        ) : (
+          <>
+            <Link
+              to="/auth/login?portal=seller"
+              className="flex items-center justify-center gap-2 w-full rounded-lg border border-primary/40 bg-primary/5 hover:bg-primary/10 px-4 py-3 text-sm font-semibold text-primary transition-colors"
+            >
+              <Truck className="h-4 w-4" />
+              Delivery partner? Sign in to your Seller Portal
+            </Link>
+
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">
+                Don&apos;t have an account?{' '}
+                <Link
+                  to="/auth/signup"
+                  className="text-primary hover:underline font-medium"
+                >
+                  Create one now
+                </Link>
+              </p>
+            </div>
+          </>
+        )}
       </div>
     </AuthLayout>
   );

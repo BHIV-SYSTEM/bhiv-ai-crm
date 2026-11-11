@@ -1,0 +1,65 @@
+services:
+  database:
+    image: mongo:6.0
+    container_name: crm_database
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - crm_network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  backend:
+    build:
+      context: ./backend-nodejs
+      dockerfile: Dockerfile
+    container_name: crm_backend
+    restart: unless-stopped
+    ports:
+      - "8014:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./backend-nodejs/logs:/app/logs
+    networks:
+      - crm_network
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: crm_frontend
+    restart: unless-stopped
+    ports:
+      - "5177:80"
+    networks:
+      - crm_network
+    depends_on:
+      backend:
+        condition: service_healthy
+
+networks:
+  crm_network:
+    name: bhiv-ai-crm_crm_network
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    name: bhiv-ai-crm_mongodb_data
+    driver: local

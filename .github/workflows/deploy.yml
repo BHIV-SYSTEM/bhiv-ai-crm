@@ -1,0 +1,340 @@
+name: Production Infrastructure CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  validate:
+    name: Validate production deployment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set GitHub SHA
+        run: echo "short_sha=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+      - name: Generate Compose file for validation
+        run: |
+          sed "s|IMG_TAG|$short_sha|g" docker-compose.production.template.yml > docker-compose.production.yml
+
+      - name: Create stub .env for compose validation
+        run: |
+          # Create a dummy .env file so the Compose schema parser succeeds
+          touch .env
+
+      - name: Validate Docker Compose files
+        env:
+          MONGODB_URL: ${{ secrets.MONGODB_URI }}
+        run: |
+          docker compose -f docker-compose.production.yml config
+
+      - name: Upload deployment artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-artifacts
+          path: |
+            docker-compose.production.template.yml
+
+  build:
+    name: Build production images
+    runs-on: ubuntu-latest
+    needs: validate
+    outputs:
+      sha_short: ${{ steps.vars.outputs.sha_short }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set short git commit SHA
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short=7 HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push backend image
+        run: |
+          docker buildx build --push \
+            --tag bhiv/crm-backend:${{ steps.vars.outputs.sha_short }} \
+            --tag bhiv/crm-backend:latest \
+            -f backend-nodejs/Dockerfile backend-nodejs
+
+      - name: Build and push frontend image
+        run: |
+          # Write frontend env secrets for the Vite build
+          cat <<'EOF' > frontend/.env.production
+          ${{ secrets.FRONTEND_ENV_FILE }}
+          EOF
+          
+          # Build frontend image, letting Vite read .env.production
+          docker buildx build --push \
+            --tag bhiv/crm-frontend:${{ steps.vars.outputs.sha_short }} \
+            --tag bhiv/crm-frontend:latest \
+            -f frontend/Dockerfile frontend
+
+  deploy:
+    name: Deploy to remote production VM via SSH
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download deployment artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: deployment-artifacts
+
+      - name: Create .env file from secrets
+        run: |
+          # Write all custom application configs, excluding the dynamic database URI for VM security isolation
+          cat <<'EOF' > .env
+          ${{ secrets.CRM_ENV_FILE }}
+          EOF
+
+      - name: Tar deployment files
+        run: |
+          tar -czf deployment.tar.gz docker-compose.production.template.yml .env
+
+      - name: Install sshpass
+        run: |
+          sudo apt-get update && sudo apt-get install -y sshpass
+
+      - name: Create SETU_CRM directory on VM
+        run: |
+          sshpass -p "${{ secrets.VM_PASSWORD }}" ssh -p ${{ secrets.VM_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VM_USERNAME }}@${{ secrets.VM_IP }} "mkdir -p ~/SETU_CRM"
+
+      - name: Copy deployment tarball to VM
+        run: |
+          sshpass -p "${{ secrets.VM_PASSWORD }}" scp -P ${{ secrets.VM_PORT }} -o StrictHostKeyChecking=no deployment.tar.gz ${{ secrets.VM_USERNAME }}@${{ secrets.VM_IP }}:~/SETU_CRM/deployment.tar.gz
+
+      - name: Deploy production stack on VM
+        run: |
+          sshpass -p "${{ secrets.VM_PASSWORD }}" ssh -p ${{ secrets.VM_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VM_USERNAME }}@${{ secrets.VM_IP }} "bash -s" << 'EOF'
+            set -euo pipefail
+            cd ~/SETU_CRM
+            
+            # Clean directory first, keeping docs folder (Release History) and the tarball we just copied
+            find . -mindepth 1 ! -name docs ! -path './docs/*' ! -name deployment.tar.gz -exec rm -rf {} +
+            
+            # Extract deployment archive and clean up tarball
+            tar -xzf deployment.tar.gz
+            rm -f deployment.tar.gz
+            
+            # Confirm Docker availability
+            docker version
+            docker compose version
+            
+            # Log in to Docker Hub on the VM to authenticate for private pulls
+            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+            
+            # Restore persistent Release History
+            mkdir -p docs
+            if [ -f /var/tmp/SETU_CRM/RELEASE_HISTORY.md ]; then
+              cp /var/tmp/SETU_CRM/RELEASE_HISTORY.md docs/RELEASE_HISTORY.md
+            fi
+            
+            # Generate target compose file from template by substituting the image tag
+            sed "s|IMG_TAG|${{ needs.build.outputs.sha_short }}|g" docker-compose.production.template.yml > docker-compose.production.yml
+            
+            # Dynamic secure inject: MongoDB Atlas URL is exported to shell only, never written to VM files
+            export MONGODB_URL='${{ secrets.MONGODB_URI }}'
+
+            # Validate compose configuration
+            docker compose -f docker-compose.production.yml config
+            
+            # Pull production images
+            docker compose -f docker-compose.production.yml pull
+            
+            # Log out from Docker Hub to secure credentials on the VM
+            docker logout
+
+            # Up the services
+            docker compose -f docker-compose.production.yml up -d --remove-orphans
+            
+            # Verify deployment status and run health checks
+            docker compose -f docker-compose.production.yml ps
+            
+            echo "Waiting for services to be healthy..."
+            for i in {1..12}; do
+              if docker compose -f docker-compose.production.yml ps --filter "status=running" --filter "health=unhealthy" -q >/dev/null 2>&1; then
+                UNHEALTHY_COUNT=$(docker compose -f docker-compose.production.yml ps --filter "status=running" --filter "health=unhealthy" -q | wc -l)
+                STARTING_COUNT=$(docker compose -f docker-compose.production.yml ps --filter "status=running" --filter "health=starting" -q | wc -l)
+              else
+                UNHEALTHY_COUNT=0
+                STARTING_COUNT=0
+              fi
+              
+              API_HEALTH=0
+              curl -sf http://localhost:8014/health > /dev/null && API_HEALTH=1
+              
+              FRONTEND_HEALTH=0
+              curl -sf http://localhost:5177 > /dev/null && FRONTEND_HEALTH=1
+              
+              if [ "$UNHEALTHY_COUNT" -eq 0 ] && [ "$STARTING_COUNT" -eq 0 ] && [ "$API_HEALTH" -eq 1 ] && [ "$FRONTEND_HEALTH" -eq 1 ]; then
+                echo "All containers, API health, and frontend endpoints are healthy!"
+                break
+              fi
+              
+              if [ "$i" -eq 12 ]; then
+                echo "Health check failed!"
+                docker compose -f docker-compose.production.yml ps
+                docker compose -f docker-compose.production.yml logs --tail=50
+                exit 1
+              fi
+              
+              echo "Status: $STARTING_COUNT starting, $UNHEALTHY_COUNT unhealthy, api_health=$API_HEALTH, frontend=$FRONTEND_HEALTH. Retrying in 10s..."
+              sleep 10
+            done
+            
+            # Prune old images while preserving recently built ones (last 7 days / 168 hours) to speed up rollbacks
+            docker image prune -af --filter "until=168h"
+          EOF
+
+      - name: Update Release Documentation on Success
+        if: success()
+        run: |
+          sshpass -p "${{ secrets.VM_PASSWORD }}" ssh -p ${{ secrets.VM_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VM_USERNAME }}@${{ secrets.VM_IP }} "bash -s" << 'EOF'
+            set -euo pipefail
+            cd ~/SETU_CRM
+            # Initialize release history file if it does not exist
+            if [ ! -f docs/RELEASE_HISTORY.md ]; then
+              mkdir -p docs
+              echo "# Release History and Deployment Registry" > docs/RELEASE_HISTORY.md
+              echo "" >> docs/RELEASE_HISTORY.md
+              echo "| Timestamp | Image Tag (Git SHA) | Status | Description |" >> docs/RELEASE_HISTORY.md
+              echo "|---|---|---|---|" >> docs/RELEASE_HISTORY.md
+            fi
+            
+            # Log success
+            echo "| $(date -u +'%Y-%m-%d %H:%M:%S UTC') | ${{ needs.build.outputs.sha_short }} | SUCCESS | Stable deployment |" >> docs/RELEASE_HISTORY.md
+          EOF
+
+      - name: Save persistent Release History
+        if: always()
+        run: |
+          sshpass -p "${{ secrets.VM_PASSWORD }}" ssh -p ${{ secrets.VM_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VM_USERNAME }}@${{ secrets.VM_IP }} "bash -s" << 'EOF'
+            set -euo pipefail
+            cd ~/SETU_CRM
+            if [ -f docs/RELEASE_HISTORY.md ]; then
+              mkdir -p /var/tmp/SETU_CRM
+              cp docs/RELEASE_HISTORY.md /var/tmp/SETU_CRM/RELEASE_HISTORY.md
+            fi
+          EOF
+
+  rollback:
+    name: Rollback on deployment failure
+    needs: [build, deploy]
+    if: always() && needs.deploy.result == 'failure'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install sshpass
+        run: |
+          sudo apt-get update && sudo apt-get install -y sshpass
+
+      - name: Automatic Rollback on Failure
+        run: |
+          sshpass -p "${{ secrets.VM_PASSWORD }}" ssh -p ${{ secrets.VM_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VM_USERNAME }}@${{ secrets.VM_IP }} "bash -s" << 'EOF'
+            set -euo pipefail
+            cd ~/SETU_CRM
+            
+            # Robust parsing of Release History to extract the last healthy 7-character Git SHA
+            if [ -f docs/RELEASE_HISTORY.md ] && grep -qE "SUCCESS|ROLLBACK_SUCCESS" docs/RELEASE_HISTORY.md; then
+              LAST_HEALTHY_TAG=$(grep -E "SUCCESS|ROLLBACK_SUCCESS" docs/RELEASE_HISTORY.md | tail -n 1 | awk -F '|' '{
+                for(i=1; i<=NF; i++) {
+                  gsub(/[[:space:]]/, "", $i);
+                  if ($i ~ /^[0-9a-f]{7}$/) {
+                    print $i;
+                    exit;
+                  }
+                }
+              }')
+              
+              if [ -z "$LAST_HEALTHY_TAG" ]; then
+                echo "⚠️ No last healthy tag extracted from Release History. Cannot perform automatic rollback."
+                exit 1
+              fi
+              
+              echo "🚨 Deployment failed! Rolling back to last healthy tag: $LAST_HEALTHY_TAG"
+              
+              # Re-generate active compose file from template
+              sed "s|IMG_TAG|$LAST_HEALTHY_TAG|g" docker-compose.production.template.yml > docker-compose.production.yml
+              
+              # Log in to Docker Hub on the VM to authenticate for rollback pulls
+              echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+              
+              # Pull last healthy images
+              docker compose -f docker-compose.production.yml pull
+              
+              # Log out from Docker Hub
+              docker logout
+              
+              # Dynamic injection of MONGODB_URL
+              export MONGODB_URL='${{ secrets.MONGODB_URI }}'
+              
+              # Up rollback containers
+              docker compose -f docker-compose.production.yml up -d --remove-orphans
+              
+              # Health check validation
+              echo "Waiting for rollback services to be healthy..."
+              for i in {1..12}; do
+                if docker compose -f docker-compose.production.yml ps --filter "status=running" --filter "health=unhealthy" -q >/dev/null 2>&1; then
+                  UNHEALTHY_COUNT=$(docker compose -f docker-compose.production.yml ps --filter "status=running" --filter "health=unhealthy" -q | wc -l)
+                  STARTING_COUNT=$(docker compose -f docker-compose.production.yml ps --filter "status=running" --filter "health=starting" -q | wc -l)
+                else
+                  UNHEALTHY_COUNT=0
+                  STARTING_COUNT=0
+                fi
+                
+                API_HEALTH=0
+                curl -sf http://localhost:8014/health > /dev/null && API_HEALTH=1
+                
+                FRONTEND_HEALTH=0
+                curl -sf http://localhost:5177 > /dev/null && FRONTEND_HEALTH=1
+                
+                if [ "$UNHEALTHY_COUNT" -eq 0 ] && [ "$STARTING_COUNT" -eq 0 ] && [ "$API_HEALTH" -eq 1 ] && [ "$FRONTEND_HEALTH" -eq 1 ]; then
+                  echo "Rollback deployment is healthy!"
+                  echo "| $(date -u +'%Y-%m-%d %H:%M:%S UTC') | $LAST_HEALTHY_TAG | ROLLBACK_SUCCESS | Rollback from failed ${{ needs.build.outputs.sha_short }} is healthy |" >> docs/RELEASE_HISTORY.md
+                  exit 0
+                fi
+                
+                if [ "$i" -eq 12 ]; then
+                  echo "Rollback health check failed!"
+                  echo "| $(date -u +'%Y-%m-%d %H:%M:%S UTC') | $LAST_HEALTHY_TAG | ROLLBACK_FAILED | Rollback from failed ${{ needs.build.outputs.sha_short }} failed health check |" >> docs/RELEASE_HISTORY.md
+                  exit 1
+                fi
+                
+                echo "Status: $STARTING_COUNT starting, $UNHEALTHY_COUNT unhealthy, api_health=$API_HEALTH, frontend=$FRONTEND_HEALTH. Retrying in 10s..."
+                sleep 10
+              done
+            else
+              echo "⚠️ No last healthy tag found in Release History. Cannot perform automatic rollback."
+              if [ ! -f docs/RELEASE_HISTORY.md ]; then
+                mkdir -p docs
+                echo "# Release History and Deployment Registry" > docs/RELEASE_HISTORY.md
+                echo "" >> docs/RELEASE_HISTORY.md
+                echo "| Timestamp | Image Tag (Git SHA) | Status | Description |" >> docs/RELEASE_HISTORY.md
+                echo "|---|---|---|---|" >> docs/RELEASE_HISTORY.md
+              fi
+              echo "| $(date -u +'%Y-%m-%d %H:%M:%S UTC') | ${{ needs.build.outputs.sha_short }} | FAILED | Deployment failed and no rollback tag was available |" >> docs/RELEASE_HISTORY.md
+              exit 1
+            fi
+          EOF
+
+      - name: Save persistent Release History
+        if: always()
+        run: |
+          sshpass -p "${{ secrets.VM_PASSWORD }}" ssh -p ${{ secrets.VM_PORT }} -o StrictHostKeyChecking=no ${{ secrets.VM_USERNAME }}@${{ secrets.VM_IP }} "bash -s" << 'EOF'
+            set -euo pipefail
+            cd ~/SETU_CRM
+            if [ -f docs/RELEASE_HISTORY.md ]; then
+              mkdir -p /var/tmp/SETU_CRM
+              cp docs/RELEASE_HISTORY.md /var/tmp/SETU_CRM/RELEASE_HISTORY.md
+            fi
+          EOF

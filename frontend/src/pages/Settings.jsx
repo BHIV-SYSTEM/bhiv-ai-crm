@@ -12,6 +12,7 @@ import Alert from '../components/common/ui/Alert';
 import { LoadingSpinner } from '../components/common/ui/Spinner';
 import { Modal, ModalFooter } from '../components/common/ui/Modal';
 import { userAPI } from '../services/api/userAPI';
+import { deviceNotificationService } from '@/services/deviceNotificationService';
 
 export const Settings = () => {
   const [loading, setLoading] = useState(false);
@@ -267,11 +268,22 @@ export const Settings = () => {
                 />
               </label>
               <label className="flex items-center justify-between cursor-pointer">
-                <span className="text-sm font-medium">Push Notifications</span>
+                <div>
+                  <span className="text-sm font-medium block">Device Push Notifications</span>
+                  <span className="text-[11px] text-muted-foreground">Hardware & browser system popups</span>
+                </div>
                 <input
                   type="checkbox"
                   checked={notificationSettings.pushNotifications}
-                  onChange={(e) => setNotificationSettings({ ...notificationSettings, pushNotifications: e.target.checked })}
+                  onChange={async (e) => {
+                    const checked = e.target.checked;
+                    if (checked) {
+                      const granted = await deviceNotificationService.requestPermission();
+                      setNotificationSettings({ ...notificationSettings, pushNotifications: granted });
+                    } else {
+                      setNotificationSettings({ ...notificationSettings, pushNotifications: false });
+                    }
+                  }}
                   className="w-4 h-4 rounded border-border"
                 />
               </label>
@@ -312,11 +324,23 @@ export const Settings = () => {
                 />
               </label>
             </div>
-            <div className="flex justify-end">
-              <Button onClick={() => handleSaveSettings('notifications')} disabled={loading}>
-                <Save className="h-4 w-4 mr-2" />
-                Save Notification Settings
-              </Button>
+            <div className="pt-3 border-t border-border flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-muted-foreground font-medium">Browser Permission:</span>
+                <Badge variant={deviceNotificationService.getPermissionState() === 'granted' ? 'success' : 'warning'}>
+                  {deviceNotificationService.getPermissionState().toUpperCase()}
+                </Badge>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => deviceNotificationService.sendTestNotification()}>
+                  <Bell className="h-3.5 w-3.5 mr-1.5 text-primary" />
+                  Test Device Push
+                </Button>
+                <Button onClick={() => handleSaveSettings('notifications')} disabled={loading}>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Notification Settings
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

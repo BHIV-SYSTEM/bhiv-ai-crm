@@ -1,3 +1,4 @@
+import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 
@@ -5,62 +6,87 @@ dotenv.config();
 
 class EmailService {
   constructor() {
+    this.resendClient = null;
     this.transporter = null;
-    this.initializeTransporter();
+    this.initializeService();
   }
 
-  initializeTransporter() {
-    // Check if SMTP credentials are configured
-    if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
-      console.warn('⚠️ Email service not configured. Set SMTP credentials in .env file');
+  initializeService() {
+    const resendApiKey = process.env.RESEND_API_KEY || (process.env.SMTP_PASSWORD?.startsWith('re_') ? process.env.SMTP_PASSWORD : null);
+    
+    if (resendApiKey && resendApiKey !== 're_xxxxxxxxx') {
+      this.resendClient = new Resend(resendApiKey);
+      console.log('✅ Resend API Email Service initialized');
       return;
     }
 
-    this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT) || 587,
-      secure: process.env.SMTP_SECURE === 'true',
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD
-      }
-    });
+    if (process.env.SMTP_USER && process.env.SMTP_PASSWORD) {
+      this.transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST || 'smtp.gmail.com',
+        port: parseInt(process.env.SMTP_PORT) || 587,
+        secure: process.env.SMTP_SECURE === 'true',
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASSWORD
+        }
+      });
+      console.log('✅ NodeMailer SMTP Email Service initialized');
+      return;
+    }
 
-    // Verify connection
-    this.transporter.verify((error, success) => {
-      if (error) {
-        console.error('❌ Email service error:', error.message);
-      } else {
-        console.log('✅ Email service ready');
+    console.warn('⚠️ Email service not configured. Set RESEND_API_KEY or SMTP credentials in .env file');
+  }
+
+  async sendMail({ to, subject, html }) {
+    const fromEmail = process.env.RESEND_FROM_EMAIL || process.env.SMTP_FROM_EMAIL || 'onboarding@resend.dev';
+    const fromName = process.env.SMTP_FROM_NAME || 'AI CRM Logistics';
+
+    if (this.resendClient) {
+      try {
+        const response = await this.resendClient.emails.send({
+          from: `${fromName} <${fromEmail}>`,
+          to,
+          subject,
+          html
+        });
+        if (response.error) {
+          console.error('❌ Resend API Error:', response.error.message || response.error);
+          return { success: false, message: response.error.message || 'Resend error' };
+        }
+        console.log('✅ Email sent via Resend API:', response.data?.id);
+        return { success: true, messageId: response.data?.id };
+      } catch (err) {
+        console.error('❌ Resend API Exception:', err.message);
+        return { success: false, message: err.message };
       }
-    });
+    }
+
+    if (this.transporter) {
+      try {
+        const info = await this.transporter.sendMail({
+          from: { name: fromName, address: fromEmail },
+          to,
+          subject,
+          html
+        });
+        console.log('✅ Email sent via NodeMailer:', info.messageId);
+        return { success: true, messageId: info.messageId };
+      } catch (err) {
+        console.error('❌ NodeMailer Error:', err.message);
+        return { success: false, message: err.message };
+      }
+    }
+
+    console.log(`📧 Email service not configured. Would have sent email to ${to}: ${subject}`);
+    return { success: false, message: 'Email service not configured' };
   }
 
   async sendRestockEmail(product, restockRequest) {
-    if (!this.transporter) {
-      console.log('📧 Email service not configured. Would have sent restock email for:', product.name);
-      return { success: false, message: 'Email service not configured' };
-    }
-
-    try {
-      const mailOptions = {
-        from: {
-          name: process.env.SMTP_FROM_NAME || 'AI CRM Logistics',
-          address: process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER
-        },
-        to: restockRequest.supplierEmail,
-        subject: `🔔 Urgent: Restock Request for ${product.name}`,
-        html: this.getRestockEmailTemplate(product, restockRequest)
-      };
-
-      const info = await this.transporter.sendMail(mailOptions);
-      console.log('✅ Restock email sent:', info.messageId);
-      
-      return { success: true, messageId: info.messageId };
-    } catch (error) {
-      console.error('❌ Email sending failed:', error.message);
-      return { success: false, message: error.message };
-    }
+    return this.sendMail({
+      to: restockRequest.supplierEmail,
+      subject: `🔔 Urgent: Restock Request for ${product.name}`,
+      html: this.getRestockEmailTemplate(product, restockRequest)
+    });
   }
 
   getRestockEmailTemplate(product, restockRequest) {

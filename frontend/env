@@ -1,0 +1,8 @@
+# Primary Node.js Backend API (Port 8000)
+VITE_API_URL=http://localhost:8000
+VITE_WS_URL=ws://localhost:8000
+
+# Real Production Dashboard URLs (Falls back to localhost if unconfigured)
+VITE_ARTHA_URL=https://artha.blackholeinfiverse.com/
+VITE_NIYANTRAN_URL=https://niyantran.blackholeinfiverse.com/
+VITE_SAMPADA_URL=https://sampada.blackholeinfiverse.com/

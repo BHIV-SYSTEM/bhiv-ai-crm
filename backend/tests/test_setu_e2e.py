@@ -29,7 +29,10 @@ from setu.trace_continuity import TraceContinuityValidator
 from setu.trace_continuity_middleware import TraceContinuityMiddleware
 from setu.ui_visibility_service import SetuUIVisibilityService
 from setu.utils import compute_lineage_hash
-from tests.setu_inmemory_store import InMemorySetuStore
+try:
+    from backend.tests.setu_inmemory_store import InMemorySetuStore
+except ImportError:
+    from tests.setu_inmemory_store import InMemorySetuStore
 
 ROOT = Path(__file__).resolve().parents[2]
 END_TO_END_TRACE = json.loads((ROOT / "end_to_end_trace.json").read_text(encoding="utf-8"))

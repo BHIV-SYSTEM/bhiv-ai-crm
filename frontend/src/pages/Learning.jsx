@@ -39,7 +39,8 @@ export const Learning = () => {
       // Fetch agent rankings
       try {
         const rankingsResponse = await rlAPI.getAgentRankings();
-        const rankingsData = rankingsResponse.data?.rankings || rankingsResponse.data || [];
+        const rawRankings = rankingsResponse.data?.data?.rankings || rankingsResponse.data?.rankings || (Array.isArray(rankingsResponse.data) ? rankingsResponse.data : []);
+        const rankingsData = Array.isArray(rawRankings) ? rawRankings : [];
         setAgentRankings(rankingsData.map((agent, index) => ({
           rank: index + 1,
           agentName: agent.agent_name || agent.name || 'Unknown Agent',
@@ -54,19 +55,20 @@ export const Learning = () => {
       // Fetch analytics
       try {
         const analyticsResponse = await rlAPI.getAnalytics();
-        const analytics = analyticsResponse.data || {};
+        const analytics = analyticsResponse.data?.data || analyticsResponse.data || {};
         setMetrics({
-          totalActions: analytics.total_actions || 0,
-          averageReward: parseFloat(analytics.average_reward || analytics.avg_reward || 0),
-          learningStatus: analytics.learning_status || analytics.status || 'stable',
-          progressRate: parseFloat(analytics.progress_rate || 0),
+          totalActions: analytics.totalActions || analytics.total_actions || 0,
+          averageReward: parseFloat(analytics.averageReward || analytics.average_reward || analytics.avg_reward || 0),
+          learningStatus: analytics.learningStatus || analytics.learning_status || analytics.status || 'stable',
+          progressRate: parseFloat(analytics.learningProgress || analytics.progress_rate || 0),
         });
 
         // Set reward history from analytics
-        if (analytics.reward_history) {
-          setRewardHistory(analytics.reward_history.map((item, index) => ({
+        const rawHistory = analytics.reward_history || analytics.recentActions || analytics.performanceTrend;
+        if (Array.isArray(rawHistory)) {
+          setRewardHistory(rawHistory.map((item, index) => ({
             action: index + 1,
-            reward: parseFloat(item.reward || item),
+            reward: parseFloat(item.reward || item.score || item),
           })));
         }
       } catch (err) {

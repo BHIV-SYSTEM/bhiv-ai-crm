@@ -12,8 +12,9 @@ class SecurityConfig:
     """Centralized security configuration"""
     
     # JWT Configuration
-    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "ai-agent-logistics-secret-key-2025")
-    JWT_ALGORITHM = "HS256"
+    JWT_PRIVATE_KEY = os.getenv("JWT_PRIVATE_KEY")
+    JWT_PUBLIC_KEY = os.getenv("JWT_PUBLIC_KEY")
+    JWT_ALGORITHM = "RS256"
     ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
     REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
     
@@ -191,7 +192,8 @@ if SecurityConfig.is_production():
     SecurityConfig.RATE_LIMIT_REQUESTS_PER_MINUTE = 30  # Stricter in production
 
 # Export commonly used configurations
-JWT_SECRET_KEY = SecurityConfig.JWT_SECRET_KEY
+JWT_PRIVATE_KEY = SecurityConfig.JWT_PRIVATE_KEY
+JWT_PUBLIC_KEY = SecurityConfig.JWT_PUBLIC_KEY
 JWT_ALGORITHM = SecurityConfig.JWT_ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = SecurityConfig.ACCESS_TOKEN_EXPIRE_MINUTES
 REFRESH_TOKEN_EXPIRE_DAYS = SecurityConfig.REFRESH_TOKEN_EXPIRE_DAYS

@@ -27,6 +27,9 @@ import Alert from '../components/common/ui/Alert';
 import { formatRelativeTime } from '@/utils/dateUtils';
 import { dashboardAPI } from '../services/api/dashboardAPI';
 import { productAPI } from '../services/api/productAPI';
+import { rlAPI } from '../services/api/rlAPI';
+import { aiDecisionsAPI } from '../services/api/aiDecisionsAPI';
+import { emsAPI } from '../services/api/emsAPI';
 import { useNavigate } from 'react-router-dom';
 
 export const Dashboard = () => {
@@ -95,10 +98,43 @@ export const Dashboard = () => {
         console.warn('Failed to fetch recent activity:', err);
       }
 
+      // AI & Automation stats — real API values only. If an endpoint is
+      // unreachable the card honestly shows 0 instead of a fabricated number
+      // (the old code seeded 526/148/48/12 as "fallbacks").
+      let rlActionsCount = 0;
+      let aiWorkflowsCount = 0;
+      let emailsCount = 0;
+
+      try {
+        const rlRes = await rlAPI.getAnalytics();
+        const rlData = rlRes.data?.data || rlRes.data || {};
+        rlActionsCount = rlData.totalActions ?? rlData.total_actions ?? 0;
+      } catch (e) {}
+
+      try {
+        const aiRes = await aiDecisionsAPI.getDecisionAnalytics();
+        const aiData = aiRes.data?.data || aiRes.data || {};
+        aiWorkflowsCount = aiData.totalDecisions ?? aiData.total_decisions ?? 0;
+      } catch (e) {}
+
+      try {
+        const emsRes = await emsAPI.getEmailStats();
+        const emsData = emsRes.data?.data || emsRes.data || {};
+        // `??` not `||`: a real value of 0 emails today must show 0, not the
+        // old hard-coded 48.
+        emailsCount = emsData.emails_sent_today ?? emsData.today ?? 0;
+      } catch (e) {}
+
       const totalOrders = stats.orders?.total ?? 0;
       const activeAccounts = stats.users?.activeCustomers ?? 0;
       const productsCount = productStats.totalProducts ?? stats.products?.total ?? 0;
       const revenueTotal = Number(stats.revenue?.total ?? 0);
+
+      // Employees = staff accounts (total users minus customers), derived
+      // from real counts — never a hard-coded 12.
+      const employeesCount = stats.users
+        ? Math.max((stats.users.total ?? 0) - (stats.users.customerCount ?? 0), 0)
+        : 0;
 
       // Update metrics (only values we can back with real APIs)
       setMetrics({
@@ -106,10 +142,10 @@ export const Dashboard = () => {
         activeAccounts,
         products: productsCount,
         suppliers: suppliersCount,
-        employees: 0,
-        emailsSent: 0,
-        rlActions: 0,
-        aiWorkflows: 0,
+        employees: employeesCount,
+        emailsSent: emailsCount,
+        rlActions: rlActionsCount,
+        aiWorkflows: aiWorkflowsCount,
         revenue: Number.isFinite(revenueTotal) ? revenueTotal : 0,
       });
 
@@ -225,10 +261,6 @@ export const Dashboard = () => {
     return <LoadingSpinner text="Loading dashboard..." />;
   }
 
-  if (loading) {
-    return <LoadingSpinner text="Loading dashboard..." />;
-  }
-
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Page Header */}
@@ -259,7 +291,10 @@ export const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Customer Portal Quick Access - Full Width */}
         <div className="col-span-full">
-          <Card className="bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 border-2 border-primary/20 hover:border-primary/40 transition-all cursor-pointer" onClick={() => navigate('/customer-portal')}>
+          <Card 
+            className="bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 border-2 border-primary/20 hover:border-primary/40 transition-all cursor-pointer" 
+            onClick={() => navigate('/customer-portal')}
+          >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -271,7 +306,14 @@ export const Dashboard = () => {
                     <p className="text-muted-foreground">Browse products, place orders, and track deliveries</p>
                   </div>
                 </div>
-                <Button size="lg" className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90">
+                <Button 
+                  size="lg" 
+                  className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate('/customer-portal');
+                  }}
+                >
                   Open Portal →
                 </Button>
               </div>
@@ -279,67 +321,54 @@ export const Dashboard = () => {
           </Card>
         </div>
 
+        {/* All values are live API data. The old `trendValue="+12.5%"`-style
+            badges were hard-coded fake growth numbers, so they are gone until
+            we have real period-over-period data to compute them from. */}
         <MetricCard
           title="Total Orders"
           value={metrics.totalOrders.toLocaleString()}
-          trend="up"
-          trendValue="+12.5%"
           icon={Package}
           variant="primary"
         />
         <MetricCard
           title="Active Accounts"
           value={metrics.activeAccounts.toLocaleString()}
-          trend="up"
-          trendValue="+8.2%"
           icon={UserCheck}
           variant="secondary"
         />
         <MetricCard
           title="Products"
           value={metrics.products.toLocaleString()}
-          trend="up"
-          trendValue="+5.7%"
           icon={Box}
           variant="accent"
         />
         <MetricCard
           title="Suppliers"
           value={metrics.suppliers.toLocaleString()}
-          trend="up"
-          trendValue="+3.4%"
           icon={Truck}
           variant="success"
         />
         <MetricCard
           title="Employees"
           value={metrics.employees.toLocaleString()}
-          trend="up"
-          trendValue="+2.1%"
           icon={Briefcase}
           variant="primary"
         />
         <MetricCard
           title="Emails Sent"
           value={metrics.emailsSent.toLocaleString()}
-          trend="up"
-          trendValue="+18.9%"
           icon={Mail}
           variant="secondary"
         />
         <MetricCard
           title="RL Actions"
           value={metrics.rlActions.toLocaleString()}
-          trend="up"
-          trendValue="+24.3%"
           icon={Zap}
           variant="accent"
         />
         <MetricCard
           title="AI Workflows"
           value={metrics.aiWorkflows.toLocaleString()}
-          trend="up"
-          trendValue="+16.7%"
           icon={Workflow}
           variant="success"
         />

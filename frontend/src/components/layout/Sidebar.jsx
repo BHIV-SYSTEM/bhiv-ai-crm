@@ -1,63 +1,106 @@
-import React from 'react';
-import { 
-  LayoutDashboard, Package, Users, Building2, ShoppingCart, Bot,
+import React, { useEffect, useState } from 'react';
+import {
+  LayoutDashboard, Package, Users, Building2, ShoppingCart, Bot, MapPinned,
   Workflow, Brain, GraduationCap, Bell, Mail, BarChart3, Settings,
   UsersRound, Menu, X, ChevronLeft, ChevronRight, TrendingUp, Zap,
-  FileText, Store, Activity, Database, Sparkles, LogOut
+  Store, Activity, Sparkles, LogOut, Truck, ShieldCheck
 } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { cn } from '@/utils/helpers';
 import { ROUTES } from '@/utils/constants';
 import Button from '../common/ui/Button';
 import { useAuth } from '@/context/MongoAuthContext';
+import notificationAPI from '@/services/api/notificationAPI';
+import financialAPI from '@/services/api/financialAPI';
 
 export const Sidebar = ({ isOpen, onToggle, isCollapsed, onCollapseToggle }) => {
-  const { logout, isCustomer } = useAuth();
+  const { logout, isCustomer, user } = useAuth();
+  const isFieldAgent = user?.role === 'field_agent';
   const navigate = useNavigate();
+  const [unread, setUnread] = useState(0);
+
+  // Live unread badge for the customer notification centre (SETU + ARTHA).
+  useEffect(() => {
+    if (!isCustomer) {
+      setUnread(0);
+      return undefined;
+    }
+    let alive = true;
+    const load = async () => {
+      const [setu, artha] = await Promise.allSettled([
+        notificationAPI.unreadCount(),
+        financialAPI.unreadCount(),
+      ]);
+      if (!alive) return;
+      const a = setu.status === 'fulfilled' ? Number(setu.value.data?.data?.count || 0) : 0;
+      const b = artha.status === 'fulfilled' ? Number(artha.value.data?.data?.count || 0) : 0;
+      setUnread(a + b);
+    };
+    load().catch(() => {});
+    const timer = setInterval(load, 45000);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, [isCustomer]);
 
   // Role-based navigation
   const navigation = isCustomer
     ? [
-        { name: 'Customer Portal', icon: ShoppingCart, path: '/customer-portal' }
-      ]
+      { name: 'Shop', icon: ShoppingCart, path: ROUTES.CUSTOMER_PORTAL },
+      { name: 'My Orders', icon: Package, path: ROUTES.CUSTOMER_ORDERS },
+      { name: 'Account', icon: Users, path: ROUTES.CUSTOMER_ACCOUNT },
+      { name: 'Notifications', icon: Bell, path: ROUTES.CUSTOMER_NOTIFICATIONS, badge: unread || undefined },
+    ]
+    : isFieldAgent
+    ? [
+      { name: 'Field Agent Portal', icon: MapPinned, path: ROUTES.FIELD_AGENT },
+    ]
     : [
-        { name: 'Overview', icon: LayoutDashboard, path: ROUTES.DASHBOARD },
-        { 
-          name: 'CRM & Logistics',
-          items: [
-            { name: 'CRM Management', icon: Users, path: ROUTES.CRM },
-            { name: 'Logistics & Inventory', icon: Package, path: ROUTES.LOGISTICS },
-            { name: 'Infiverse Monitoring', icon: UsersRound, path: ROUTES.INFIVERSE },
-            { name: 'Sampada Dashboard', icon: Activity, path: ROUTES.SAMPADA },
-            { name: 'AI Artha', icon: Sparkles, path: ROUTES.AI_ARTHA },
-            { name: 'Supplier Management', icon: Building2, path: ROUTES.SUPPLIERS },
-            { name: 'Product Catalog', icon: ShoppingCart, path: ROUTES.PRODUCTS },
-            { name: 'Supplier Showcase', icon: Store, path: '/showcase' },
-          ]
-        },
-        {
-          name: 'AI & Automation',
-          items: [
-            { name: 'EMS Automation', icon: Mail, path: ROUTES.EMAILS },
-            { name: 'RL Learning', icon: GraduationCap, path: ROUTES.LEARNING },
-            { name: 'AI Decisions', icon: Brain, path: ROUTES.DECISIONS },
-            { name: 'AI Agents', icon: Bot, path: ROUTES.AGENTS },
-          ]
-        },
-        {
-          name: 'Analytics & Reports',
-          items: [
-            { name: 'Analytics', icon: BarChart3, path: '/analytics' },
-          ]
-        },
-        {
-          name: 'System',
-          items: [
-            { name: 'Notifications', icon: Bell, path: ROUTES.NOTIFICATIONS },
-            { name: 'Settings', icon: Settings, path: ROUTES.SETTINGS },
-          ]
-        },
-      ];
+      { name: 'Overview', icon: LayoutDashboard, path: ROUTES.DASHBOARD },
+      {
+        name: 'CRM & Logistics',
+        items: [
+          { name: 'Proof Approvals', icon: ShieldCheck, path: ROUTES.FIELD_REVIEWS },
+          { name: 'Bright Connection Demo', icon: Zap, path: ROUTES.BRIGHT_CONNECTION },
+          { name: 'CRM Management', icon: Users, path: ROUTES.CRM },
+          { name: 'Logistics & Inventory', icon: Package, path: ROUTES.LOGISTICS },
+          { name: 'Infiverse Monitoring', icon: UsersRound, path: ROUTES.INFIVERSE },
+          { name: 'Sampada Dashboard', icon: Activity, path: ROUTES.SAMPADA },
+          { name: 'AI Artha', icon: Sparkles, path: ROUTES.AI_ARTHA },
+          { name: 'Supplier Management', icon: Building2, path: ROUTES.SUPPLIERS },
+          { name: 'Product Catalog', icon: ShoppingCart, path: ROUTES.PRODUCTS },
+          { name: 'Supplier Showcase', icon: Store, path: '/showcase' },
+          {
+            name: 'Sellers & Dispatch',
+            icon: Truck,
+            path: ROUTES.SELLER_PORTAL,
+          },
+        ]
+      },
+      {
+        name: 'AI & Automation',
+        items: [
+          { name: 'EMS Automation', icon: Mail, path: ROUTES.EMAILS },
+          { name: 'RL Learning', icon: GraduationCap, path: ROUTES.LEARNING },
+          { name: 'AI Decisions', icon: Brain, path: ROUTES.DECISIONS },
+          { name: 'AI Agents', icon: Bot, path: ROUTES.AGENTS },
+        ]
+      },
+      {
+        name: 'Analytics & Reports',
+        items: [
+          { name: 'Analytics', icon: BarChart3, path: ROUTES.REPORTS },
+        ]
+      },
+      {
+        name: 'System',
+        items: [
+          { name: 'Notifications', icon: Bell, path: ROUTES.NOTIFICATIONS },
+          { name: 'Settings', icon: Settings, path: ROUTES.SETTINGS },
+        ]
+      },
+    ];
 
   const handleLogout = async () => {
     try {
@@ -72,7 +115,7 @@ export const Sidebar = ({ isOpen, onToggle, isCollapsed, onCollapseToggle }) => 
     <>
       {/* Mobile backdrop */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden animate-fade-in"
           onClick={onToggle}
         />
@@ -95,7 +138,7 @@ export const Sidebar = ({ isOpen, onToggle, isCollapsed, onCollapseToggle }) => 
               </h1>
             </div>
           )}
-          
+
           {/* Desktop collapse toggle */}
           <button
             onClick={onCollapseToggle}
@@ -104,7 +147,7 @@ export const Sidebar = ({ isOpen, onToggle, isCollapsed, onCollapseToggle }) => 
           >
             {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </button>
-          
+
           {/* Mobile close button */}
           <button
             onClick={onToggle}
@@ -113,7 +156,7 @@ export const Sidebar = ({ isOpen, onToggle, isCollapsed, onCollapseToggle }) => 
           >
             <X className="h-4 w-4" />
           </button>
-          
+
           {/* Collapsed state logo */}
           {isCollapsed && (
             <div className="hidden lg:flex w-10 h-10 rounded-lg gradient-primary shadow-glow-primary items-center justify-center animate-scale-in">
@@ -139,9 +182,9 @@ export const Sidebar = ({ isOpen, onToggle, isCollapsed, onCollapseToggle }) => 
                   )}
                   <div className="space-y-1">
                     {section.items.map((item) => (
-                      <NavItem 
-                        key={item.path} 
-                        item={item} 
+                      <NavItem
+                        key={item.path}
+                        item={item}
                         isCollapsed={isCollapsed}
                         onClick={onToggle}
                       />
@@ -150,8 +193,8 @@ export const Sidebar = ({ isOpen, onToggle, isCollapsed, onCollapseToggle }) => 
                 </div>
               ) : (
                 // Single item
-                <NavItem 
-                  item={section} 
+                <NavItem
+                  item={section}
                   isCollapsed={isCollapsed}
                   onClick={onToggle}
                 />
@@ -181,7 +224,7 @@ export const Sidebar = ({ isOpen, onToggle, isCollapsed, onCollapseToggle }) => 
 
 const StatusItem = ({ label, status }) => {
   const isOnline = status === 'online';
-  
+
   return (
     <div className="flex items-center justify-between text-xs">
       <span className="text-muted-foreground">{label}</span>
@@ -278,7 +321,7 @@ const NavItem = ({ item, isCollapsed, onClick }) => {
       </a>
     );
   }
-  
+
   return (
     <NavLink
       to={item.path}
@@ -286,8 +329,8 @@ const NavItem = ({ item, isCollapsed, onClick }) => {
       className={({ isActive }) =>
         cn(
           'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300 group relative',
-          isActive 
-            ? 'gradient-primary text-primary-foreground shadow-glow-primary' 
+          isActive
+            ? 'gradient-primary text-primary-foreground shadow-glow-primary'
             : 'text-muted-foreground hover:bg-muted hover:text-foreground hover:scale-105',
           isCollapsed && 'justify-center'
         )
@@ -303,7 +346,18 @@ const NavItem = ({ item, isCollapsed, onClick }) => {
           {item.name}
         </span>
       )}
-      
+
+      {item.badge && (
+        <span
+          className={cn(
+            'ml-auto min-w-[1.25rem] px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center h-5',
+            isCollapsed && 'absolute top-1 right-1 ml-0 min-w-0 h-4 w-4 px-0'
+          )}
+        >
+          {isCollapsed ? '' : item.badge}
+        </span>
+      )}
+
       {/* Tooltip for collapsed state */}
       {isCollapsed && (
         <div className="absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground text-sm rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
@@ -315,3 +369,6 @@ const NavItem = ({ item, isCollapsed, onClick }) => {
 };
 
 export default Sidebar;
+
+
+

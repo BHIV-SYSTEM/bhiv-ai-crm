@@ -1,3 +1,18 @@
+import { formatDate } from './dateUtils';
+
+/** ₹ currency with Indian digit grouping (1,23,456.78). */
+export const money = (value) => {
+  const n = Number(value || 0);
+  if (!Number.isFinite(n)) return '₹0.00';
+  return `₹${n.toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+};
+
+/** Human-readable date; accepts ISO strings or Date objects. */
+export const fmtDate = (date) => (date ? formatDate(date) : '—');
+
 export const formatCurrency = (value, currency = 'USD') => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',

@@ -17,6 +17,8 @@ import MetricCard from '../components/common/charts/MetricCard';
 import { orderAPI } from '../services/api/orderAPI';
 import { productAPI } from '../services/api/productAPI';
 import { restockAPI } from '../services/api/restockAPI';
+import { logisticsAPI } from '../services/api/logisticsAPI';
+import { inventoryAPI } from '../services/api/inventoryAPI';
 import { formatDate } from '@/utils/dateUtils';
 
 export const Logistics = () => {
@@ -33,6 +35,9 @@ export const Logistics = () => {
 
   // Inventory data for chart
   const [inventoryData, setInventoryData] = useState([]);
+
+  // Real stock-change history (inventory adjustment logs) for the trend chart
+  const [inventoryLogs, setInventoryLogs] = useState([]);
 
   // Low stock products (stockQuantity < minThreshold)
   const [lowStockProducts, setLowStockProducts] = useState([]);
@@ -60,7 +65,11 @@ export const Logistics = () => {
       // Fetch orders
       try {
         const ordersResponse = await orderAPI.getOrders({ limit: 100 });
-        setOrders(ordersResponse.data?.data?.orders || []);
+        const rawOrders = ordersResponse.data?.data?.orders || ordersResponse.data?.orders || (Array.isArray(ordersResponse.data) ? ordersResponse.data : []);
+        // Real orders only — a fresh account with no orders honestly shows 0
+        // (the old `demoOrders` fallback injected the same fake orders for
+        // every account).
+        setOrders(Array.isArray(rawOrders) ? rawOrders : []);
       } catch (err) {
         console.warn('Failed to fetch orders:', err);
       }
@@ -68,40 +77,57 @@ export const Logistics = () => {
       // Fetch inventory
       try {
         const inventoryResponse = await productAPI.getProducts({ limit: 1000, bustCache: true });
-        const products = inventoryResponse.data?.data?.products || [];
+        const rawProducts = inventoryResponse.data?.data?.products || inventoryResponse.data?.products || (Array.isArray(inventoryResponse.data) ? inventoryResponse.data : []);
+        const products = Array.isArray(rawProducts) ? rawProducts : [];
 
         const lowStock = products
           .filter(p => (p.stockQuantity ?? 0) < (p.minThreshold ?? 0))
           .sort((a, b) => (a.stockQuantity ?? 0) - (b.stockQuantity ?? 0));
         setLowStockProducts(lowStock);
 
-        setInventoryData(products.slice(0, 15).map(p => ({
-          ProductID: p.sku,
+        setInventoryData(products.map(p => ({
+          productId: p._id,
+          ProductID: p.name || p.sku,
           CurrentStock: p.stockQuantity || 0
         })));
       } catch (err) {
         console.warn('Failed to fetch inventory:', err);
       }
 
-      // Fetch recent procurement/restock activity (Agents tab)
-      if (activeTab === 'agents') {
-        try {
-          const restockResponse = await restockAPI.getRestockRequests({ limit: 10 });
-          setAgentActivity(restockResponse.data?.data?.requests || []);
-        } catch (err) {
-          console.warn('Failed to fetch restock activity:', err);
-        }
+      // Real stock-change history for the Inventory Levels Trend chart
+      try {
+        const logsResponse = await inventoryAPI.getInventoryLogs({ limit: 500 });
+        const rawLogs = logsResponse.data?.data?.logs || logsResponse.data?.logs || [];
+        setInventoryLogs(Array.isArray(rawLogs) ? rawLogs : []);
+      } catch (err) {
+        console.warn('Failed to fetch inventory logs:', err);
+        setInventoryLogs([]);
       }
 
-      // Legacy sections not backed by MongoDB-only backend
-      setShipments([]);
+      // Active shipments — real list from the backend (customers/sellers get
+      // their own scoped rows; the old hard-coded SHP-901/902 entries were
+      // shown to every account identically)
+      try {
+        const shipmentsResponse = await logisticsAPI.getShipments();
+        const rawShipments = shipmentsResponse.data?.shipments || shipmentsResponse.data?.data?.shipments || (Array.isArray(shipmentsResponse.data) ? shipmentsResponse.data : []);
+        setShipments(Array.isArray(rawShipments) ? rawShipments : []);
+      } catch (err) {
+        console.warn('Failed to fetch shipments:', err);
+        setShipments([]);
+      }
+
+      // Fetch recent procurement/restock activity (Agents tab)
+      try {
+        const restockResponse = await restockAPI.getRestockRequests({ limit: 10 });
+        const rawRestock = restockResponse.data?.data?.requests || restockResponse.data?.requests || [];
+        setAgentActivity(Array.isArray(rawRestock) ? rawRestock : []);
+      } catch (err) {
+        console.warn('Failed to fetch restock activity:', err);
+      }
 
       // Calculate metrics from fetched data
-      const processingOrdersCount = orders.filter(o => o.Status === 'Processing' || o.status === 'Processing').length;
-      const inTransitCount = shipments.filter(s => s.status === 'out_for_delivery' || s.status === 'picked_up').length;
-      const totalInventoryCount = inventoryData.reduce((sum, item) => sum + (item.CurrentStock || 0), 0);
-
-      // KPIs are computed from fetched data, no need to set state
+      // (KPIs are derived from state in `overviewMetrics` below — no
+      //  dead duplicate calculations here)
 
     } catch (err) {
       console.error('Error fetching logistics data:', err);
@@ -114,10 +140,16 @@ export const Logistics = () => {
   const getStatusVariant = (status) => {
     const variants = {
       PLACED: 'warning',
+      PROCESSING: 'warning',
       DISPATCHED: 'info',
+      PENDING_PICKUP: 'warning',
+      PICKED_UP: 'info',
+      IN_TRANSIT: 'info',
+      OUT_FOR_DELIVERY: 'info',
       DELIVERED: 'success',
+      CANCELLED: 'destructive',
     };
-    return variants[status] || 'default';
+    return variants[String(status || '').toUpperCase()] || 'default';
   };
 
   const getRestockStatusVariant = (status) => {
@@ -176,7 +208,20 @@ export const Logistics = () => {
   };
 
   const handleRunDeliveryAgent = async () => {
-    setError('Delivery agent is not available in the MongoDB backend');
+    setLoading(true);
+    try {
+      setError(null);
+      setSuccess(null);
+      const response = await logisticsAPI.runDeliveryAgent();
+      const message = response.data?.message || 'Delivery agent run completed: 1 shipment dispatched';
+      setSuccess(message);
+      await fetchAllData();
+    } catch (err) {
+      console.error('Error running delivery agent:', err);
+      setError(err.response?.data?.message || err.message || 'Failed to run delivery agent');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRefreshActivity = async () => {
@@ -192,11 +237,12 @@ export const Logistics = () => {
   };
 
   // Overview metrics (computed from real data)
+  const inTransitStatuses = ['PENDING_PICKUP', 'PICKED_UP', 'IN_TRANSIT', 'DISPATCHED', 'OUT_FOR_DELIVERY'];
   const overviewMetrics = {
     totalOrders: orders.length,
-    totalShipments: 0,
-    processingOrders: orders.filter(o => o.status === 'PLACED').length,
-    inTransitShipments: orders.filter(o => o.status === 'DISPATCHED').length,
+    totalShipments: shipments.length,
+    processingOrders: orders.filter(o => (o.status === 'PLACED' || o.status === 'Processing')).length,
+    inTransitShipments: shipments.filter(s => inTransitStatuses.includes(String(s.status || '').toUpperCase())).length,
     totalInventory: inventoryData.reduce((sum, item) => sum + (item.CurrentStock || item.current_stock || 0), 0),
     agentActions: agentActivity.length,
   };
@@ -208,17 +254,20 @@ export const Logistics = () => {
     for (let i = 6; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
+      const isoDate = date.toISOString().split('T')[0];
+      const displayDate = `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      
       const dayOrders = orders.filter(o => {
-        const orderDate = o.OrderDate || o.order_date;
-        return orderDate && orderDate.startsWith(dateStr);
+        const orderDate = String(o.OrderDate || o.order_date || o.createdAt || '');
+        return orderDate.includes(isoDate) || (i === 0 && !orderDate);
       });
       const dayShipments = shipments.filter(s => {
-        const shipDate = s.created_at || s.timestamp || s.shipment_date;
-        return shipDate && shipDate.startsWith(dateStr);
+        const shipDate = String(s.created_at || s.timestamp || s.shipment_date || '');
+        return shipDate.includes(isoDate) || (i === 0 && !shipDate);
       });
+
       last7Days.push({
-        date: `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
+        date: displayDate,
         orders: dayOrders.length,
         shipments: dayShipments.length
       });
@@ -228,39 +277,80 @@ export const Logistics = () => {
 
   // Order status distribution
   const orderStatusData = [
-    { name: 'Processing', value: orders.filter(o => (o.Status === 'Processing' || o.status === 'Processing')).length },
-    { name: 'Shipped', value: orders.filter(o => (o.Status === 'Shipped' || o.status === 'Shipped')).length },
-    { name: 'Cancelled', value: orders.filter(o => (o.Status === 'Cancelled' || o.status === 'Cancelled')).length },
+    { name: 'Placed', value: orders.filter(o => (o.status === 'PLACED' || o.Status === 'Placed' || o.status === 'Processing')).length },
+    { name: 'Dispatched', value: orders.filter(o => (o.status === 'DISPATCHED' || o.Status === 'Dispatched' || o.status === 'Shipped')).length },
+    { name: 'Delivered', value: orders.filter(o => (o.status === 'DELIVERED' || o.Status === 'Delivered')).length },
+    { name: 'Cancelled', value: orders.filter(o => (o.status === 'CANCELLED' || o.Status === 'Cancelled')).length },
   ].filter(item => item.value > 0);
 
-  // Shipment status distribution
-  const shipmentStatusData = [
-    { name: 'Out for Delivery', value: shipments.filter(s => s.status === 'out_for_delivery').length },
-    { name: 'Picked Up', value: shipments.filter(s => s.status === 'picked_up').length },
-    { name: 'Created', value: shipments.filter(s => s.status === 'created').length },
-    { name: 'Delivered', value: shipments.filter(s => s.status === 'delivered').length },
-  ].filter(item => item.value > 0);
+  // Shipment status distribution (real data — status values are normalized
+  // because the backend uses both order-style (DISPATCHED) and delivery-flow
+  // (IN_TRANSIT / OUT_FOR_DELIVERY / …) vocabularies)
+  const shipmentStatusData = (() => {
+    const counts = {};
+    shipments.forEach(s => {
+      const st = String(s.status || 'UNKNOWN').toUpperCase();
+      counts[st] = (counts[st] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .map(([name, value]) => ({ name, value }))
+      .filter(item => item.value > 0);
+  })();
 
-  // Inventory trend data (use current inventory data)
+  // Inventory trend data — REAL stock history reconstructed from inventory
+  // adjustment logs (each log records newStock at a point in time). Products
+  // without any recorded change show a flat line at their current stock; if
+  // there is no history at all the chart stays empty instead of drawing
+  // invented wobble (the old code added `Math.sin(...)*5` noise).
   const inventoryTrendData = (() => {
     if (inventoryData.length === 0) return [];
     const topProducts = inventoryData.slice(0, 5);
-    const data = [];
+
+    // Day boundaries for the last 7 days (oldest → newest)
+    const days = [];
     const today = new Date();
     for (let i = 6; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      const dateStr = `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-      const entry = { date: dateStr };
-      topProducts.forEach((product) => {
-        const productId = product.ProductID || product.product_id || 'PROD';
-        const currentStock = product.CurrentStock || product.current_stock || 0;
-        // Use current stock with slight variation for trend visualization
-        entry[productId] = Math.max(0, currentStock + Math.floor(Math.random() * 5) - 2);
-      });
-      data.push(entry);
+      const end = new Date(today);
+      end.setDate(end.getDate() - i);
+      end.setHours(23, 59, 59, 999);
+      const displayDate = `${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}`;
+      days.push({ displayDate, endMs: end.getTime() });
     }
-    return data;
+
+    const logsByProduct = {};
+    inventoryLogs.forEach(log => {
+      const key = String(log.productId?._id || log.productId || '');
+      if (!key) return;
+      (logsByProduct[key] = logsByProduct[key] || []).push(log);
+    });
+    Object.values(logsByProduct).forEach(list => {
+      list.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    });
+
+    const hasAnyHistory = Object.keys(logsByProduct).length > 0;
+    if (!hasAnyHistory) return [];
+
+    return days.map(day => {
+      const entry = { date: day.displayDate };
+      topProducts.forEach((product, pIdx) => {
+        const prodKey = product.ProductID || product.product_id || `Prod ${pIdx + 1}`;
+        const logs = logsByProduct[String(product.productId || '')] || [];
+        if (logs.length === 0) {
+          // No recorded changes → current stock (a real, flat value)
+          entry[prodKey] = Number(product.CurrentStock || 0);
+          return;
+        }
+        // Latest recorded state at/before the end of this day
+        const upTo = logs.filter(l => new Date(l.createdAt).getTime() <= day.endMs);
+        if (upTo.length > 0) {
+          entry[prodKey] = Number(upTo[upTo.length - 1].newStock ?? 0);
+        } else {
+          // Before the first recorded change: the recorded pre-change stock
+          entry[prodKey] = Number(logs[0].previousStock ?? logs[0].newStock ?? 0);
+        }
+      });
+      return entry;
+    });
   })();
 
   const COLORS = [
@@ -376,16 +466,12 @@ export const Logistics = () => {
               value={overviewMetrics.totalOrders}
           icon={Package}
           variant="primary"
-              trend="up"
-              trendValue="+12.5%"
             />
             <MetricCard
               title="Total Shipments"
               value={overviewMetrics.totalShipments}
               icon={Truck}
               variant="info"
-              trend="up"
-              trendValue="+8.2%"
             />
             <MetricCard
               title="Processing Orders"
@@ -404,8 +490,6 @@ export const Logistics = () => {
               value={overviewMetrics.totalInventory}
               icon={BarChart3}
           variant="success"
-              trend="up"
-              trendValue="+5.3%"
         />
         <MetricCard
               title="Agent Actions"
@@ -590,6 +674,11 @@ export const Logistics = () => {
                 <CardTitle>Inventory Levels Trend</CardTitle>
               </CardHeader>
               <CardContent>
+                {inventoryTrendData.length === 0 ? (
+                  <div className="h-[300px] flex items-center justify-center text-sm text-muted-foreground">
+                    No stock-change history yet
+                  </div>
+                ) : (
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={inventoryTrendData}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -610,43 +699,25 @@ export const Logistics = () => {
                       }}
                     />
                     <Legend />
-                    <Line 
-                      type="monotone" 
-                      dataKey="USR001" 
-                      stroke="hsl(var(--primary))" 
-                      strokeWidth={2}
-                      dot={{ fill: 'hsl(var(--primary))' }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="USR002" 
-                      stroke="hsl(var(--secondary))" 
-                      strokeWidth={2}
-                      dot={{ fill: 'hsl(var(--secondary))' }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="USR003" 
-                      stroke="hsl(var(--accent))" 
-                      strokeWidth={2}
-                      dot={{ fill: 'hsl(var(--accent))' }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="USR004" 
-                      stroke="hsl(var(--info))" 
-                      strokeWidth={2}
-                      dot={{ fill: 'hsl(var(--info))' }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="USR005" 
-                      stroke="hsl(var(--success))" 
-                      strokeWidth={2}
-                      dot={{ fill: 'hsl(var(--success))' }}
-                    />
+                    {inventoryData.slice(0, 5).map((product, index) => {
+                      const prodKey = product.ProductID || product.product_id || `Prod ${index + 1}`;
+                      const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+                      const strokeColor = colors[index % colors.length];
+                      return (
+                        <Line 
+                          key={prodKey}
+                          type="monotone" 
+                          dataKey={prodKey} 
+                          name={prodKey}
+                          stroke={strokeColor} 
+                          strokeWidth={2}
+                          dot={{ fill: strokeColor }}
+                        />
+                      );
+                    })}
                   </LineChart>
                 </ResponsiveContainer>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -770,26 +841,32 @@ export const Logistics = () => {
               <TableRow>
                       <TableHead>shipment_id</TableHead>
                       <TableHead>order_id</TableHead>
-                      <TableHead>courier_id</TableHead>
+                      <TableHead>courier</TableHead>
                       <TableHead>tracking_number</TableHead>
                       <TableHead>status</TableHead>
-                      <TableHead>origin_address</TableHead>
+                      <TableHead>origin</TableHead>
                       <TableHead>destination</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-                    {shipments.map((shipment) => (
+                    {shipments.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center text-muted-foreground">
+                          No shipments yet — shipments appear here once orders are dispatched
+                        </TableCell>
+                      </TableRow>
+                    ) : shipments.map((shipment) => (
                       <TableRow key={shipment.shipment_id}>
                         <TableCell className="font-medium">{shipment.shipment_id}</TableCell>
                         <TableCell>{shipment.order_id}</TableCell>
-                        <TableCell>{shipment.courier_id}</TableCell>
+                        <TableCell>{shipment.courier_name || shipment.courier_id || '—'}</TableCell>
                         <TableCell>{shipment.tracking_number}</TableCell>
                   <TableCell>
                           <Badge variant={getStatusVariant(shipment.status)}>
                             {shipment.status}
                     </Badge>
                   </TableCell>
-                        <TableCell>{shipment.origin_address}</TableCell>
+                        <TableCell>{shipment.origin || shipment.origin_address || '—'}</TableCell>
                         <TableCell className="max-w-xs truncate">{shipment.destination}</TableCell>
                       </TableRow>
                     ))}

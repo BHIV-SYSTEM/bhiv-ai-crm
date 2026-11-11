@@ -1,7 +1,9 @@
 export const USER_ROLES = {
   ADMIN: 'admin',
   MANAGER: 'manager',
-  CUSTOMER: 'customer'
+  SELLER: 'seller',
+  CUSTOMER: 'customer',
+  FIELD_AGENT: 'field_agent'
 };
 
 export const ORDER_STATUS = {

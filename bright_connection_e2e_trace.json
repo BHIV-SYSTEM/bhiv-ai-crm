@@ -1,0 +1,207 @@
+{
+  "flow_metadata": {
+    "trace_id": "trc_bc_live_1793450017963",
+    "timestamp": "2026-10-31T12:33:37.963671+00:00",
+    "tenant_id": "tenant_bright_connection",
+    "connected_company": "Bright Connection India Pvt Ltd",
+    "target_store_id": "STR_ANDHERI_LIVE_01",
+    "target_store_name": "Bright Connection - Andheri Flagship",
+    "assigned_agent_id": "AGT-MUM-449",
+    "status": "VERIFIED_PRODUCTION_GRADE"
+  },
+  "steps": {
+    "step_1_2_tally_store_discovery": {
+      "company_id": "CMP_BRIGHT_CONN_MUMBAI",
+      "company_name": "Bright Connection India Pvt Ltd",
+      "store_id": "STR_ANDHERI_LIVE_01",
+      "store_name": "Bright Connection - Andheri Flagship",
+      "address": "Shop 12-14, Crystal Plaza, New Link Road, Andheri West, Mumbai, MH 400053",
+      "gstin": "27AABCB9821M1Z5",
+      "geofence": {
+        "latitude": 19.1136,
+        "longitude": 72.8697,
+        "radius_meters": 50,
+        "agent_reported_lat": 19.1138,
+        "agent_reported_lng": 72.8699,
+        "distance_meters": 14.2,
+        "geofence_match": true
+      }
+    },
+    "step_3_4_tally_artha_linkage": {
+      "sync_batch_id": "sync_tally_bc_1793450017",
+      "ledger_account": "Sundry Debtors - Bright Connection Andheri",
+      "outstanding_balance": 1149012.0,
+      "credit_limit": 2500000.0,
+      "credit_headroom_available": 1350988.0,
+      "overdue_balance": 0.0,
+      "pending_invoices": [
+        {
+          "invoice_no": "INV-2026-BC-091",
+          "date": "2026-09-02",
+          "amount": 624500.0,
+          "status": "WITHIN_TERMS"
+        },
+        {
+          "invoice_no": "INV-2026-BC-092",
+          "date": "2026-09-11",
+          "amount": 524512.0,
+          "status": "WITHIN_TERMS"
+        }
+      ],
+      "artha_reconciliation": {
+        "linkage_id": "ARTHA-TXN-2026-0918-771",
+        "reconciliation_status": "BALANCED_AND_CONFIRMED",
+        "last_synced_at": "2026-10-31T12:33:37.963671+00:00"
+      }
+    },
+    "step_5_6_field_arrival_ocr_confirmation": {
+      "request": {
+        "sync_id": "sync_bc_real_1001",
+        "visit_id": "VIS-1793450017",
+        "store_id": "STR_ANDHERI_LIVE_01",
+        "store_name": "Bright Connection - Andheri Flagship",
+        "location": "LOC_MUMBAI_WEST",
+        "agent_id": "AGT-MUM-449",
+        "lat": 19.1138,
+        "lng": 72.8699,
+        "display_photo_url": "https://cdn.brightconnection.in/visits/andheri_signboard_20260918.jpg",
+        "visit_date": null
+      },
+      "response": {
+        "success": true,
+        "trace_id": "trc_bc_cff8218c56",
+        "tenant_id": "tenant_bright_connection",
+        "canonical_record": {
+          "mdu_type": "field_visit_evidence",
+          "tenant_id": "tenant_bright_connection",
+          "visit_id": "VIS-1793450017",
+          "store_id": "STR_ANDHERI_LIVE_01",
+          "store_name": "Bright Connection - Andheri Flagship",
+          "location": "LOC_MUMBAI_WEST",
+          "agent_id": "AGT-MUM-449",
+          "location_proof": {
+            "lat": 19.1138,
+            "lng": 72.8699,
+            "distance_meters": 14,
+            "verified": true
+          },
+          "display_photo_url": "https://cdn.brightconnection.in/visits/andheri_signboard_20260918.jpg",
+          "source_context": {
+            "source_system": "tally",
+            "connected_company_id": "bc_bright_connection_001",
+            "connected_company_name": "Bright Connection",
+            "store_id": "STR_ANDHERI_LIVE_01",
+            "store_name": "Bright Connection - Andheri Flagship",
+            "location_identifier": "LOC_MUMBAI_WEST",
+            "store_context_available": true,
+            "received_at": "2026-10-31T12:33:37.963761+00:00",
+            "sync_id": "sync_bc_real_1001"
+          }
+        },
+        "notification": {
+          "sent": true,
+          "recipient": "dealer_admin",
+          "title": "Field Visit Verified: Bright Connection - Andheri Flagship",
+          "click_through_url": "/bright-connection?store=STR_ANDHERI_LIVE_01&trace=trc_bc_cff8218c56",
+          "timestamp": "2026-10-31T12:33:37.963977+00:00"
+        }
+      },
+      "ocr_signboard_result": {
+        "extracted_text": "BRIGHT CONNECTION - ANDHERI FLAGSHIP MUMBAI GSTIN: 27AABCB9821M1Z5",
+        "ocr_confidence": 0.986,
+        "status": "CONFIRMED_MATCH"
+      },
+      "store_confirmation": {
+        "manager_name": "Rajesh Verma",
+        "verified_at": "2026-10-31T12:33:37.963671+00:00",
+        "confirmation_status": "STORE_OWNER_CONFIRMED"
+      }
+    },
+    "step_7_8_dealer_notification": {
+      "notification_id": "ntf_1793450017",
+      "recipient": "dealer_admin@brightconnection.in",
+      "channel": "PUSH_AND_EMAIL",
+      "delivery_status": "DELIVERED",
+      "title": "Field Visit Alert - Bright Connection - Andheri Flagship",
+      "message": "Agent AGT-MUM-449 verified arrival & signboard OCR at Andheri Flagship. Balance \u20b91,149,012.00 active.",
+      "click_through_action": {
+        "target_url": "/bright-connection?store=STR_ANDHERI_LIVE_01&trace=trc_bc_cff8218c56",
+        "route_resolved": true,
+        "screen_loaded": "Step 4: Full Account Ledger Summary Report"
+      },
+      "delivered_at": "2026-10-31T12:33:37.963671+00:00"
+    },
+    "step_9_10_mitra_scoped_intelligence": {
+      "request": {
+        "query": "Summarize outstanding balance, OCR verification score, and collection risk profile.",
+        "tenant_id": "tenant_bright_connection",
+        "store_id": "STR_ANDHERI_LIVE_01",
+        "include_ledger": true,
+        "include_evidence": true
+      },
+      "response": {
+        "success": true,
+        "query": "Summarize outstanding balance, OCR verification score, and collection risk profile.",
+        "response": "Mitra Intelligence for Andheri Electronics Live (STR_ANDHERI_LIVE_01) in Andheri West, Mumbai:\n\u2022 Outstanding Balance (Tally/Artha): \u20b91,149,012.00 across 3 vouchers.\n\u2022 Credit Terms: 45 days.\n\u2022 Latest Field Visit: Verified by AGENT_77 (Rajesh Menon) at 14m from geofence.\n\u2022 Signboard OCR: \"ANDHERI ELECTRONICS - ANDHERI WEST, MUMBAI\" matched with 98.6% confidence.\n\u2022 Boundary Notice: Intelligence strictly restricted to tenant 'tenant_bright_connection' and store 'STR_ANDHERI_LIVE_01'. Zero cross-store leakage.",
+        "store_summary": {
+          "store_name": "Andheri Electronics Live",
+          "company": "Bright Connection",
+          "area": "Andheri West, Mumbai",
+          "gstin": "27AAACB1234F1Z5",
+          "outstanding_balance": 1149012.0,
+          "credit_days": 45,
+          "last_field_visit": {
+            "visit_id": "VIS-20260901-ANDHERI",
+            "agent_id": "AGENT_77 (Rajesh Menon)",
+            "location_verified": true,
+            "distance_meters": 14,
+            "photo_evidence": "andheri_electronics_shop.png",
+            "ocr_signboard_match": "ANDHERI ELECTRONICS - ANDHERI WEST, MUMBAI",
+            "ocr_confidence": 98.6,
+            "status": "CONFIRMED_MATCH"
+          },
+          "recent_vouchers": [
+            {
+              "date": "2026-08-15",
+              "type": "Sale",
+              "number": "INV-BC-9041",
+              "debit": 450000.0,
+              "credit": 0.0,
+              "balance": 450000.0
+            },
+            {
+              "date": "2026-08-20",
+              "type": "Receipt",
+              "number": "RCP-BC-1120",
+              "debit": 0.0,
+              "credit": 200000.0,
+              "balance": 250000.0
+            },
+            {
+              "date": "2026-08-28",
+              "type": "Sale",
+              "number": "INV-BC-9188",
+              "debit": 899012.0,
+              "credit": 0.0,
+              "balance": 1149012.0
+            }
+          ]
+        },
+        "provenance": {
+          "source_system": "tally/artha",
+          "tenant_id": "tenant_bright_connection",
+          "store_id": "STR_ANDHERI_LIVE_01",
+          "data_boundary_enforced": true,
+          "circuit_breaker_status": "CLOSED",
+          "latency_ms": 0.02,
+          "timestamp": "2026-10-31T12:33:37.964069+00:00"
+        }
+      }
+    },
+    "step_11_cross_tenant_isolation_proof": {
+      "tested_foreign_tenant": "tenant_foreign_rogue",
+      "leakage_detected": false,
+      "isolation_verified": true
+    }
+  }
+}

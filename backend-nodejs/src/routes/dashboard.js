@@ -3,14 +3,17 @@ import User from '../models/User.js';
 import Product from '../models/Product.js';
 import Order from '../models/Order.js';
 import RestockRequest from '../models/RestockRequest.js';
+import FieldAgentTask from '../models/FieldAgentTask.js';
 import { protect } from '../middleware/auth.js';
-import { isAdminOrManager } from '../middleware/authorize.js';
+import { isAdminOrManager, denyPortalRoles } from '../middleware/authorize.js';
 import { HTTP_STATUS, ORDER_STATUS, USER_ROLES, RESTOCK_STATUS } from '../config/constants.js';
 
 const router = express.Router();
 
 // All routes require authentication
 router.use(protect);
+// Staff-only: company-wide stats/activity/charts are not customer data
+router.use(denyPortalRoles);
 
 // @route   GET /api/dashboard/stats
 // @desc    Get dashboard statistics
@@ -198,10 +201,83 @@ router.get('/alerts', isAdminOrManager, async (req, res) => {
       });
     }
 
+    // Field Agent Proof & Arrival Alerts for Manager/Admin operational review
+    const pendingTasks = await FieldAgentTask.find({
+      $or: [
+        { state: { $in: ['PROOF_SUBMITTED', 'REVIEW_REQUIRED'] } },
+        { 'proof.reviewState': 'REVIEW_REQUIRED' },
+        { state: 'ARRIVED' }
+      ]
+    })
+      .populate('assignedAgentId', 'name email')
+      .sort({ updatedAt: -1 })
+      .limit(30);
+
+    pendingTasks.forEach(task => {
+      const isProof = task.state === 'PROOF_SUBMITTED' || task.proof?.reviewState === 'REVIEW_REQUIRED';
+      const agentName = task.assignedAgentId?.name || 'Field Agent';
+
+      if (isProof) {
+        alerts.push({
+          id: `fa_proof_${task.taskId}`,
+          type: 'field_proof',
+          severity: 'critical',
+          title: `Storefront Proof Submitted: ${task.store?.name || 'Retail Store'}`,
+          message: `${agentName} uploaded storefront signboard photo proof for ${task.store?.name || task.taskId}. Review and approval required.`,
+          taskId: task.taskId,
+          storeId: task.store?.storeId,
+          storeName: task.store?.name,
+          targetUrl: `/field-reviews?taskId=${task.taskId}`,
+          timestamp: task.proof?.submittedAt || task.updatedAt || new Date()
+        });
+      } else if (task.state === 'ARRIVED') {
+        alerts.push({
+          id: `fa_arrived_${task.taskId}`,
+          type: 'field_arrived',
+          severity: 'warning',
+          title: `Field Agent Arrived: ${task.store?.name || 'Retail Store'}`,
+          message: `${agentName} reached 50m geofence for ${task.store?.name || task.taskId}.`,
+          taskId: task.taskId,
+          storeId: task.store?.storeId,
+          storeName: task.store?.name,
+          targetUrl: `/field-reviews?taskId=${task.taskId}`,
+          timestamp: task.arrivalEvidence?.evaluatedAt || task.updatedAt || new Date()
+        });
+      }
+    });
+
+    // Recent Field Task Determinations (Verified or Rejected in last 24h)
+    const recentResolved = await FieldAgentTask.find({
+      state: { $in: ['VERIFIED', 'REJECTED'] },
+      updatedAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+    })
+      .populate('assignedAgentId', 'name email')
+      .sort({ updatedAt: -1 })
+      .limit(10);
+
+    recentResolved.forEach(task => {
+      const isVerified = task.state === 'VERIFIED';
+      alerts.push({
+        id: `fa_resolved_${task.taskId}`,
+        type: isVerified ? 'field_verified' : 'field_rejected',
+        severity: isVerified ? 'info' : 'warning',
+        title: `Storefront Proof ${isVerified ? 'Verified ✓' : 'Rejected ✗'}: ${task.store?.name}`,
+        message: `Task ${task.taskId} for ${task.store?.name} was marked ${task.state}.`,
+        taskId: task.taskId,
+        storeId: task.store?.storeId,
+        storeName: task.store?.name,
+        targetUrl: `/field-reviews?taskId=${task.taskId}`,
+        timestamp: task.updatedAt || new Date()
+      });
+    });
+
     // Sort by severity and timestamp
     alerts.sort((a, b) => {
       const severityOrder = { critical: 0, warning: 1, info: 2 };
-      return severityOrder[a.severity] - severityOrder[b.severity];
+      const sevA = severityOrder[a.severity] ?? 3;
+      const sevB = severityOrder[b.severity] ?? 3;
+      if (sevA !== sevB) return sevA - sevB;
+      return new Date(b.timestamp) - new Date(a.timestamp);
     });
 
     res.json({
@@ -213,6 +289,49 @@ router.get('/alerts', isAdminOrManager, async (req, res) => {
       success: false,
       message: error.message
     });
+  }
+});
+
+// @route   GET /api/dashboard/charts
+// @desc    Get dashboard charts data
+// @access  Private
+router.get('/charts', async (req, res) => {
+  try {
+    const products = await Product.find({ isActive: true }).limit(10);
+    const categoryCounts = {};
+    products.forEach(p => {
+      const cat = p.category || 'General';
+      // `?? 0`: a product with 0 (or missing) stock contributes 0 — the old
+      // `|| 10` silently inflated every empty product by 10 units
+      categoryCounts[cat] = (categoryCounts[cat] || 0) + (p.stockQuantity ?? 0);
+    });
+
+    // Honest empty arrays when there is no category data — the old fallback
+    // fabricated ['Tools','Hardware',…] with [150, 220, 180, 95] stock numbers.
+    const labels = Object.keys(categoryCounts);
+    const currentStock = Object.values(categoryCounts);
+
+    res.json({
+      success: true,
+      data: {
+        orderStatus: {
+          PLACED: await Order.countDocuments({ status: ORDER_STATUS.PLACED }),
+          DISPATCHED: await Order.countDocuments({ status: ORDER_STATUS.DISPATCHED }),
+          DELIVERED: await Order.countDocuments({ status: ORDER_STATUS.DELIVERED }),
+          // No CANCELLED status exists in ORDER_STATUS — count the literal
+          // value so the query matches nothing instead of silently counting
+          // every order (undefined would be stripped from the filter).
+          CANCELLED: await Order.countDocuments({ status: 'CANCELLED' })
+        },
+        inventory: {
+          labels,
+          currentStock,
+          minThreshold: labels.map(() => 20)
+        }
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 

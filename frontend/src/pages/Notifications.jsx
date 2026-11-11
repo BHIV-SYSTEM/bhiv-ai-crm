@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Bell, AlertTriangle, CheckCircle, Info, XCircle,
   Settings, Filter, CheckCheck, RefreshCw
@@ -11,8 +12,12 @@ import Alert from '../components/common/ui/Alert';
 import { LoadingSpinner } from '../components/common/ui/Spinner';
 import { formatRelativeTime } from '@/utils/dateUtils';
 import { dashboardAPI } from '../services/api/dashboardAPI';
+import { notificationAPI } from '../services/api/notificationAPI';
+
+import { deviceNotificationService } from '@/services/deviceNotificationService';
 
 export const Notifications = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [notifications, setNotifications] = useState([]);
@@ -24,48 +29,99 @@ export const Notifications = () => {
     critical: 0,
   });
 
-  // Fetch alerts from backend
+  // Fetch alerts from backend & local storage
   const fetchNotifications = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await dashboardAPI.getAlerts();
-      const alerts = response.data?.alerts || response.data || [];
+      let alerts = [];
+      try {
+        const response = await dashboardAPI.getAlerts();
+        const rawAlerts = response.data?.data?.alerts || response.data?.alerts || (Array.isArray(response.data) ? response.data : []);
+        alerts = Array.isArray(rawAlerts) ? rawAlerts : [];
+      } catch (err) {
+        console.warn('Backend API alerts unavailable, loading local alerts:', err);
+      }
 
-      // Transform alerts to notifications format
-      const formattedNotifications = alerts.map((alert, index) => ({
-        id: alert.id || index + 1,
-        type: alert.severity === 'critical' ? 'error' :
-              alert.severity === 'high' ? 'warning' :
-              alert.severity === 'medium' ? 'info' : 'success',
-        title: alert.title || alert.message || 'Alert',
-        message: alert.message || alert.description || '',
-        timestamp: alert.timestamp ? new Date(alert.timestamp) : new Date(),
-        read: alert.read || false,
-        severity: alert.severity || 'medium'
+      const readIds = new Set(JSON.parse(localStorage.getItem('setu_read_alert_ids') || '[]'));
+
+      // Transform backend alerts to notifications format
+      const formattedApiAlerts = alerts.map((alert, index) => {
+        const id = alert.id || `api_alert_${index + 1}`;
+        const isRead = alert.read || readIds.has(id);
+        return {
+          id: id,
+          type: alert.severity === 'critical' ? 'error' :
+                alert.severity === 'high' ? 'warning' :
+                alert.severity === 'medium' ? 'info' : 'success',
+          title: alert.title || alert.message || 'Alert',
+          message: alert.message || alert.description || '',
+          timestamp: alert.timestamp ? new Date(alert.timestamp) : new Date(),
+          read: isRead,
+          severity: alert.severity || 'medium',
+          taskId: alert.taskId || null,
+          storeName: alert.storeName || null,
+          targetUrl: alert.targetUrl || (alert.taskId ? `/field-reviews?taskId=${alert.taskId}` : null),
+        };
+      });
+
+      // Load custom notifications from localStorage (e.g. OCR Storefront Verifications)
+      const customAlerts = JSON.parse(localStorage.getItem('setu_custom_notifications') || '[]');
+      const formattedCustomAlerts = customAlerts.map((n) => ({
+        ...n,
+        read: n.read || readIds.has(n.id),
+        timestamp: new Date(n.timestamp),
       }));
 
-      setNotifications(formattedNotifications);
+      // Per-user operational notifications from the backend (order shipped,
+      // parcel assigned to a seller, etc). These carry a server-side read
+      // flag; sellers in particular receive their "new work" assignments here.
+      let personalNotifications = [];
+      try {
+        const res = await notificationAPI.list({ limit: 50 });
+        const rows = res.data?.data || [];
+        personalNotifications = (Array.isArray(rows) ? rows : []).map((n) => ({
+          id: n._id || n.id,
+          type: n.level === 'critical' || n.level === 'error' ? 'error' :
+                n.level === 'warning' ? 'warning' : 'info',
+          title: n.title || 'Notification',
+          message: n.body || n.message || '',
+          timestamp: n.createdAt ? new Date(n.createdAt) : new Date(),
+          read: !!n.read,
+          severity: n.level || 'info',
+        }));
+      } catch (err) {
+        console.warn('Per-user notifications unavailable:', err);
+      }
+
+      const allNotifications = [...personalNotifications, ...formattedCustomAlerts, ...formattedApiAlerts];
+
+      setNotifications(allNotifications);
 
       // Calculate metrics
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const todayAlerts = formattedNotifications.filter(n => n.timestamp >= today);
-      const unreadAlerts = formattedNotifications.filter(n => !n.read);
-      const criticalAlerts = formattedNotifications.filter(n => n.severity === 'critical');
+      const todayAlerts = allNotifications.filter(n => n.timestamp >= today);
+      const unreadAlerts = allNotifications.filter(n => !n.read);
+      const criticalAlerts = allNotifications.filter(n => n.severity === 'critical');
+
+      const unreadCount = unreadAlerts.length;
+      localStorage.setItem('setu_unread_alerts', String(unreadCount));
 
       setMetrics({
-        total: formattedNotifications.length,
-        unread: unreadAlerts.length,
+        total: allNotifications.length,
+        unread: unreadCount,
         today: todayAlerts.length,
         critical: criticalAlerts.length,
       });
 
+      // Automatically sync unread alerts with hardware device push notification
+      deviceNotificationService.syncAndPushNewNotifications(allNotifications);
+
     } catch (err) {
       console.error('Error fetching notifications:', err);
       setError(err.response?.data?.detail || err.message || 'Failed to load notifications');
-      // Fallback to empty array
       setNotifications([]);
     } finally {
       setLoading(false);
@@ -74,13 +130,18 @@ export const Notifications = () => {
 
   useEffect(() => {
     fetchNotifications();
+    const handleUpdate = () => fetchNotifications();
+    window.addEventListener('setu_alerts_updated', handleUpdate);
     
     // Auto-refresh every 30 seconds
     const interval = setInterval(() => {
       fetchNotifications();
     }, 30000);
 
-    return () => clearInterval(interval);
+    return () => {
+      window.removeEventListener('setu_alerts_updated', handleUpdate);
+      clearInterval(interval);
+    };
   }, [fetchNotifications]);
 
   const getIcon = (type) => {
@@ -103,6 +164,78 @@ export const Notifications = () => {
     return variants[type] || 'default';
   };
 
+  const handleMarkAllRead = () => {
+    const allIds = notifications.map(n => n.id);
+    localStorage.setItem('setu_read_alert_ids', JSON.stringify(allIds));
+
+    const updated = notifications.map(n => ({ ...n, read: true }));
+    setNotifications(updated);
+    setMetrics(prev => ({
+      ...prev,
+      unread: 0
+    }));
+
+    // Update custom notifications in localStorage
+    const customAlerts = JSON.parse(localStorage.getItem('setu_custom_notifications') || '[]');
+    const readCustom = customAlerts.map(n => ({ ...n, read: true }));
+    localStorage.setItem('setu_custom_notifications', JSON.stringify(readCustom));
+    localStorage.setItem('setu_unread_alerts', '0');
+
+    window.dispatchEvent(new Event('setu_alerts_updated'));
+  };
+
+  const handleTestDeviceNotification = async () => {
+    await deviceNotificationService.requestPermission();
+    deviceNotificationService.sendTestNotification();
+  };
+
+  const handleNotificationClick = (notification) => {
+    // 1. Persistently mark notification as read
+    const readIds = new Set(JSON.parse(localStorage.getItem('setu_read_alert_ids') || '[]'));
+    readIds.add(notification.id);
+    localStorage.setItem('setu_read_alert_ids', JSON.stringify(Array.from(readIds)));
+
+    const updated = notifications.map(n => n.id === notification.id ? { ...n, read: true } : n);
+    setNotifications(updated);
+    
+    const unreadCount = updated.filter(n => !n.read).length;
+    setMetrics(prev => ({
+      ...prev,
+      unread: unreadCount
+    }));
+    localStorage.setItem('setu_unread_alerts', String(unreadCount));
+
+    window.dispatchEvent(new Event('setu_alerts_updated'));
+
+    // 2. Intelligently route to corresponding feature page
+    const titleLower = (notification.title || '').toLowerCase();
+    const msgLower = (notification.message || '').toLowerCase();
+
+    if (notification.targetUrl) {
+      navigate(notification.targetUrl);
+    } else if (notification.taskId) {
+      navigate(`/field-reviews?taskId=${encodeURIComponent(notification.taskId)}`);
+    } else if (
+      titleLower.includes('proof') ||
+      titleLower.includes('storefront') ||
+      titleLower.includes('signboard') ||
+      titleLower.includes('arrival') ||
+      msgLower.includes('storefront') ||
+      msgLower.includes('signboard') ||
+      msgLower.includes('field agent')
+    ) {
+      navigate('/field-reviews');
+    } else if (titleLower.includes('ocr') || msgLower.includes('ocr') || msgLower.includes('bright connection') || msgLower.includes('raj prajapati') || msgLower.includes('rajesh')) {
+      navigate('/bright-connection');
+    } else if (titleLower.includes('order') || msgLower.includes('order') || msgLower.includes('dispatched') || msgLower.includes('waiting')) {
+      navigate('/logistics');
+    } else if (titleLower.includes('stock') || titleLower.includes('product') || msgLower.includes('stock') || msgLower.includes('restock')) {
+      navigate('/inventory');
+    } else {
+      navigate('/field-reviews');
+    }
+  };
+
   const filteredNotifications = filter === 'all' 
     ? notifications 
     : filter === 'unread' 
@@ -120,23 +253,23 @@ export const Notifications = () => {
         <div>
           <h1 className="text-3xl font-heading font-bold tracking-tight">Alert Management</h1>
           <p className="text-muted-foreground mt-1">
-            View and manage system notifications and alerts
+            View and manage system notifications and hardware device push alerts
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={handleTestDeviceNotification}>
+            <Bell className="h-4 w-4 mr-2 text-primary animate-pulse" />
+            Test Device Push
+          </Button>
           <Button variant="outline" size="sm" onClick={fetchNotifications}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          <Button variant="outline">
-            <Filter className="h-4 w-4 mr-2" />
-            Filter
-          </Button>
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleMarkAllRead}>
             <CheckCheck className="h-4 w-4 mr-2" />
             Mark All Read
           </Button>
-          <Button>
+          <Button onClick={() => navigate('/settings')}>
             <Settings className="h-4 w-4 mr-2" />
             Settings
           </Button>
@@ -222,10 +355,11 @@ export const Notifications = () => {
               return (
                 <div
                   key={notification.id}
-                  className={`flex items-start gap-4 p-4 rounded-lg border transition-all ${
+                  onClick={() => handleNotificationClick(notification)}
+                  className={`flex items-start gap-4 p-4 rounded-lg border transition-all cursor-pointer hover:border-primary/50 hover:shadow-md ${
                     notification.read
-                      ? 'bg-muted/30 border-border'
-                      : 'bg-background border-primary/20'
+                      ? 'bg-muted/30 border-border opacity-75'
+                      : 'bg-background border-primary/30 shadow-sm'
                   }`}
                 >
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
@@ -249,9 +383,16 @@ export const Notifications = () => {
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground mb-2">{notification.message}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatRelativeTime(notification.timestamp)}
-                    </p>
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/40 text-xs">
+                      <span className="text-muted-foreground">
+                        {formatRelativeTime(notification.timestamp)}
+                      </span>
+                      <span className="font-bold text-primary hover:underline flex items-center gap-1">
+                        {notification.taskId || notification.targetUrl?.includes('/field-reviews')
+                          ? 'Review Store Proof & Accept →'
+                          : 'View Page Details →'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               );
