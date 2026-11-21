@@ -17,12 +17,16 @@ const Login = () => {
   const [searchParams] = useSearchParams();
   const sellerMode = searchParams.get('portal') === 'seller';
   
+  const rememberedEmail = typeof window !== 'undefined'
+    ? localStorage.getItem('setu_remembered_email') || ''
+    : '';
+
   const [formData, setFormData] = useState({
-    email: '',
+    email: rememberedEmail,
     password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [rememberMe, setRememberMe] = useState(Boolean(rememberedEmail));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showSplash, setShowSplash] = useState(true);
@@ -49,7 +53,7 @@ const Login = () => {
     setError('');
 
     try {
-      const result = await login(formData.email, formData.password);
+      const result = await login(formData.email, formData.password, rememberMe);
       const role = result?.user?.role;
       // One login, three homes: customer -> shop, seller -> seller portal,
       // staff/admin -> the SETU dashboard (owner of every product).
@@ -130,7 +134,6 @@ const Login = () => {
 
         {error && (
           <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
             <span>{error}</span>
           </Alert>
         )}
@@ -184,19 +187,25 @@ const Login = () => {
           </div>
 
           <div className="flex items-center justify-between">
-            <div className="flex items-center">
+            <label htmlFor="remember-me" className="inline-flex items-center gap-2 cursor-pointer select-none">
               <input
                 id="remember-me"
                 name="remember-me"
                 type="checkbox"
                 checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setRememberMe(checked);
+                  if (!checked) {
+                    localStorage.removeItem('setu_remembered_email');
+                  }
+                }}
+                className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 accent-blue-600 cursor-pointer"
               />
-              <label htmlFor="remember-me" className="ml-2 block text-sm">
+              <span className="text-sm text-slate-700 dark:text-slate-300">
                 Remember me
-              </label>
-            </div>
+              </span>
+            </label>
 
             <Link
               to="/auth/forgot-password"

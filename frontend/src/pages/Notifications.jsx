@@ -48,7 +48,12 @@ export const Notifications = () => {
 
       // Transform backend alerts to notifications format
       const formattedApiAlerts = alerts.map((alert, index) => {
-        const id = alert.id || `api_alert_${index + 1}`;
+        const id =
+          alert.id ||
+          (alert.productId ? `low_stock_${alert.productId}` : null) ||
+          (alert.requestId ? `restock_${alert.requestId}` : null) ||
+          (alert.type === 'pending_orders' ? `pending_orders_${alert.count ?? index}` : null) ||
+          `api_alert_${index + 1}`;
         const isRead = alert.read || readIds.has(id);
         return {
           id: id,
@@ -83,6 +88,7 @@ export const Notifications = () => {
         const rows = res.data?.data || [];
         personalNotifications = (Array.isArray(rows) ? rows : []).map((n) => ({
           id: n._id || n.id,
+          _isPersonal: true,
           type: n.level === 'critical' || n.level === 'error' ? 'error' :
                 n.level === 'warning' ? 'warning' : 'info',
           title: n.title || 'Notification',
@@ -164,9 +170,11 @@ export const Notifications = () => {
     return variants[type] || 'default';
   };
 
-  const handleMarkAllRead = () => {
+  const handleMarkAllRead = async () => {
     const allIds = notifications.map(n => n.id);
-    localStorage.setItem('setu_read_alert_ids', JSON.stringify(allIds));
+    const existing = new Set(JSON.parse(localStorage.getItem('setu_read_alert_ids') || '[]'));
+    allIds.forEach(id => existing.add(id));
+    localStorage.setItem('setu_read_alert_ids', JSON.stringify(Array.from(existing)));
 
     const updated = notifications.map(n => ({ ...n, read: true }));
     setNotifications(updated);
@@ -181,6 +189,12 @@ export const Notifications = () => {
     localStorage.setItem('setu_custom_notifications', JSON.stringify(readCustom));
     localStorage.setItem('setu_unread_alerts', '0');
 
+    try {
+      await notificationAPI.markAllRead();
+    } catch {
+      // Best-effort if backend notifications unavailable
+    }
+
     window.dispatchEvent(new Event('setu_alerts_updated'));
   };
 
@@ -189,11 +203,15 @@ export const Notifications = () => {
     deviceNotificationService.sendTestNotification();
   };
 
-  const handleNotificationClick = (notification) => {
+  const handleNotificationClick = async (notification) => {
     // 1. Persistently mark notification as read
     const readIds = new Set(JSON.parse(localStorage.getItem('setu_read_alert_ids') || '[]'));
     readIds.add(notification.id);
     localStorage.setItem('setu_read_alert_ids', JSON.stringify(Array.from(readIds)));
+
+    if (notification._isPersonal && notification.id) {
+      notificationAPI.markRead(notification.id).catch(() => {});
+    }
 
     const updated = notifications.map(n => n.id === notification.id ? { ...n, read: true } : n);
     setNotifications(updated);

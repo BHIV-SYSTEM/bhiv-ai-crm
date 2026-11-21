@@ -60,7 +60,8 @@ app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, ngrok-skip-browser-warning, Cache-Control');
+    const reqHeaders = req.headers['access-control-request-headers'];
+    res.setHeader('Access-Control-Allow-Headers', reqHeaders || 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, Pragma, Expires, ngrok-skip-browser-warning');
   }
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
@@ -82,7 +83,7 @@ const corsOptions = {
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'ngrok-skip-browser-warning', 'Cache-Control'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'Cache-Control', 'Pragma', 'Expires', 'ngrok-skip-browser-warning'],
   exposedHeaders: ['Content-Range', 'X-Content-Range'],
   optionsSuccessStatus: 204,
 };
@@ -98,13 +99,17 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-// Rate limiting (relaxed for development)
+// Rate limiting (skipped in local development so HMR/polling never locks out localhost)
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // Allow generous requests for local dev
-  message: 'Too many requests from this IP, please try again later.',
+  max: 1000,
+  message: {
+    success: false,
+    message: 'Too many requests from this IP, please try again later.',
+  },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => (process.env.NODE_ENV || 'development') !== 'production',
 });
 app.use('/api/', limiter);
 

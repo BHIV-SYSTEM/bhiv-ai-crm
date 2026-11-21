@@ -14,8 +14,7 @@ export const productAPI = {
         ...(lowStock && { lowStock }),
         ...(isActive !== undefined && { isActive }),
         ...(bustCache && { _t: Date.now() }) // Cache buster
-      },
-      headers: bustCache ? { 'Cache-Control': 'no-cache' } : {}
+      }
     });
   },
   
@@ -29,8 +28,7 @@ export const productAPI = {
   
   // Product Stats
   getStats: (bustCache = false) => apiClient.get('/api/products/stats/summary', {
-    params: bustCache ? { _t: Date.now() } : {},
-    headers: bustCache ? { 'Cache-Control': 'no-cache' } : {}
+    params: bustCache ? { _t: Date.now() } : {}
   }),
   
   // Categories (extract from products)

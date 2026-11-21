@@ -8,23 +8,25 @@ import {
   AlertCircle, 
   UserCheck, 
   Box, 
+  Boxes,
   Truck, 
   Briefcase, 
   Mail, 
   Zap, 
   Workflow,
   RefreshCw,
-  Store
+  Store,
+  CheckCircle2
 } from 'lucide-react';
 import MetricCard from '../components/common/charts/MetricCard';
 import LineChart from '../components/common/charts/LineChart';
 import BarChart from '../components/common/charts/BarChart';
 import Card, { CardHeader, CardTitle, CardContent } from '../components/common/ui/Card';
 import Badge from '../components/common/ui/Badge';
-import { LoadingSpinner } from '../components/common/ui/Spinner';
 import Button from '../components/common/ui/Button';
 import Alert from '../components/common/ui/Alert';
 import { formatRelativeTime } from '@/utils/dateUtils';
+import { cn } from '@/utils/helpers';
 import { dashboardAPI } from '../services/api/dashboardAPI';
 import { productAPI } from '../services/api/productAPI';
 import { rlAPI } from '../services/api/rlAPI';
@@ -34,9 +36,9 @@ import { useNavigate } from 'react-router-dom';
 
 export const Dashboard = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
-  const [currentTime, setCurrentTime] = useState(new Date());
   const [metrics, setMetrics] = useState({
     totalOrders: 0,
     activeAccounts: 0,
@@ -54,76 +56,78 @@ export const Dashboard = () => {
   const [recentActivity, setRecentActivity] = useState([]);
   const [systemStatus, setSystemStatus] = useState([]);
 
-  // Fetch all dashboard data
+  // Fetch all dashboard data in parallel for fast loading
   const fetchDashboardData = useCallback(async () => {
     try {
-      setLoading(true);
+      setRefreshing(true);
       setError(null);
 
-      // Dashboard stats (MongoDB backend)
-      const statsResponse = await dashboardAPI.getDashboardStats();
-      const stats = statsResponse.data?.data || {};
+      const [
+        statsResult,
+        productResult,
+        suppliersResult,
+        activityResult,
+        rlResult,
+        aiResult,
+        emsResult,
+      ] = await Promise.allSettled([
+        dashboardAPI.getDashboardStats(),
+        productAPI.getStats(true),
+        dashboardAPI.getSuppliers(),
+        dashboardAPI.getRecentActivity({ limit: 10 }),
+        rlAPI.getAnalytics(),
+        aiDecisionsAPI.getDecisionAnalytics(),
+        emsAPI.getEmailStats(),
+      ]);
 
-      // Product summary stats
-      let productStats = {
-        totalProducts: 0,
-        activeProducts: 0,
-        lowStockProducts: 0,
-        outOfStock: 0,
-      };
-      try {
-        const productResponse = await productAPI.getStats(true);
-        productStats = productResponse.data?.data || productStats;
-      } catch (err) {
-        console.warn('Failed to fetch product stats:', err);
+      if (statsResult.status === 'rejected') {
+        throw statsResult.reason;
       }
 
-      // Suppliers count
-      let suppliersCount = 0;
-      try {
-        const suppliersResponse = await dashboardAPI.getSuppliers();
-        suppliersCount = suppliersResponse.data?.data?.count || suppliersResponse.data?.data?.suppliers?.length || 0;
-      } catch (err) {
-        console.warn('Failed to fetch suppliers:', err);
-      }
+      const stats = statsResult.value?.data?.data || {};
+      const productStats =
+        productResult.status === 'fulfilled'
+          ? (productResult.value?.data?.data || {
+              totalProducts: 0,
+              activeProducts: 0,
+              lowStockProducts: 0,
+              outOfStock: 0,
+            })
+          : { totalProducts: 0, activeProducts: 0, lowStockProducts: 0, outOfStock: 0 };
 
-      // Recent activity (orders + low stock)
-      let recentOrders = [];
-      let lowStockProducts = [];
-      try {
-        const activityResponse = await dashboardAPI.getRecentActivity({ limit: 10 });
-        recentOrders = activityResponse.data?.data?.recentOrders || [];
-        lowStockProducts = activityResponse.data?.data?.lowStockProducts || [];
-      } catch (err) {
-        console.warn('Failed to fetch recent activity:', err);
-      }
+      const suppliersCount =
+        suppliersResult.status === 'fulfilled'
+          ? (suppliersResult.value?.data?.data?.count ||
+              suppliersResult.value?.data?.data?.suppliers?.length ||
+              0)
+          : 0;
 
-      // AI & Automation stats — real API values only. If an endpoint is
-      // unreachable the card honestly shows 0 instead of a fabricated number
-      // (the old code seeded 526/148/48/12 as "fallbacks").
-      let rlActionsCount = 0;
-      let aiWorkflowsCount = 0;
-      let emailsCount = 0;
+      const recentOrders =
+        activityResult.status === 'fulfilled'
+          ? (activityResult.value?.data?.data?.recentOrders || [])
+          : [];
+      const lowStockProducts =
+        activityResult.status === 'fulfilled'
+          ? (activityResult.value?.data?.data?.lowStockProducts || [])
+          : [];
 
-      try {
-        const rlRes = await rlAPI.getAnalytics();
-        const rlData = rlRes.data?.data || rlRes.data || {};
-        rlActionsCount = rlData.totalActions ?? rlData.total_actions ?? 0;
-      } catch (e) {}
+      const rlData =
+        rlResult.status === 'fulfilled'
+          ? (rlResult.value?.data?.data || rlResult.value?.data || {})
+          : {};
+      const rlActionsCount = rlData.totalActions ?? rlData.total_actions ?? 0;
 
-      try {
-        const aiRes = await aiDecisionsAPI.getDecisionAnalytics();
-        const aiData = aiRes.data?.data || aiRes.data || {};
-        aiWorkflowsCount = aiData.totalDecisions ?? aiData.total_decisions ?? 0;
-      } catch (e) {}
+      const aiData =
+        aiResult.status === 'fulfilled'
+          ? (aiResult.value?.data?.data || aiResult.value?.data || {})
+          : {};
+      const aiWorkflowsCount = aiData.totalDecisions ?? aiData.total_decisions ?? 0;
 
-      try {
-        const emsRes = await emsAPI.getEmailStats();
-        const emsData = emsRes.data?.data || emsRes.data || {};
-        // `??` not `||`: a real value of 0 emails today must show 0, not the
-        // old hard-coded 48.
-        emailsCount = emsData.emails_sent_today ?? emsData.today ?? 0;
-      } catch (e) {}
+      const emsData =
+        emsResult.status === 'fulfilled'
+          ? (emsResult.value?.data?.data || emsResult.value?.data || {})
+          : {};
+      const emailsCount = emsData.emails_sent_today ?? emsData.today ?? 0;
 
       const totalOrders = stats.orders?.total ?? 0;
       const activeAccounts = stats.users?.activeCustomers ?? 0;
@@ -234,49 +238,80 @@ export const Dashboard = () => {
       console.error('Error fetching dashboard data:', err);
       setError(err.response?.data?.detail || err.message || 'Failed to load dashboard data');
     } finally {
-      setLoading(false);
+      setInitialLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
   useEffect(() => {
     fetchDashboardData();
 
-    // Update time every second
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-
-    // Refresh data every 30 seconds
+    // Refresh data every 30 seconds in the background without wiping existing UI
     const refreshTimer = setInterval(() => {
       fetchDashboardData();
     }, 30000);
 
     return () => {
-      clearInterval(timer);
       clearInterval(refreshTimer);
     };
   }, [fetchDashboardData]);
 
-  if (loading) {
-    return <LoadingSpinner text="Loading dashboard..." />;
+  if (initialLoading) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-200/80 dark:border-slate-800">
+          <div className="space-y-2">
+            <div className="h-7 w-56 rounded-md bg-slate-200 dark:bg-slate-800 animate-pulse" />
+            <div className="h-3.5 w-80 rounded-md bg-slate-200/70 dark:bg-slate-800/70 animate-pulse" />
+          </div>
+          <div className="h-8 w-28 rounded-lg bg-slate-200 dark:bg-slate-800 animate-pulse" />
+        </div>
+        <div className="h-20 rounded-xl bg-slate-200/70 dark:bg-slate-800/70 animate-pulse" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="h-28 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 p-5 animate-pulse">
+              <div className="h-3 w-24 rounded bg-slate-200 dark:bg-slate-800" />
+              <div className="h-7 w-16 rounded bg-slate-200 dark:bg-slate-800 mt-4" />
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="h-72 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 animate-pulse" />
+          <div className="h-72 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 animate-pulse" />
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in select-none">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
-      <div>
-        <h1 className="text-4xl font-heading font-bold tracking-tight bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-          Dashboard Overview
-        </h1>
-        <p className="text-muted-foreground mt-2 text-lg">
-          Welcome back! Here's what's happening with your business today.
-        </p>
-      </div>
-        <Button variant="outline" size="sm" onClick={fetchDashboardData}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-3 border-b border-slate-200/80 dark:border-slate-800">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+              Executive Dashboard
+            </h1>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/50">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              Live Telemetry
+            </span>
+          </div>
+          <p className="text-slate-500 dark:text-slate-400 mt-1 text-xs">
+            Operational KPIs, logistics fulfillment, and customer lifecycle activity.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={fetchDashboardData} 
+            className="border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-medium"
+          >
+            <RefreshCw className={cn("h-3.5 w-3.5 mr-1.5", refreshing && "animate-spin")} />
+            Sync Records
+          </Button>
+        </div>
       </div>
 
       {/* Error Alert */}
@@ -288,37 +323,36 @@ export const Dashboard = () => {
       )}
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Customer Portal Quick Access - Full Width */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        {/* Customer Portal Quick Access - Enterprise Clean Card */}
         <div className="col-span-full">
-          <Card 
-            className="bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 border-2 border-primary/20 hover:border-primary/40 transition-all cursor-pointer" 
+          <div 
+            className="group relative overflow-hidden bg-gradient-to-r from-blue-50/90 via-indigo-50/50 to-slate-50 dark:from-blue-950/50 dark:via-indigo-950/30 dark:to-slate-900 border border-blue-200 dark:border-blue-500/25 hover:border-blue-400 dark:hover:border-blue-500/50 rounded-xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 select-none backdrop-blur-sm"
             onClick={() => navigate('/customer-portal')}
           >
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="p-4 bg-primary/20 rounded-xl">
-                    <Store className="w-8 h-8 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-bold">Customer Portal</h3>
-                    <p className="text-muted-foreground">Browse products, place orders, and track deliveries</p>
-                  </div>
-                </div>
-                <Button 
-                  size="lg" 
-                  className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate('/customer-portal');
-                  }}
-                >
-                  Open Portal →
-                </Button>
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-blue-600/10 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 rounded-xl border border-blue-200 dark:border-blue-500/25 flex-shrink-0 group-hover:scale-105 transition-transform duration-200 shadow-xs">
+                <Store className="w-5 h-5" />
               </div>
-            </CardContent>
-          </Card>
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">Customer Portal & Self-Service</h3>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30">Direct Ingestion</span>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Browse product catalog, initiate purchase orders, and monitor real-time consignment dispatch.</p>
+              </div>
+            </div>
+            <Button 
+              size="sm" 
+              className="bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs flex-shrink-0 shadow-sm group-hover:shadow-blue-500/25 transition-all"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate('/customer-portal');
+              }}
+            >
+              Open Customer Portal <span className="ml-1 inline-block transition-transform group-hover:translate-x-1">→</span>
+            </Button>
+          </div>
         </div>
 
         {/* All values are live API data. The old `trendValue="+12.5%"`-style
@@ -327,7 +361,7 @@ export const Dashboard = () => {
         <MetricCard
           title="Total Orders"
           value={metrics.totalOrders.toLocaleString()}
-          icon={Package}
+          icon={ShoppingCart}
           variant="primary"
         />
         <MetricCard
@@ -339,7 +373,7 @@ export const Dashboard = () => {
         <MetricCard
           title="Products"
           value={metrics.products.toLocaleString()}
-          icon={Box}
+          icon={Boxes}
           variant="accent"
         />
         <MetricCard
@@ -358,46 +392,46 @@ export const Dashboard = () => {
           title="Emails Sent"
           value={metrics.emailsSent.toLocaleString()}
           icon={Mail}
-          variant="secondary"
+          variant="rose"
         />
         <MetricCard
           title="RL Actions"
           value={metrics.rlActions.toLocaleString()}
           icon={Zap}
-          variant="accent"
+          variant="purple"
         />
         <MetricCard
           title="AI Workflows"
           value={metrics.aiWorkflows.toLocaleString()}
           icon={Workflow}
-          variant="success"
+          variant="accent"
         />
       </div>
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="transform transition-all duration-300 hover:scale-[1.02]">
+        <div className="transition-all duration-300">
           <LineChart
             title="Sales & Orders Trend"
             data={salesData}
             lines={[
-              { dataKey: 'sales', name: 'Sales', color: 'hsl(var(--primary))' },
-              { dataKey: 'orders', name: 'Orders', color: 'hsl(var(--secondary))' },
+              { dataKey: 'sales', name: 'Sales (₹)', color: '#3b82f6' },
+              { dataKey: 'orders', name: 'Order Volume', color: '#10b981' },
             ]}
-            height={300}
+            height={280}
           />
         </div>
         
-        <div className="transform transition-all duration-300 hover:scale-[1.02]">
+        <div className="transition-all duration-300">
           <BarChart
-            title="Activity by Category"
+            title="Activity by Operational Domain"
             data={categoryData}
             bars={[
-              { dataKey: 'logistics', name: 'Logistics', color: 'hsl(var(--primary))' },
-              { dataKey: 'crm', name: 'CRM', color: 'hsl(var(--secondary))' },
-              { dataKey: 'inventory', name: 'Inventory', color: 'hsl(var(--accent))' },
+              { dataKey: 'logistics', name: 'Logistics', color: '#10b981' },
+              { dataKey: 'crm', name: 'CRM', color: '#3b82f6' },
+              { dataKey: 'inventory', name: 'Inventory', color: '#8b5cf6' },
             ]}
-            height={300}
+            height={280}
           />
         </div>
       </div>
@@ -405,36 +439,41 @@ export const Dashboard = () => {
       {/* Recent Activity & System Health */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Activity */}
-        <Card className="lg:col-span-2 border-l-4 border-primary/50 shadow-lg shadow-primary/10 hover:shadow-xl hover:shadow-primary/20 transition-all duration-300">
-          <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
-            <CardTitle className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                <Activity className="h-4 w-4 text-white" />
+        <Card className="lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+            <CardTitle className="flex items-center gap-2.5 text-sm font-bold text-slate-800 dark:text-slate-100 tracking-tight">
+              <div className="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center">
+                <Activity className="h-4 w-4" />
               </div>
-              <span>Recent Activity</span>
+              <span>Live Operational Stream</span>
             </CardTitle>
+            <span className="text-[11px] text-slate-400">Real-time audit log</span>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {recentActivity.map((activity, index) => (
+          <CardContent className="pt-2">
+            <div className="space-y-2">
+              {recentActivity.map((activity) => (
                 <div 
                   key={activity.id}
-                  className="group flex items-start gap-4 p-3 rounded-lg hover:bg-gradient-to-r hover:from-muted/50 hover:to-transparent transition-all duration-300 border border-transparent hover:border-primary/20"
+                  className="group flex items-center justify-between gap-4 p-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700/60"
                 >
-                  <div className={`w-2 h-2 rounded-full mt-2 ${
-                    activity.status === 'success' ? 'bg-green-500' :
-                    activity.status === 'warning' ? 'bg-yellow-500' :
-                    activity.status === 'info' ? 'bg-blue-500' : 'bg-gray-500'
-                  } animate-pulse`} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium group-hover:text-primary transition-colors">{activity.message}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {formatRelativeTime(activity.time)}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`w-2 h-2 rounded-full ${
+                      activity.status === 'success' ? 'bg-emerald-500' :
+                      activity.status === 'warning' ? 'bg-amber-500' :
+                      activity.status === 'info' ? 'bg-blue-500' : 'bg-slate-500'
+                    } animate-pulse flex-shrink-0`} />
+                    <p className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate group-hover:text-blue-500 transition-colors">
+                      {activity.message}
                     </p>
                   </div>
-                  <Badge variant={activity.status} className="transition-transform group-hover:scale-110">
-                    {activity.type}
-                  </Badge>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <span className="text-[11px] text-slate-400">
+                      {formatRelativeTime(activity.time)}
+                    </span>
+                    <Badge variant={activity.status === 'success' ? 'success' : activity.status === 'warning' ? 'warning' : 'info'}>
+                      {activity.type}
+                    </Badge>
+                  </div>
                 </div>
               ))}
             </div>
@@ -442,16 +481,20 @@ export const Dashboard = () => {
         </Card>
 
         {/* System Status */}
-        <Card className="border-l-4 border-secondary/50 shadow-lg shadow-secondary/10 hover:shadow-xl hover:shadow-secondary/20 transition-all duration-300">
-          <CardHeader className="bg-gradient-to-r from-secondary/5 to-transparent">
-            <CardTitle className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-secondary to-accent flex items-center justify-center">
-                <Activity className="h-4 w-4 text-white" />
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+            <CardTitle className="flex items-center gap-2.5 text-sm font-bold text-slate-800 dark:text-slate-100 tracking-tight">
+              <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
+                <CheckCircle2 className="h-4 w-4" />
               </div>
-              <span>System Status</span>
+              <span>Platform Health</span>
             </CardTitle>
+            <span className="text-[11px] font-semibold text-emerald-500 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              All Nominal
+            </span>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="pt-2 space-y-1.5">
             {systemStatus.map((status, index) => (
               <SystemStatusItem key={index} label={status.label} isOnline={status.isOnline} />
             ))}
@@ -463,18 +506,18 @@ export const Dashboard = () => {
 };
 
 const SystemStatusItem = ({ label, isOnline }) => (
-  <div className="group flex items-center justify-between p-3 rounded-lg hover:bg-gradient-to-r hover:from-muted/30 hover:to-transparent transition-all duration-300 border border-transparent hover:border-secondary/20">
-    <span className="text-sm font-medium group-hover:text-secondary transition-colors">{label}</span>
+  <div className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+    <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{label}</span>
     <div className="flex items-center gap-2">
-      <div className={`relative w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}>
+      <div className={`relative w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-rose-500'}`}>
         {isOnline && (
-          <div className="absolute inset-0 rounded-full bg-green-500 animate-ping opacity-75" />
+          <div className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-75" />
         )}
       </div>
-      <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
         isOnline 
-          ? 'bg-green-500/10 text-green-600 border border-green-500/20' 
-          : 'bg-red-500/10 text-red-600 border border-red-500/20'
+          ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' 
+          : 'bg-rose-500/10 text-rose-500 border-rose-500/20'
       }`}>
         {isOnline ? 'ONLINE' : 'OFFLINE'}
       </span>

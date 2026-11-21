@@ -1,67 +1,79 @@
-import { Outlet, useNavigate } from 'react-router-dom';
-import { LogOut, Package, Truck } from 'lucide-react';
-import { useAuth } from '@/context/MongoAuthContext';
-import Button from '@/components/common/ui/Button';
+import React, { useState, useEffect } from 'react';
+import { Outlet } from 'react-router-dom';
+import Sidebar from './Sidebar';
+import Header from './Header';
+import { cn } from '@/utils/helpers';
 
 /**
- * Seller Portal shell — a self-contained portal for sellers.
- *
- * Deliberately NOT the SETU admin layout: no product sidebar (CRM, Logistics,
- * ARTHA, suppliers…) and no customer portal. One header, one workspace:
- * orders → dispatch → pickup → delivery.
+ * Seller Portal shell — renders the role-aware Sidebar and Header alongside
+ * the seller workspace (`orders -> dispatch -> pickup -> delivery`).
+ * Sellers only see Seller Portal navigation in Sidebar; staff keep full navigation.
  */
 const SellerShell = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isDark, setIsDark] = useState(false);
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/auth/login');
-    } catch (error) {
-      console.error('Logout failed:', error);
+  useEffect(() => {
+    const stored = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const shouldBeDark = stored === 'dark' || (!stored && prefersDark);
+
+    setIsDark(shouldBeDark);
+    if (shouldBeDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setSidebarOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = !isDark;
+    setIsDark(newTheme);
+    localStorage.setItem('theme', newTheme ? 'dark' : 'light');
+    if (newTheme) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <header className="sticky top-0 z-30 h-16 bg-card border-b border-border shadow-sm backdrop-blur-sm">
-        <div className="h-full px-4 sm:px-6 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="gradient-primary rounded-lg px-3 py-2 shadow-glow-primary flex items-center gap-2">
-              <Truck className="h-5 w-5 text-primary-foreground" />
-              <span className="text-sm font-heading font-bold text-primary-foreground whitespace-nowrap">
-                Seller Portal
-              </span>
-            </div>
-            <span className="hidden sm:inline text-xs text-muted-foreground truncate">
-              Orders, dispatch & delivery — your workspace on SETU
-            </span>
-          </div>
+    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 antialiased font-sans">
+      <Sidebar
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+        isCollapsed={sidebarCollapsed}
+        onCollapseToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+      />
 
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="hidden sm:flex items-center gap-2 text-sm">
-              <span className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center shadow-glow-primary">
-                <Package className="h-4 w-4 text-primary-foreground" />
-              </span>
-              <span className="font-medium truncate max-w-[10rem]">{user?.name || user?.email}</span>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleLogout}
-              className="text-destructive border-destructive/40 hover:bg-destructive hover:text-destructive-foreground"
-            >
-              <LogOut className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Sign Out</span>
-            </Button>
-          </div>
-        </div>
-      </header>
+      <div
+        className={cn(
+          'transition-all duration-300',
+          sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64',
+          'ml-0'
+        )}
+      >
+        <Header
+          onMenuClick={() => setSidebarOpen(!sidebarOpen)}
+          isDark={isDark}
+          onThemeToggle={toggleTheme}
+        />
 
-      <main className="p-4 sm:p-6 max-w-7xl mx-auto">
-        <Outlet />
-      </main>
+        <main className="p-4 sm:p-6 min-h-[calc(100vh-3.5rem)] max-w-7xl mx-auto">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 };

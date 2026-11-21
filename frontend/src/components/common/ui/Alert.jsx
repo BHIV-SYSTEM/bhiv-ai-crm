@@ -12,23 +12,23 @@ export const Alert = ({
 }) => {
   const variants = {
     info: {
-      container: 'bg-info/10 border-info text-info-foreground',
+      container: 'bg-blue-50 dark:bg-blue-950/50 border-blue-500 text-blue-900 dark:text-blue-100',
       icon: Info,
     },
     success: {
-      container: 'bg-success/10 border-success text-success-foreground',
+      container: 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-500 text-emerald-900 dark:text-emerald-100',
       icon: CheckCircle2,
     },
     warning: {
-      container: 'bg-warning/10 border-warning text-warning-foreground',
+      container: 'bg-amber-50 dark:bg-amber-950/50 border-amber-500 text-amber-900 dark:text-amber-100',
       icon: AlertCircle,
     },
     destructive: {
-      container: 'bg-destructive/10 border-destructive text-destructive-foreground',
+      container: 'bg-rose-50 dark:bg-rose-950/50 border-rose-500 text-rose-900 dark:text-rose-100',
       icon: XCircle,
     },
     error: {
-      container: 'bg-destructive/10 border-destructive text-destructive-foreground',
+      container: 'bg-rose-50 dark:bg-rose-950/50 border-rose-500 text-rose-900 dark:text-rose-100',
       icon: XCircle,
     },
   };

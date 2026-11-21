@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Layout from './components/layout/Layout';
@@ -6,47 +6,54 @@ import ProtectedRoute from './components/ProtectedRoute';
 // MongoDB Backend Auth
 import { AuthProvider } from './context/MongoAuthContext';
 import { ROUTES } from './utils/constants';
-
-// Pages
-import Dashboard from './pages/Dashboard';
-import UnifiedDashboard from './pages/UnifiedDashboard';
-import Logistics from './pages/Logistics';
-import CRM from './pages/CRM';
-import Infiverse from './pages/InfiverseEmbedded';
-import Sampada from './pages/SampadaEmbedded';
-import AIArtha from './pages/AIArthaEmbedded';
-import Inventory from './pages/Inventory';
-import AIQuery from './pages/AIQuery';
-import Suppliers from './pages/Suppliers';
-import Products from './pages/Products';
-import Agents from './pages/Agents';
-import Workflows from './pages/Workflows';
-import Decisions from './pages/Decisions';
-import Learning from './pages/Learning';
-import Notifications from './pages/Notifications';
-import Emails from './pages/Emails';
-import Reports from './pages/Reports';
-import Settings from './pages/Settings';
-import Users from './pages/Users';
-import SupplierShowcase from './pages/SupplierShowcase';
-import CustomerDashboard from './pages/CustomerDashboard';
-import CustomerOrders from './pages/customer/CustomerOrders';
-import CustomerAccount from './pages/customer/CustomerAccount';
-import BrightConnectionDemo from './pages/BrightConnectionDemo';
-import CustomerNotifications from './pages/customer/notifications/CustomerNotifications';
-import PayNow from './pages/customer/PayNow';
-import ShippingPortal from './pages/ShippingPortal';
-import SellerShell from './components/layout/SellerShell';
-import FieldProofReviews from './pages/FieldProofReviews';
-import FieldAgent from './pages/FieldAgent';
-
-// Auth Pages
 import Login from './pages/auth/Login';
-import Signup from './pages/auth/Signup';
-import ForgotPassword from './pages/auth/ForgotPassword';
-import ResetPassword from './pages/auth/ResetPassword';
-import VerifyEmail from './pages/auth/VerifyEmail';
-import OAuthCallback from './pages/auth/OAuthCallback';
+
+// Lazy-loaded pages for fast initial load & route-level code splitting
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const UnifiedDashboard = lazy(() => import('./pages/UnifiedDashboard'));
+const Logistics = lazy(() => import('./pages/Logistics'));
+const CRM = lazy(() => import('./pages/CRM'));
+const Infiverse = lazy(() => import('./pages/InfiverseEmbedded'));
+const Sampada = lazy(() => import('./pages/SampadaEmbedded'));
+const AIArtha = lazy(() => import('./pages/AIArthaEmbedded'));
+const Inventory = lazy(() => import('./pages/Inventory'));
+const AIQuery = lazy(() => import('./pages/AIQuery'));
+const Suppliers = lazy(() => import('./pages/Suppliers'));
+const Products = lazy(() => import('./pages/Products'));
+const Agents = lazy(() => import('./pages/Agents'));
+const Workflows = lazy(() => import('./pages/Workflows'));
+const Decisions = lazy(() => import('./pages/Decisions'));
+const Learning = lazy(() => import('./pages/Learning'));
+const Notifications = lazy(() => import('./pages/Notifications'));
+const Emails = lazy(() => import('./pages/Emails'));
+const Reports = lazy(() => import('./pages/Reports'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Users = lazy(() => import('./pages/Users'));
+const SupplierShowcase = lazy(() => import('./pages/SupplierShowcase'));
+const CustomerDashboard = lazy(() => import('./pages/CustomerDashboard'));
+const CustomerOrders = lazy(() => import('./pages/customer/CustomerOrders'));
+const CustomerAccount = lazy(() => import('./pages/customer/CustomerAccount'));
+const BrightConnectionDemo = lazy(() => import('./pages/BrightConnectionDemo'));
+const CustomerNotifications = lazy(() => import('./pages/customer/notifications/CustomerNotifications'));
+const PayNow = lazy(() => import('./pages/customer/PayNow'));
+const ShippingPortal = lazy(() => import('./pages/ShippingPortal'));
+const SellerShell = lazy(() => import('./components/layout/SellerShell'));
+const FieldProofReviews = lazy(() => import('./pages/FieldProofReviews'));
+const FieldAgent = lazy(() => import('./pages/FieldAgent'));
+
+// Auth Pages (non-login flows lazy-loaded)
+const Signup = lazy(() => import('./pages/auth/Signup'));
+const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
+const VerifyEmail = lazy(() => import('./pages/auth/VerifyEmail'));
+const OAuthCallback = lazy(() => import('./pages/auth/OAuthCallback'));
+
+const PageLoader = () => (
+  <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 p-8 animate-fade-in">
+    <div className="h-8 w-8 rounded-full border-2 border-blue-600/20 border-t-blue-600 animate-spin" />
+    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Loading workspace...</p>
+  </div>
+);
 
 function App() {
   return (
@@ -57,7 +64,8 @@ function App() {
       }}
     >
       <AuthProvider>
-        <Routes>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
           {/* Auth Routes */}
           <Route path="/auth/login" element={<Login />} />
           <Route path="/auth/signup" element={<Signup />} />
@@ -125,7 +133,8 @@ function App() {
 
           {/* Catch all - redirect to dashboard in dev mode */}
           <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+          </Routes>
+        </Suspense>
         <Toaster
           position="top-right"
           toastOptions={{

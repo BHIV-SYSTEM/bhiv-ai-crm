@@ -76,7 +76,7 @@ export const Layout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 antialiased font-sans">
       <Sidebar 
         isOpen={sidebarOpen} 
         onToggle={() => setSidebarOpen(!sidebarOpen)}
@@ -97,7 +97,7 @@ export const Layout = () => {
         />
         
         <main className={cn(
-          isAgentRoute ? 'p-0 sm:p-4 min-h-screen' : 'p-4 sm:p-6 min-h-[calc(100vh-4rem)]'
+          isAgentRoute ? 'p-0 sm:p-4 min-h-screen' : 'p-4 sm:p-6 min-h-[calc(100vh-3.5rem)]'
         )}>
           <Outlet />
         </main>

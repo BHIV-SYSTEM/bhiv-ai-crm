@@ -256,9 +256,9 @@ const CustomerDashboard = () => {
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-primary via-secondary to-accent p-6 shadow-lg">
+      <div className="rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-slate-900 p-6 shadow-md text-white">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center gap-4">
             <div>
@@ -472,7 +472,7 @@ const CustomerDashboard = () => {
                   <Button
                     onClick={placeOrder}
                     disabled={placingOrder}
-                    className="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
                     size="lg"
                   >
                     {placingOrder ? (

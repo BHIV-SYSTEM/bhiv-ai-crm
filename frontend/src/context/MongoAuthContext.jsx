@@ -42,10 +42,10 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  const login = async (email, password) => {
+  const login = async (email, password, rememberMe = true) => {
     setLoading(true);
     try {
-      const result = await authService.signIn({ email, password });
+      const result = await authService.signIn({ email, password, rememberMe });
       
       if (result?.user && result?.session) {
         setUser(result.user);

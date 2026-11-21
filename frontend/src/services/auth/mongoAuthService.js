@@ -4,18 +4,26 @@ import authAPI from '../api/authAPI';
 // Updated auth service for MongoDB backend
 export const authService = {
   // Sign in with email and password
-  async signIn({ email, password }) {
+  async signIn({ email, password, rememberMe = true }) {
     try {
       const response = await authAPI.login({ email, password });
       
       if (response.data?.success && response.data?.data?.token) {
-        // Store token
-        localStorage.setItem('token', response.data.data.token);
+        const token = response.data.data.token;
+        if (rememberMe) {
+          localStorage.setItem('token', token);
+          sessionStorage.removeItem('token');
+          localStorage.setItem('setu_remembered_email', email);
+        } else {
+          sessionStorage.setItem('token', token);
+          localStorage.removeItem('token');
+          localStorage.removeItem('setu_remembered_email');
+        }
         
         return {
           user: response.data.data.user,
           session: {
-            access_token: response.data.data.token,
+            access_token: token,
             user: response.data.data.user
           }
         };
@@ -57,6 +65,7 @@ export const authService = {
   // Sign out
   async signOut() {
     localStorage.removeItem('token');
+    sessionStorage.removeItem('token');
     return { error: null };
   },
 
@@ -73,7 +82,7 @@ export const authService = {
 
   // Get session
   async getSession() {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     
     if (!token) {
       return { data: { session: null } };
@@ -95,6 +104,7 @@ export const authService = {
     } catch (error) {
       // Invalid token
       localStorage.removeItem('token');
+      sessionStorage.removeItem('token');
     }
     
     return { data: { session: null } };

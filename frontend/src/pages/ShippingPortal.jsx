@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
   BadgeCheck, Bell, CheckCircle2, Clock, FileText, Loader2, Package,
@@ -61,12 +62,27 @@ const relTime = (value) => {
  */
 export const ShippingPortal = () => {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   // Staff (admin/manager) oversee ALL parcels and assign them to sellers.
   // Sellers only ever receive their own assigned parcels — the backend scopes
   // every query by `assignedSeller`, this UI just renders what comes back.
   const isStaff = user?.role === 'admin' || user?.role === 'manager';
   const isSeller = user?.role === 'seller';
-  const [tab, setTab] = useState('orders');
+  const urlTab = searchParams.get('tab');
+  const [tab, setTab] = useState(
+    urlTab && ['orders', 'shipping', 'notifications'].includes(urlTab) ? urlTab : 'orders'
+  );
+
+  useEffect(() => {
+    if (urlTab && ['orders', 'shipping', 'notifications'].includes(urlTab) && urlTab !== tab) {
+      setTab(urlTab);
+    }
+  }, [urlTab, tab]);
+
+  const handleTabChange = (nextTab) => {
+    setTab(nextTab);
+    setSearchParams({ tab: nextTab }, { replace: true });
+  };
   const [orders, setOrders] = useState([]);
   const [finance, setFinance] = useState({});
   const [shipments, setShipments] = useState([]);
@@ -253,12 +269,12 @@ export const ShippingPortal = () => {
         {tabs.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
-            onClick={() => setTab(key)}
+            onClick={() => handleTabChange(key)}
             className={
               'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ' +
               (tab === key
-                ? 'gradient-primary text-primary-foreground shadow-glow-primary'
-                : 'bg-muted text-muted-foreground hover:text-foreground')
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white')
             }
           >
             <Icon className="h-4 w-4" /> {label}
