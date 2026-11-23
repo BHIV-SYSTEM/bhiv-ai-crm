@@ -1,7 +1,7 @@
 {
   "mdu_type": "receivable_ledger",
   "tenant_id": "tenant_bright_connection",
-  "report_id": "RCV-BC-1795419283490_Receivable-22_Sept_26",
+  "report_id": "RCV-BC-Receivable-22_Sept_26",
   "metadata": {
     "report_title": "List of outstanding due.",
     "company_name": "Bright Connections",
@@ -95,20 +95,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-001",
         "store_name": "A1 COLLECTION VILEPARLE (AMB)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-001",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -166,20 +165,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-002",
         "store_name": "A1 COLLECTION VILEPARLE (EVM)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-002",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -209,20 +207,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-003",
         "store_name": "AAYU MOBILE ANDHERI EAST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-003",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -245,20 +242,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-004",
         "store_name": "ALFA-VILE PARLE (W)NT",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-004",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -281,20 +277,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-005",
         "store_name": "AMBIKA COLLECTIONS SALES & SERVICE SANTACRUZ (W)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-005",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -331,20 +326,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-006",
         "store_name": "AMBIKA MOBILE SANTACRUZ (W)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-006",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -402,20 +396,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-007",
         "store_name": "ANGAI ELECTRONIC-MAROL PIPE LINE -ANDHERI (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-007",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -438,20 +431,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-008",
         "store_name": "ANGAI ELECTRONIC-MAROL PIPE LINE -ANDHERI (E) (EVM)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-008",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -474,20 +466,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-009",
         "store_name": "ANKIT STATIONERY & COMPUTERS ANDHERI EAST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-009",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -510,20 +501,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-010",
         "store_name": "APPLE WORLD VILE PARLE (W)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-010",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -553,20 +543,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-011",
         "store_name": "APPLE WORLD VILE PARLE WEST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-011",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -596,20 +585,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-012",
         "store_name": "ARIHANT INFOCOM ANDHERI E",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-012",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -646,20 +634,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-013",
         "store_name": "ARIHANT MOBILE (TUNGA POWAI)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-013",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -696,20 +683,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-014",
         "store_name": "ARIHANT MOBILE NX- SAKINAKA-ANDHERI (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-014",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -858,20 +844,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-015",
         "store_name": "ARIHANT MOBILE SALES & SERVICE ANDHERI (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-015",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -915,20 +900,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-016",
         "store_name": "ARIHANT MOBILE SALES & SERVICE ANDHERI (E) (EVM)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-016",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -972,20 +956,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-017",
         "store_name": "ARIHANT MOBILE-ANDHERI (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-017",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -1022,20 +1005,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-018",
         "store_name": "ASHAPURA MOBILE ACCESSORIES-VILES PARLE (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-018",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -1149,20 +1131,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-019",
         "store_name": "ASHAPURA MOBILE SALES AND SERVICE-ANDHERI (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-019",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -1206,20 +1187,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-020",
         "store_name": "ASHAPURA TELECOM-VILE PARLE (W)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-020",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -1249,20 +1229,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-021",
         "store_name": "Azad Digital Store (Saki vihar road)andheri (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-021",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -1285,20 +1264,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-022",
         "store_name": "BALAJI STEEL ANDHERI EAST (PC)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-022",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -1335,20 +1313,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-023",
         "store_name": "BANARASI TELECOM (EVM)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-023",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -1434,20 +1411,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-024",
         "store_name": "BHAVNA ELECTRONICS- ANDHERI (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-024",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -1477,20 +1453,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-025",
         "store_name": "BK MOBILE SALES AND SERVICE (AMB)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-025",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -1541,20 +1516,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-026",
         "store_name": "BRAINTONE TECHNOLGY PVT. LTD.",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-026",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -1640,20 +1614,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-027",
         "store_name": "CASEFLEX MOBILE ACCESSORIES AND REPAIRING",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-027",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -1683,20 +1656,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-028",
         "store_name": "CELL POINT MOBILE HUB ANDHRI EAST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-028",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -1726,20 +1698,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-029",
         "store_name": "CELL POINT SALES & SERVICE- MAROL-ANDHERI (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-029",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -1776,20 +1747,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-030",
         "store_name": "CELL POINT THE MOBILE SHOP ANDHERI (EAST)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-030",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -1812,20 +1782,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-031",
         "store_name": "CHAMUNDA MOBILES KHAR WEST (EVM)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-031",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -1848,20 +1817,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-032",
         "store_name": "CHOICE POINTChandivali, ANDHERI",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-032",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -1954,20 +1922,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-033",
         "store_name": "DARSHAN MOBILE & ELECTRONICS -TUNGA",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-033",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -1990,20 +1957,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-034",
         "store_name": "DEEP COMPUTER & SERVICES ANDHERI EAST-NT",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-034",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -2026,20 +1992,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-035",
         "store_name": "DHANALAXMI ELECTRIC & HARDWARE VILE PARLE WEST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-035",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -2069,20 +2034,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-036",
         "store_name": "DHRUV MOBILE (EVM)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-036",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -2147,20 +2111,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-037",
         "store_name": "DYNAMIC MOBILES-ANDHERI (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-037",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -2190,20 +2153,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-038",
         "store_name": "ELEGANT ENTERPRISES ANDHERI EAST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-038",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -2240,20 +2202,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-039",
         "store_name": "GIFT GALLERY VILEPARLE WEST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-039",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -2283,20 +2244,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-040",
         "store_name": "GLOBAL LINX SMART CAFE VILE PARLE WEST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-040",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -2333,20 +2293,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-041",
         "store_name": "GLOBAL MOBILE AND ACCESSORIES (AMB)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-041",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -2369,20 +2328,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-042",
         "store_name": "GLOBAL MOBILE AND ACCESSORIES (EVM)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-042",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -2419,20 +2377,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-043",
         "store_name": "GO GADGETZ SANTACRUZ EAST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-043",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -2476,20 +2433,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-044",
         "store_name": "GOKUL ENTERPRISES BANDRA EAST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-044",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -2512,20 +2468,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-045",
         "store_name": "GOLDEN ELECTRICAL &HARDWARE ANDHERI EAST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-045",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -2548,20 +2503,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-046",
         "store_name": "Highway Electronics",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-046",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -2584,20 +2538,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-047",
         "store_name": "Hinglaj Novelty",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-047",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -2648,20 +2601,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-048",
         "store_name": "J M MOBILE ACCESSOIRES VILE PARLE EAST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-048",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -2691,20 +2643,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-049",
         "store_name": "JAI AMBE COMPUTER & SERVICE SANTACRUZ (W) AMB",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-049",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -2734,20 +2685,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-050",
         "store_name": "JAVA TELECOME SANTACRUZ WEST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-050",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -2770,20 +2720,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-051",
         "store_name": "K K COLLECTIONS KHAR EAST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-051",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -2806,20 +2755,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-052",
         "store_name": "K.K COLLECTION KHAR EAST (EVM)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-052",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -2877,20 +2825,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-053",
         "store_name": "K.K. Collection Khar (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-053",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -2920,20 +2867,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-054",
         "store_name": "K.M. Mobile Sales & Services Vile Parle East (EVM)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-054",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -2963,20 +2909,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-055",
         "store_name": "KAMAL MOBILE (AMB)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-055",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -3034,20 +2979,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-056",
         "store_name": "KHAZANA PLUS-SANTACRUZ EAST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-056",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -3070,20 +3014,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-057",
         "store_name": "KHAZANA PLUS-SANTACRUZ EAST (EVM)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-057",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -3183,20 +3126,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-058",
         "store_name": "KHUSHI MOBILE & MORE- ANDHERI (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-058",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -3233,20 +3175,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-059",
         "store_name": "KINJAL MOBILE (AMB)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-059",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -3290,20 +3231,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-060",
         "store_name": "Krishna Electric Hardware Andheri East",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-060",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -3333,20 +3273,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-061",
         "store_name": "KRISHNA TELECOM KHAR EAST (EVM)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-061",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -3369,20 +3308,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-062",
         "store_name": "KUBER THE MOBILE STORE- ANDHERI (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-062",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -3405,20 +3343,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-063",
         "store_name": "KUMKUM MOBILE (MAHAKALI) ANDHERI ( E )",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-063",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -3441,20 +3378,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-064",
         "store_name": "KUMKUM MOBILE-3-ANDHERI (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-064",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -3477,20 +3413,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-065",
         "store_name": "LOKMANYA ELECTRICAL & HARDWARE STORES ANDHERI EAST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-065",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -3527,20 +3462,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-066",
         "store_name": "Lucky Mobile Sale & Services Andheri",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-066",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -3563,20 +3497,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-067",
         "store_name": "LUCKY MOBILE SALES & SERVICE ANDHERI (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-067",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -3606,20 +3539,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-068",
         "store_name": "M2 GIFT POINT-VILE PARLE (W) NT",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-068",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -3642,20 +3574,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-069",
         "store_name": "MAA MOBILE VILE PARLE (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-069",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -3692,20 +3623,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-070",
         "store_name": "MAA MOBILE VILE PARLE EAST (EVM)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-070",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -3728,20 +3658,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-071",
         "store_name": "MAHARASHTRA MOBILE (EVM)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-071",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -3764,20 +3693,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-072",
         "store_name": "MAHAVIR ELECTRIC & INSULATION ANDHERI EAST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-072",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -3800,20 +3728,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-073",
         "store_name": "MARUTI MOBILE ANDHERI ( E )",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-073",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -3850,20 +3777,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-074",
         "store_name": "MARUTI MOBILE ANDHERI (E)- EVM",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-074",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -3886,20 +3812,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-075",
         "store_name": "Maruti Mobile Andheri JB Nagar Andheri (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-075",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -3922,20 +3847,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-076",
         "store_name": "Metro Electric Andheri East",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-076",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -3958,20 +3882,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-077",
         "store_name": "METRO ELECTRONICS KHAR EAST (AMB)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-077",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -4001,20 +3924,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-078",
         "store_name": "METRO ELECTRONICS KHAR EAST (EVM)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-078",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -4065,20 +3987,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-079",
         "store_name": "MILAN ELECTRONICS-VILE PARLE EAST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-079",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -4108,20 +4029,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-080",
         "store_name": "MOBILE CANDY (EVM)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-080",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -4144,20 +4064,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-081",
         "store_name": "MOBILE CITY ANDHERI (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-081",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -4194,20 +4113,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-082",
         "store_name": "MOBILE PLANET VILE PARLE (W)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-082",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -4237,20 +4155,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-083",
         "store_name": "Mobile World NX",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-083",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -4301,20 +4218,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-084",
         "store_name": "MOMENTO ONE-ANDHERI EAST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-084",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -4344,20 +4260,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-085",
         "store_name": "MY SHOPPIE SANTACRUZE W",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-085",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -4387,20 +4302,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-086",
         "store_name": "NAKODA ELECTRIC & HARDWARE STORES ANDHERI EAST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-086",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -4430,20 +4344,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-087",
         "store_name": "NAVKAR MOBILE ANDHERI (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-087",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -4480,20 +4393,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-088",
         "store_name": "Navraj Ele & H/w Stores",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-088",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -4516,20 +4428,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-089",
         "store_name": "NEW CHIKLIT TELECOM (AMB)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-089",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -4552,20 +4463,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-090",
         "store_name": "NEW CHIKLIT TELECOM (EVM)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-090",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -4588,20 +4498,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-091",
         "store_name": "NEW VENTIONS PVT LTD (Caseflex Mobile)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-091",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -4624,20 +4533,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-092",
         "store_name": "NIYAM THE MOBILE GALLERY- ANDHERI (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-092",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -4674,20 +4582,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-093",
         "store_name": "PRABHAT NOVELTY-ANDHERI (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-093",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -4766,20 +4673,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-094",
         "store_name": "PRABHU MOBILES ANDHERI EAST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-094",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -4809,20 +4715,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-095",
         "store_name": "PRATHAM SERVICES (AMB)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-095",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -4845,20 +4750,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-096",
         "store_name": "Prince Telecom Santacruz (e)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-096",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -4937,20 +4841,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-097",
         "store_name": "R.K. TELECOM-KHAR (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-097",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -4987,20 +4890,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-098",
         "store_name": "R.K. TELECOM-KHAR EAST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-098",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -5037,20 +4939,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-099",
         "store_name": "RADHIKA TELECOM-VILE PARLE (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-099",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -5080,20 +4981,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-100",
         "store_name": "RAINBOW BANDRA EAST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-100",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -5116,20 +5016,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-101",
         "store_name": "RAINBOW BANDRA EAST (ACC)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-101",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -5166,20 +5065,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-102",
         "store_name": "RAJ ENTERPRISES JUHU",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-102",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -5202,20 +5100,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-103",
         "store_name": "RAJ ENTERPRISES JUHU (EVM)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-103",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -5245,20 +5142,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-104",
         "store_name": "RAJ TELECOM (AMB)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-104",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -5351,20 +5247,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-105",
         "store_name": "RAJ TELECOM-KHAR (W)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-105",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -5387,20 +5282,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-106",
         "store_name": "RAJ TELECOME MOBILE & ELECTRONICS KHAR (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-106",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -5423,20 +5317,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-107",
         "store_name": "RAJSHREE ELECTRIC & H/W ANDHERI EAST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-107",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -5459,20 +5352,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-108",
         "store_name": "RAMESH ELECTRONICS ANDHERI EAST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-108",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -5537,20 +5429,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-109",
         "store_name": "RATAN TELECOM KHAR EAST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-109",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -5573,20 +5464,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-110",
         "store_name": "RATAN TELECOM KHAR EAST (EVM)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-110",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -5609,20 +5499,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-111",
         "store_name": "RELIABLE STORES-KALINA SANTACRUZE (E) NT",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-111",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -5645,20 +5534,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-112",
         "store_name": "RISHABH ELECTRONICS ANDHERI EAST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-112",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -5681,20 +5569,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-113",
         "store_name": "ROLEX MOBILE KHAR WEST (AMB)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-113",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -5717,20 +5604,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-114",
         "store_name": "ROLEX MOBILE KHAR WEST (EVM)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-114",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -5760,20 +5646,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-115",
         "store_name": "S.R. TELECOM",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-115",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -5810,20 +5695,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-116",
         "store_name": "S.R. TELECOM (AMB)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-116",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -5846,20 +5730,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-117",
         "store_name": "SANVI ENTERPRISES ANDHERI EAST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-117",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -5882,20 +5765,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-118",
         "store_name": "SARVODAYA VIDEO CENTRE KHAR WEST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-118",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -5946,20 +5828,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-119",
         "store_name": "SEEMA TELECOM- SANTACRUZ (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-119",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -5982,20 +5863,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-120",
         "store_name": "SHREE JAI MATA DI WATCH & MOBILE ANDHERI (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-120",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -6039,20 +5919,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-121",
         "store_name": "SHREE KHETESHWAR MOBILE ASALFA GHATKOPAR WEST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-121",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -6082,20 +5961,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-122",
         "store_name": "Shree kheteswar mobile Santacruz East NT",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-122",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -6181,20 +6059,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-123",
         "store_name": "SHREE NEW KHETESHWAR MOBILE-ANDHERI (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-123",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -6308,20 +6185,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-124",
         "store_name": "SHREE RAMDEV MOBILE KHAR WEST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-124",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -6351,20 +6227,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-125",
         "store_name": "SHREESAINATH ELECTRIC & HARDWARE (MAHAKALI) ANDHERI EAST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-125",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -6401,20 +6276,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-126",
         "store_name": "SHRI KRISHNAA COLLECTION- BANDRA EAST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-126",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -6458,20 +6332,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-127",
         "store_name": "Shubh Mangal Vile Parle West",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-127",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -6515,20 +6388,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-128",
         "store_name": "SIYA TRADING (AMB)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-128",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -6600,20 +6472,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-129",
         "store_name": "STARS MOBILE CORNER (AMB)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-129",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -6636,20 +6507,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-130",
         "store_name": "SUPREME ELECTRONICS SANTACRUZ (W)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-130",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -6672,20 +6542,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-131",
         "store_name": "SURANA ELECTRONICS CENTER KHAR (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-131",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -6715,20 +6584,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-132",
         "store_name": "SWASTIK COMUNICATION CENTRE-SAKINAKA",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-132",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -6807,20 +6675,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-133",
         "store_name": "SWASTIK MOBILE TUNGA VILLAGE",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-133",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -6843,20 +6710,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-134",
         "store_name": "TANISHKA TELECOM (ANDHERI)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-134",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -6900,20 +6766,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-135",
         "store_name": "TANVI MOBILE HUB-ANDHERI (E)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-135",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -6950,20 +6815,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-136",
         "store_name": "TECH GUIDE-ANDHERI (E) (EVM)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-136",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -6986,20 +6850,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-137",
         "store_name": "THE MOBILE HUB ANDHERI EAST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-137",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -7050,20 +6913,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-138",
         "store_name": "THE MOBILE HUB ANDHERI EAST (EVM)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-138",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -7086,20 +6948,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-139",
         "store_name": "THE MOBILE WORLD MAROL",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-139",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -7122,20 +6983,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-140",
         "store_name": "VIKAS MOBILE CENTER VILE PARLE EAST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-140",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -7186,20 +7046,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-141",
         "store_name": "VINAYAK MOBILE KHAR WEST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-141",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -7229,20 +7088,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-142",
         "store_name": "VISHAL ELCTROINICS VILE PARLE WEST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-142",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -7265,20 +7123,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-143",
         "store_name": "YOUR CHOICE (AMB)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-143",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -7308,20 +7165,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-144",
         "store_name": "ZALANI COLLECTION NX (EVM)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-144",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -7365,20 +7221,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-145",
         "store_name": "Zalani Collection Nx Santacruz (W)",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-145",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -7450,20 +7305,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-146",
         "store_name": "ZALANI COLLECTION NX SANTACRUZ WEST",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-146",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -7486,20 +7340,19 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-147",
         "store_name": "Zee Electronics Vile Parle East Pca",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-147",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     },
@@ -7536,39 +7389,37 @@
         }
       ],
       "canonical_version": "1.0",
-      "transformed_at": "2026-11-23T07:34:49.891380Z",
+      "transformed_at": "2026-11-23T10:00:59.977Z",
       "source_context": {
         "source_system": "tally_bizanalyst_pdf",
         "connected_company_id": "bc_bright_connection_001",
-        "connected_company_name": "Bright Connection",
+        "connected_company_name": "Bright Connections",
         "store_id": "CUST-BC-148",
         "store_name": "ZEE MOBILE NX SANTACRUZ (E)EVM",
-        "location_identifier": "Mumbai 400104",
+        "location_identifier": "Mumbai",
         "store_context_available": true,
         "source_entity": "receivable_customer_ledger",
         "source_record_id": "CUST-BC-148",
         "source_timestamp": "22 Sept 26",
-        "received_at": "2026-11-23T07:34:49.891380Z",
-        "sync_id": "sync_bc_pdf_20261123073449",
+        "received_at": "2026-11-23T10:00:59.977Z",
         "group": "ARUN CHALKE"
       }
     }
   ],
   "canonical_version": "1.0",
-  "transformed_at": "2026-11-23T07:34:49.891380Z",
+  "transformed_at": "2026-11-23T10:00:59.977Z",
   "source_context": {
     "source_system": "tally_bizanalyst_pdf",
     "connected_company_id": "bc_bright_connection_001",
-    "connected_company_name": "Bright Connection",
+    "connected_company_name": "Bright Connections",
     "store_id": null,
     "store_name": "Bright Connections",
     "location_identifier": "Mumbai 400104",
-    "store_context_available": true,
+    "store_context_available": false,
     "source_entity": "receivable_ledger",
-    "source_record_id": "RCV-BC-1795419283490_Receivable-22_Sept_26",
+    "source_record_id": "RCV-BC-Receivable-22_Sept_26",
     "source_timestamp": "22 Sept 26",
-    "received_at": "2026-11-23T07:34:49.891380Z",
-    "sync_id": "sync_bc_pdf_20261123073449",
+    "received_at": "2026-11-23T10:00:59.977Z",
     "gstin": "27AJKPN4994K1ZD",
     "group": "ARUN CHALKE"
   },

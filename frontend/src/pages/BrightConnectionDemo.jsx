@@ -4,7 +4,8 @@ import {
   Building2, MapPin, Camera, Bell, CheckCircle2, ShieldCheck,
   Sparkles, ArrowRight, ArrowLeft, RefreshCw, Send, DollarSign, FileText,
   TrendingUp, TrendingDown, AlertCircle, Eye, Check, Upload, Compass, ExternalLink,
-  Download, Filter, Calendar, Layers, Video, VideoOff, RotateCcw, Clock, IndianRupee, FileCheck
+  Download, Filter, Calendar, Layers, Video, VideoOff, RotateCcw, Clock, IndianRupee, FileCheck,
+  Plus, Minus, Crosshair, Maximize2
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -53,24 +54,105 @@ function MapRecenter({ center }) {
   const map = useMap();
   useEffect(() => {
     if (center && center[0] && center[1]) {
-      map.setView(center, 13, { animate: true });
+      map.setView(center, Math.max(map.getZoom(), 14), { animate: true });
     }
   }, [center, map]);
   return null;
 }
 
-function MapFitBounds({ stores, agentCoords }) {
+function MapFitBounds({ stores, agentCoords, triggerKey }) {
   const map = useMap();
   useEffect(() => {
-    if (stores && stores.length > 0 && agentCoords) {
-      const bounds = [
-        ...stores.map(s => [s.geofence.lat, s.geofence.lng]),
-        [agentCoords.lat, agentCoords.lng]
-      ];
-      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+    if (stores && stores.length > 0) {
+      const points = stores.map((s) => [s.geofence.lat, s.geofence.lng]);
+      if (agentCoords?.lat && agentCoords?.lng && stores.length <= 25) {
+        points.push([agentCoords.lat, agentCoords.lng]);
+      }
+      map.fitBounds(points, { padding: [55, 55], maxZoom: 15 });
     }
-  }, [stores, agentCoords, map]);
+  }, [triggerKey, map]); // eslint-disable-line react-hooks/exhaustive-deps
   return null;
+}
+
+function CustomMapControls({ storeContext, areaStores, mapTheme, onToggleTheme }) {
+  const map = useMap();
+
+  const handleFitArea = (e) => {
+    e.stopPropagation();
+    if (areaStores && areaStores.length > 0) {
+      const bounds = areaStores.map((s) => [s.geofence.lat, s.geofence.lng]);
+      map.fitBounds(bounds, { padding: [55, 55], maxZoom: 15, animate: true });
+    }
+  };
+
+  const handleFocusStore = (e) => {
+    e.stopPropagation();
+    if (storeContext?.geofence) {
+      map.setView([storeContext.geofence.lat, storeContext.geofence.lng], 16, { animate: true });
+    }
+  };
+
+  return (
+    <div
+      className="absolute bottom-4 right-4 z-[1000] flex flex-col gap-1.5 pointer-events-auto"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="flex flex-col bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-xl shadow-2xl overflow-hidden divide-y divide-slate-700/70">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            map.zoomIn();
+          }}
+          title="Zoom In"
+          className="w-9 h-9 flex items-center justify-center text-white hover:bg-purple-600/80 transition active:scale-95"
+        >
+          <Plus className="w-4 h-4" />
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            map.zoomOut();
+          }}
+          title="Zoom Out"
+          className="w-9 h-9 flex items-center justify-center text-white hover:bg-purple-600/80 transition active:scale-95"
+        >
+          <Minus className="w-4 h-4" />
+        </button>
+      </div>
+
+      <div className="flex flex-col bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-xl shadow-2xl overflow-hidden divide-y divide-slate-700/70">
+        <button
+          type="button"
+          onClick={handleFocusStore}
+          title="Center on Selected Dealer"
+          className="w-9 h-9 flex items-center justify-center text-amber-400 hover:bg-amber-500/20 transition active:scale-95"
+        >
+          <Crosshair className="w-4 h-4" />
+        </button>
+        <button
+          type="button"
+          onClick={handleFitArea}
+          title="Fit All Dealers in Selected Area"
+          className="w-9 h-9 flex items-center justify-center text-emerald-400 hover:bg-emerald-500/20 transition active:scale-95"
+        >
+          <Maximize2 className="w-4 h-4" />
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleTheme();
+          }}
+          title={`Switch Map Style (Current: ${mapTheme})`}
+          className="w-9 h-9 flex items-center justify-center text-purple-300 hover:bg-purple-500/20 transition active:scale-95"
+        >
+          <Layers className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
 }
 
 const formatCurrency = (val) => {
@@ -101,6 +183,37 @@ export const BrightConnectionDemo = () => {
   const [pdfParsing, setPdfParsing] = useState(false);
   const [pdfValidation, setPdfValidation] = useState(null);
   const [dealerSearch, setDealerSearch] = useState('');
+  const [selectedArea, setSelectedArea] = useState(PDF_PARSED_BRIGHT_DATA.dealers[0]?.area || 'Andheri East');
+  const [mapTheme, setMapTheme] = useState('voyager'); // voyager | dark | street
+
+  // Area groups derived from ingested dealers
+  const areaGroups = useMemo(() => {
+    const map = new Map();
+    for (const d of storesList) {
+      const areaName = d.area || 'Mumbai';
+      const existing = map.get(areaName) || { area: areaName, count: 0, total: 0 };
+      existing.count += 1;
+      existing.total += Number(d.outstanding || 0);
+      map.set(areaName, existing);
+    }
+    return Array.from(map.values()).sort((a, b) => b.count - a.count);
+  }, [storesList]);
+
+  // Dealers visible on the Step 2 map & list for the chosen area
+  const areaFilteredDealers = useMemo(() => {
+    if (selectedArea === 'ALL') return storesList;
+    return storesList.filter((d) => (d.area || 'Mumbai') === selectedArea);
+  }, [storesList, selectedArea]);
+
+  const handleSelectArea = (areaName) => {
+    setSelectedArea(areaName);
+    if (areaName !== 'ALL') {
+      const firstInArea = storesList.find((d) => (d.area || 'Mumbai') === areaName);
+      if (firstInArea) {
+        setStoreContext(firstInArea);
+      }
+    }
+  };
 
   // Field Agent Job Dispatch Modal state
   const [showDispatchModal, setShowDispatchModal] = useState(false);
@@ -125,6 +238,7 @@ export const BrightConnectionDemo = () => {
     });
     setStoresList(data.dealers);
     setStoreContext(data.dealers[0]);
+    setSelectedArea(data.dealers[0].area || 'ALL');
     setPdfFileName(resolvedName);
     setPdfValidation(data.validation || null);
     setPdfUploaded(true);
@@ -274,11 +388,11 @@ export const BrightConnectionDemo = () => {
       if (res?.data?.success && res.data.dealers?.length > 0) {
         applyIngestedReceivables(res.data);
         toast.success(`Loaded "${res.data.metadata?.source_file || 'Receivable-22 Sept 26.pdf'}" — ${res.data.total_customers} dealers, ₹${Number(res.data.total_amount || 0).toLocaleString('en-IN')}`);
+      } else {
+        throw new Error('No dealers returned from backend');
       }
     } catch (err) {
-      setPdfUploaded(true);
-      setPdfFileName('Receivable-22 Sept 26.pdf');
-      toast.success('Loaded default Bright Connection demo dataset');
+      toast.error(err?.response?.data?.message || err.message || 'Failed to load ingested PDF dealers from backend');
     } finally {
       setPdfParsing(false);
     }
@@ -756,10 +870,9 @@ export const BrightConnectionDemo = () => {
                       className="text-xs sm:w-64"
                     />
                   </div>
-                  <div className="max-h-60 overflow-y-auto divide-y divide-border rounded-lg border border-border bg-card">
+                  <div className="max-h-80 overflow-y-auto divide-y divide-border rounded-lg border border-border bg-card">
                     {storesList
-                      .filter((s) => !dealerSearch || s.name.toLowerCase().includes(dealerSearch.toLowerCase()) || (s.area || '').toLowerCase().includes(dealerSearch.toLowerCase()))
-                      .slice(0, 50)
+                      .filter((s) => !dealerSearch || s.name.toLowerCase().includes(dealerSearch.toLowerCase()) || (s.area || '').toLowerCase().includes(dealerSearch.toLowerCase()) || (s.code || '').toLowerCase().includes(dealerSearch.toLowerCase()))
                       .map((s) => (
                         <div
                           key={s.id}
@@ -803,20 +916,74 @@ export const BrightConnectionDemo = () => {
         {activeStep === 2 && (
           <Card className="border-purple-500/30 shadow-lg">
             <CardHeader className="bg-muted/30 border-b border-border">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <CardTitle className="text-base flex items-center gap-2">
                   <MapPin className="h-5 w-5 text-purple-600" />
-                  Step 2: PDF Data Shown on Interactive Map ({storeContext.city})
+                  Step 2: Area-Scoped Interactive Map ({selectedArea === 'ALL' ? `All ${storesList.length}` : `${areaFilteredDealers.length} in ${selectedArea}`})
                 </CardTitle>
-                {isGeofenceVerified ? (
-                  <Badge variant="success">Agent GPS Verified</Badge>
-                ) : (
-                  <Badge variant="outline">Verification Pending</Badge>
-                )}
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="font-mono text-purple-400">
+                    {areaFilteredDealers.length} / {storesList.length} Shown
+                  </Badge>
+                  {isGeofenceVerified ? (
+                    <Badge variant="success">Agent GPS Verified</Badge>
+                  ) : (
+                    <Badge variant="outline">Verification Pending</Badge>
+                  )}
+                </div>
               </div>
             </CardHeader>
 
-            <CardContent className="pt-6 space-y-6">
+            <CardContent className="pt-6 space-y-5">
+
+              {/* Clickable Mumbai Area Selector Pills */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                    <Filter className="w-3.5 h-3.5 text-purple-500" />
+                    Select Mumbai Area to View on Map
+                  </span>
+                  <span className="text-[11px] text-muted-foreground">
+                    Click any zone (e.g., Bandra East, Santacruz, Vile Parle)
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {areaGroups.map((grp) => {
+                    const isActiveArea = selectedArea === grp.area;
+                    return (
+                      <button
+                        key={grp.area}
+                        type="button"
+                        onClick={() => handleSelectArea(grp.area)}
+                        className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition flex items-center gap-1.5 active:scale-95 ${
+                          isActiveArea
+                            ? 'bg-purple-600 text-white border-purple-500 shadow-md'
+                            : 'bg-card border-border text-foreground hover:border-purple-500/50 hover:bg-purple-500/10'
+                        }`}
+                      >
+                        <MapPin className={`w-3 h-3 ${isActiveArea ? 'text-white' : 'text-purple-500'}`} />
+                        <span>{grp.area}</span>
+                        <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+                          isActiveArea ? 'bg-white/20 text-white' : 'bg-muted text-muted-foreground'
+                        }`}>
+                          {grp.count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    onClick={() => handleSelectArea('ALL')}
+                    className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition flex items-center gap-1.5 active:scale-95 ${
+                      selectedArea === 'ALL'
+                        ? 'bg-slate-800 text-white border-slate-600 shadow-md'
+                        : 'bg-muted/40 border-border text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <span>All Areas ({storesList.length})</span>
+                  </button>
+                </div>
+              </div>
 
               {/* Active Target Banner + Dealer Selector */}
               <div className="bg-purple-500/10 border border-purple-500/30 p-4 rounded-xl space-y-3">
@@ -848,7 +1015,7 @@ export const BrightConnectionDemo = () => {
                     }}
                     className="flex-1 px-3 py-2 text-xs rounded-lg bg-card border border-border text-foreground"
                   >
-                    {storesList.map((s) => (
+                    {areaFilteredDealers.map((s) => (
                       <option key={s.id} value={s.id}>
                         {s.name} — {formatCurrency(s.outstanding)} ({s.area})
                       </option>
@@ -879,20 +1046,36 @@ export const BrightConnectionDemo = () => {
                 )}
               </div>
 
-              {/* INTERACTIVE LEAFLET MAP */}
-              <div className="relative w-full h-96 rounded-2xl overflow-hidden border border-slate-700 shadow-xl z-0">
+              {/* RESTYLED INTERACTIVE LEAFLET MAP WITH CUSTOM CONTROLS */}
+              <div className="relative w-full h-[440px] rounded-2xl overflow-hidden border border-purple-500/30 shadow-2xl z-0">
                 <MapContainer
                   center={[storeContext.geofence.lat, storeContext.geofence.lng]}
-                  zoom={13}
+                  zoom={14}
+                  zoomControl={false}
                   style={{ height: '100%', width: '100%' }}
                   scrollWheelZoom={true}
                 >
                   <MapRecenter center={[storeContext.geofence.lat, storeContext.geofence.lng]} />
-                  <MapFitBounds stores={storesList} agentCoords={agentCoords} />
+                  <MapFitBounds stores={areaFilteredDealers} agentCoords={agentCoords} triggerKey={selectedArea} />
 
                   <TileLayer
-                    attribution='&copy; OpenStreetMap'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution='&copy; OpenStreetMap &copy; CARTO'
+                    url={
+                      mapTheme === 'dark'
+                        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+                        : mapTheme === 'street'
+                          ? 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                          : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+                    }
+                  />
+
+                  <CustomMapControls
+                    storeContext={storeContext}
+                    areaStores={areaFilteredDealers}
+                    mapTheme={mapTheme}
+                    onToggleTheme={() =>
+                      setMapTheme((prev) => (prev === 'voyager' ? 'dark' : prev === 'dark' ? 'street' : 'voyager'))
+                    }
                   />
 
                   {/* 50m Geofence Circle */}
@@ -922,8 +1105,8 @@ export const BrightConnectionDemo = () => {
                     }}
                   />
 
-                  {/* Render ALL PDF Dealers on Map */}
-                  {storesList.map((store) => {
+                  {/* Render ONLY Dealers in Selected Area */}
+                  {areaFilteredDealers.map((store) => {
                     const isActive = store.id === storeContext.id;
                     return (
                       <Marker
@@ -970,17 +1153,31 @@ export const BrightConnectionDemo = () => {
                   </Marker>
                 </MapContainer>
 
-                <div className="absolute top-3 left-3 right-3 z-[1000] flex justify-between items-center bg-slate-900/90 backdrop-blur-md px-4 py-2.5 rounded-xl border border-slate-700 text-xs text-white shadow-lg pointer-events-auto">
+                {/* Top Floating Header Overlay */}
+                <div className="absolute top-3 left-3 right-3 z-[1000] flex flex-wrap justify-between items-center gap-2 bg-slate-900/90 backdrop-blur-md px-4 py-2.5 rounded-xl border border-slate-700/80 text-xs text-white shadow-xl pointer-events-auto">
                   <div className="flex items-center gap-2 font-mono font-semibold text-purple-300">
                     <Compass className="h-4 w-4 text-purple-400" />
-                    <span>Niyantran Map — PDF Receivables Plotted</span>
+                    <span>{selectedArea === 'ALL' ? 'All Mumbai Zones' : selectedArea} • {areaFilteredDealers.length} Dealers</span>
                   </div>
                   <div className="flex items-center gap-2 text-[11px]">
-                    <span className="text-slate-300">Offset:</span>
+                    <span className="text-slate-300">Style: <strong className="uppercase text-purple-300">{mapTheme}</strong></span>
                     <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-[10px]">
                       {agentCoords.distanceMeters}m (Geofence PASS)
                     </Badge>
                   </div>
+                </div>
+
+                {/* Bottom-Left Floating Legend Pill */}
+                <div className="absolute bottom-4 left-4 z-[1000] hidden sm:flex items-center gap-3 bg-slate-900/90 backdrop-blur-md px-3.5 py-2 rounded-xl border border-slate-700/80 text-[11px] text-slate-200 shadow-xl pointer-events-auto">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-sm bg-amber-500 inline-block" /> Active Store
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-sm bg-purple-500 inline-block" /> Area Dealer
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block" /> Field Agent
+                  </span>
                 </div>
               </div>
 
@@ -1000,6 +1197,60 @@ export const BrightConnectionDemo = () => {
                 >
                   Proceed to Step 3: Upload Shop Photo <ArrowRight className="w-4 h-4 ml-1.5" />
                 </Button>
+              </div>
+
+              {/* Searchable Directory of Dealers in Selected Area (or All) */}
+              <div className="border border-border rounded-xl p-4 space-y-3 bg-muted/10">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-foreground">
+                    {selectedArea === 'ALL' ? `All Ingested PDF Dealers (${storesList.length})` : `${selectedArea} Dealers (${areaFilteredDealers.length} of ${storesList.length} total)`} — Click to focus map or dispatch job
+                  </h4>
+                  <Input
+                    value={dealerSearch}
+                    onChange={(e) => setDealerSearch(e.target.value)}
+                    placeholder="Filter dealers by name, ID, area..."
+                    className="text-xs sm:w-64"
+                  />
+                </div>
+                <div className="max-h-72 overflow-y-auto divide-y divide-border rounded-lg border border-border bg-card">
+                  {areaFilteredDealers
+                    .filter((s) => !dealerSearch || s.name.toLowerCase().includes(dealerSearch.toLowerCase()) || (s.area || '').toLowerCase().includes(dealerSearch.toLowerCase()) || (s.code || '').toLowerCase().includes(dealerSearch.toLowerCase()))
+                    .map((s) => (
+                      <div
+                        key={s.id}
+                        onClick={() => {
+                          setStoreContext(s);
+                          toast.success(`Focused map on ${s.name}`);
+                        }}
+                        className={`flex items-center justify-between px-3 py-2 text-xs cursor-pointer transition ${
+                          storeContext.id === s.id ? 'bg-purple-500/15 font-bold' : 'hover:bg-muted/40'
+                        }`}
+                      >
+                        <div className="min-w-0 pr-3">
+                          <p className="truncate text-foreground">{s.name}</p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {s.code} • {s.area} • {s.invoiceCount || s.invoices?.length || 0} entries
+                            {s.maxOverdueDays > 0 ? ` • Max Overdue: ${s.maxOverdueDays}d` : ''}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className="font-mono font-bold text-amber-500">{formatCurrency(s.outstanding)}</span>
+                          <Button
+                            size="sm"
+                            type="button"
+                            onClick={(ev) => {
+                              ev.stopPropagation();
+                              setStoreContext(s);
+                              setShowDispatchModal(true);
+                            }}
+                            className="bg-amber-600 hover:bg-amber-700 text-white text-[10px] px-2.5 py-1"
+                          >
+                            Dispatch
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                </div>
               </div>
             </CardContent>
           </Card>

@@ -2,20 +2,62 @@ import express from 'express';
 import mongoose from 'mongoose';
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
-import os from 'node:os';
 import path from 'node:path';
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import multer from 'multer';
 import { protect } from '../middleware/auth.js';
+import BrightConnectionLedger from '../models/BrightConnectionLedger.js';
+import { parseReceivablePdfBuffer } from '../services/brightConnectionPdfService.js';
 
-const execFileAsync = promisify(execFile);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const NODE_ROOT = path.resolve(__dirname, '../..');
 const REPO_ROOT = path.resolve(__dirname, '../../..');
-const RECEIVABLES_JSON_PATH = path.join(REPO_ROOT, 'data', 'bright_connection_receivables.json');
-const PDF_INGESTOR_SCRIPT = path.join(REPO_ROOT, 'backend', 'setu', 'bright_connection_pdf_ingestor.py');
+const BUNDLED_RECEIVABLES_JSON = path.join(NODE_ROOT, 'src', 'data', 'bright_connection_receivables.json');
+const REPO_RECEIVABLES_JSON = path.join(REPO_ROOT, 'data', 'bright_connection_receivables.json');
+
+async function loadActiveReceivablesLedger() {
+  if (mongoose.connection.readyState === 1) {
+    const doc = await BrightConnectionLedger.findOne({ key: 'bright_connection_active_receivables' }).lean();
+    if (doc && Array.isArray(doc.customers) && doc.customers.length > 0) {
+      return doc;
+    }
+  }
+
+  for (const candidate of [BUNDLED_RECEIVABLES_JSON, REPO_RECEIVABLES_JSON]) {
+    try {
+      const raw = JSON.parse(await fs.readFile(candidate, 'utf8'));
+      if (raw && Array.isArray(raw.customers) && raw.customers.length > 0) {
+        if (mongoose.connection.readyState === 1) {
+          await BrightConnectionLedger.findOneAndUpdate(
+            { key: 'bright_connection_active_receivables' },
+            { $set: { ...raw, key: 'bright_connection_active_receivables' } },
+            { upsert: true, new: true }
+          ).catch(() => {});
+        }
+        return raw;
+      }
+    } catch {
+      // Try next fallback location
+    }
+  }
+
+  throw new Error('Bright Connection receivable ledger is not available yet. Please upload a PDF.');
+}
+
+async function saveActiveReceivablesLedger(canonical) {
+  if (mongoose.connection.readyState === 1) {
+    await BrightConnectionLedger.findOneAndUpdate(
+      { key: 'bright_connection_active_receivables' },
+      { $set: { ...canonical, key: 'bright_connection_active_receivables' } },
+      { upsert: true, new: true }
+    );
+  }
+  for (const target of [BUNDLED_RECEIVABLES_JSON, REPO_RECEIVABLES_JSON]) {
+    await fs.mkdir(path.dirname(target), { recursive: true }).catch(() => {});
+    await fs.writeFile(target, JSON.stringify(canonical, null, 2), 'utf8').catch(() => {});
+  }
+}
 
 const pdfUpload = multer({
   storage: multer.memoryStorage(),
@@ -500,17 +542,11 @@ router.post('/bright/field-visits', (req, res) => {
 
 /**
  * GET /setu/bright/receivables
- * Return the ingested Bright Connection Receivable Ledger (148 dealers, ₹11,49,012).
+ * Return the ingested Bright Connection Receivable Ledger (all dealers from MongoDB / bundled MDU store).
  */
 router.get('/bright/receivables', async (req, res) => {
   try {
-    try {
-      await fs.access(RECEIVABLES_JSON_PATH);
-    } catch {
-      const defaultPdf = path.join(REPO_ROOT, 'Receivable-22 Sept 26.pdf');
-      await execFileAsync('python', [PDF_INGESTOR_SCRIPT, defaultPdf], { cwd: REPO_ROOT });
-    }
-    const raw = JSON.parse(await fs.readFile(RECEIVABLES_JSON_PATH, 'utf8'));
+    const raw = await loadActiveReceivablesLedger();
     const enriched = enrichReceivablesForUI(raw);
     return res.status(200).json({ success: true, ...enriched });
   } catch (error) {
@@ -524,8 +560,8 @@ router.get('/bright/receivables', async (req, res) => {
 
 /**
  * POST /setu/bright/receivables/upload-pdf
- * Upload a Tally/BizAnalyst Receivable PDF from the UI, parse & validate it via SETU ingestor,
- * persist to data/bright_connection_receivables.json, and return enriched dealers.
+ * Upload a Tally/BizAnalyst Receivable PDF from the UI, parse & validate it in pure Node.js,
+ * persist to MongoDB + MDU JSON store, and return all enriched dealers.
  */
 router.post('/bright/receivables/upload-pdf', (req, res) => {
   pdfUpload.single('file')(req, res, async (uploadErr) => {
@@ -535,21 +571,20 @@ router.post('/bright/receivables/upload-pdf', (req, res) => {
     if (!req.file) {
       return res.status(400).json({ success: false, error: 'missing_file', message: 'Please attach a PDF file in the "file" field.' });
     }
-    const safeName = (req.file.originalname || 'receivable.pdf').replace(/[^a-zA-Z0-9._ -]/g, '_');
-    const tmpPath = path.join(os.tmpdir(), `${Date.now()}_${safeName}`);
     try {
-      await fs.writeFile(tmpPath, req.file.buffer);
-      await execFileAsync('python', ['-m', 'setu.bright_connection_pdf_ingestor', tmpPath], {
-        cwd: path.join(REPO_ROOT, 'backend'),
-        env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
-      });
-      const raw = JSON.parse(await fs.readFile(RECEIVABLES_JSON_PATH, 'utf8'));
-      // Preserve the original uploaded filename in metadata
-      if (raw.metadata) {
-        raw.metadata.source_file = req.file.originalname || safeName;
+      const canonical = await parseReceivablePdfBuffer(
+        req.file.buffer,
+        req.file.originalname || 'Receivable.pdf'
+      );
+      if (!canonical.customers || canonical.customers.length === 0) {
+        return res.status(422).json({
+          success: false,
+          error: 'no_customers_parsed',
+          message: 'No customer receivable tables were detected in this PDF.',
+        });
       }
-      await fs.writeFile(RECEIVABLES_JSON_PATH, JSON.stringify(raw, null, 2), 'utf8');
-      const enriched = enrichReceivablesForUI(raw);
+      await saveActiveReceivablesLedger(canonical);
+      const enriched = enrichReceivablesForUI(canonical);
       return res.status(200).json({ success: true, ...enriched });
     } catch (error) {
       return res.status(500).json({
@@ -557,8 +592,6 @@ router.post('/bright/receivables/upload-pdf', (req, res) => {
         error: 'pdf_parse_failed',
         message: error.message,
       });
-    } finally {
-      await fs.unlink(tmpPath).catch(() => {});
     }
   });
 });
@@ -746,7 +779,7 @@ router.post('/mitra/query', async (req, res) => {
     // Check ingested Bright Connection receivables first when querying within tenant_bright_connection
     if (tenant_id === 'tenant_bright_connection') {
       try {
-        const raw = JSON.parse(await fs.readFile(RECEIVABLES_JSON_PATH, 'utf8'));
+        const raw = await loadActiveReceivablesLedger();
         const customers = raw.customers || [];
         const meta = raw.metadata || {};
         if (store_id === 'BRIGHT_CONNECTION_RECEIVABLES') {
