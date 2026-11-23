@@ -2,6 +2,8 @@ import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import mongoose from 'mongoose';
+import FieldAgentProofFile from '../../models/FieldAgentProofFile.js';
 
 let sharpInstance = undefined;
 
@@ -122,30 +124,45 @@ async function identifyImage(buffer) {
 export async function storeProofImage(buffer) {
   const image = await identifyImage(buffer);
   const proofReferenceId = crypto.randomUUID();
+  const fileReference = `proof:${proofReferenceId}`;
+  const sha256 = crypto.createHash('sha256').update(buffer).digest('hex');
   const filename = `${proofReferenceId}${image.extension}`;
   const filePath = path.join(STORAGE_DIR, filename);
 
-  await fs.mkdir(STORAGE_DIR, { recursive: true, mode: 0o700 });
+  let savedToMongo = false;
+  if (mongoose.connection.readyState === 1) {
+    await FieldAgentProofFile.create({
+      fileReference,
+      mimeType: image.mimeType,
+      sizeBytes: buffer.length,
+      sha256,
+      data: buffer,
+    });
+    savedToMongo = true;
+  }
 
   try {
+    await fs.mkdir(STORAGE_DIR, { recursive: true, mode: 0o700 });
     await fs.writeFile(filePath, buffer, {
       flag: 'wx',
       mode: 0o600,
     });
   } catch (error) {
-    throw storageError(
-      error.code === 'EEXIST'
-        ? 'Could not allocate a unique proof file.'
-        : 'Could not store the proof image.',
-      500,
-    );
+    if (!savedToMongo) {
+      throw storageError(
+        error.code === 'EEXIST'
+          ? 'Could not allocate a unique proof file.'
+          : 'Could not store the proof image.',
+        500,
+      );
+    }
   }
 
   return {
-    fileReference: `proof:${proofReferenceId}`,
+    fileReference,
     mimeType: image.mimeType,
     sizeBytes: buffer.length,
-    sha256: crypto.createHash('sha256').update(buffer).digest('hex'),
+    sha256,
   };
 }
 
@@ -157,6 +174,12 @@ export async function deleteProofImage(fileReference) {
     throw storageError('Invalid application-managed proof reference.');
   }
 
+  let deleted = false;
+  if (mongoose.connection.readyState === 1) {
+    const res = await FieldAgentProofFile.deleteOne({ fileReference });
+    if (res.deletedCount > 0) deleted = true;
+  }
+
   const proofReferenceId = fileReference.slice('proof:'.length);
   const candidates = ['.jpg', '.png', '.webp'];
 
@@ -165,7 +188,7 @@ export async function deleteProofImage(fileReference) {
 
     try {
       await fs.unlink(filePath);
-      return true;
+      deleted = true;
     } catch (error) {
       if (error.code !== 'ENOENT') {
         throw storageError('Could not remove the stored proof image.', 500);
@@ -173,7 +196,7 @@ export async function deleteProofImage(fileReference) {
     }
   }
 
-  return false;
+  return deleted;
 }
 
 export async function getProofImage(fileReference) {
@@ -182,6 +205,17 @@ export async function getProofImage(fileReference) {
     !/^proof:[0-9a-f-]{36}$/i.test(fileReference)
   ) {
     throw storageError('Invalid application-managed proof reference.', 400);
+  }
+
+  // Prefer MongoDB when connected so proof images work identically across local & deployed servers
+  if (mongoose.connection.readyState === 1) {
+    const doc = await FieldAgentProofFile.findOne({ fileReference }).lean();
+    if (doc?.data) {
+      const buffer = Buffer.isBuffer(doc.data)
+        ? doc.data
+        : Buffer.from(doc.data.buffer || doc.data);
+      return { buffer, mimeType: doc.mimeType || 'image/jpeg' };
+    }
   }
 
   const proofReferenceId = fileReference.slice('proof:'.length);

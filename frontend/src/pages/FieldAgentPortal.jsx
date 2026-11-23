@@ -21,6 +21,7 @@ import { useAuth } from '../context/MongoAuthContext';
 import { fieldAgentAPI } from '../services/api/fieldAgentAPI';
 import { StoreTransactionSummaryModal } from '../components/store/StoreTransactionSummaryModal';
 import { CreateFieldTaskModal } from '../components/field/CreateFieldTaskModal';
+import { resolveApiAssetUrl } from '@/utils/constants';
 
 // Leaflet map custom icons
 const AGENT_ICON = L.divIcon({
@@ -1159,11 +1160,11 @@ export const FieldAgentPortal = () => {
                           {(activeTask.proof.imageUrl || activeTask.proof.imageData || (activeTask.proof.fileReference && activeTask.proof.fileReference.startsWith('proof:'))) && (
                             <div className="relative rounded-xl overflow-hidden aspect-video bg-black border border-border">
                               <img
-                                src={
+                                src={resolveApiAssetUrl(
                                   activeTask.proof.imageUrl ||
                                   activeTask.proof.imageData ||
                                   `/api/field-agent/proof/${encodeURIComponent(activeTask.proof.fileReference)}`
-                                }
+                                )}
                                 alt={`Uploaded storefront proof for ${activeTask.store?.name}`}
                                 className="w-full h-full object-cover"
                               />

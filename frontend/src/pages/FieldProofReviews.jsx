@@ -36,6 +36,7 @@ import Badge from '../components/common/ui/Badge';
 import { LoadingSpinner } from '../components/common/ui/Spinner';
 import { fieldReviewAPI } from '../services/api/fieldReviewAPI';
 import { formatRelativeTime, formatDateTime } from '@/utils/dateUtils';
+import { resolveApiAssetUrl } from '@/utils/constants';
 import { StoreTransactionSummaryModal } from '../components/store/StoreTransactionSummaryModal';
 import { CreateFieldTaskModal } from '../components/field/CreateFieldTaskModal';
 
@@ -52,7 +53,7 @@ const getProofImageSrc = (task) => {
     return STOREFRONT_FALLBACKS[task?.store?.storeId] || STOREFRONT_FALLBACKS.default;
   }
   if (task.proof.imageUrl) {
-    return task.proof.imageUrl;
+    return resolveApiAssetUrl(task.proof.imageUrl);
   }
   if (task.proof.imageData) {
     return task.proof.imageData;
@@ -64,10 +65,10 @@ const getProofImageSrc = (task) => {
       task.proof.fileReference.startsWith('https://') ||
       task.proof.fileReference.startsWith('/api/')
     ) {
-      return task.proof.fileReference;
+      return resolveApiAssetUrl(task.proof.fileReference);
     }
     if (task.proof.fileReference.startsWith('proof:')) {
-      return `/api/field-agent/proof/${encodeURIComponent(task.proof.fileReference)}`;
+      return resolveApiAssetUrl(`/api/field-agent/proof/${encodeURIComponent(task.proof.fileReference)}`);
     }
   }
   return STOREFRONT_FALLBACKS[task?.store?.storeId] || STOREFRONT_FALLBACKS.default;
