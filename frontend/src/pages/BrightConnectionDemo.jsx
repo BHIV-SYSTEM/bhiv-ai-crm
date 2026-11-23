@@ -184,7 +184,7 @@ export const BrightConnectionDemo = () => {
   const [pdfValidation, setPdfValidation] = useState(null);
   const [dealerSearch, setDealerSearch] = useState('');
   const [selectedArea, setSelectedArea] = useState(PDF_PARSED_BRIGHT_DATA.dealers[0]?.area || 'Andheri East');
-  const [mapTheme, setMapTheme] = useState('voyager'); // voyager | dark | street
+  const [mapTheme, setMapTheme] = useState('street'); // street | esri | satellite | dark
 
   // Area groups derived from ingested dealers
   const areaGroups = useMemo(() => {
@@ -1047,7 +1047,11 @@ export const BrightConnectionDemo = () => {
               </div>
 
               {/* RESTYLED INTERACTIVE LEAFLET MAP WITH CUSTOM CONTROLS */}
-              <div className="relative w-full h-[440px] rounded-2xl overflow-hidden border border-purple-500/30 shadow-2xl z-0">
+              <div
+                className={`relative w-full h-[440px] rounded-2xl overflow-hidden border border-purple-500/30 shadow-2xl z-0 ${
+                  mapTheme === 'dark' ? '[&_.leaflet-tile-pane]:brightness-90 [&_.leaflet-tile-pane]:invert [&_.leaflet-tile-pane]:contrast-95 [&_.leaflet-tile-pane]:hue-rotate-180' : ''
+                }`}
+              >
                 <MapContainer
                   center={[storeContext.geofence.lat, storeContext.geofence.lng]}
                   zoom={14}
@@ -1059,13 +1063,18 @@ export const BrightConnectionDemo = () => {
                   <MapFitBounds stores={areaFilteredDealers} agentCoords={agentCoords} triggerKey={selectedArea} />
 
                   <TileLayer
-                    attribution='&copy; OpenStreetMap &copy; CARTO'
+                    key={mapTheme}
+                    attribution={
+                      mapTheme === 'esri' || mapTheme === 'satellite'
+                        ? 'Tiles &copy; Esri'
+                        : '&copy; OpenStreetMap contributors'
+                    }
                     url={
-                      mapTheme === 'dark'
-                        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-                        : mapTheme === 'street'
-                          ? 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-                          : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+                      mapTheme === 'esri'
+                        ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}'
+                        : mapTheme === 'satellite'
+                          ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+                          : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
                     }
                   />
 
@@ -1074,7 +1083,15 @@ export const BrightConnectionDemo = () => {
                     areaStores={areaFilteredDealers}
                     mapTheme={mapTheme}
                     onToggleTheme={() =>
-                      setMapTheme((prev) => (prev === 'voyager' ? 'dark' : prev === 'dark' ? 'street' : 'voyager'))
+                      setMapTheme((prev) =>
+                        prev === 'street'
+                          ? 'esri'
+                          : prev === 'esri'
+                            ? 'dark'
+                            : prev === 'dark'
+                              ? 'satellite'
+                              : 'street'
+                      )
                     }
                   />
 
