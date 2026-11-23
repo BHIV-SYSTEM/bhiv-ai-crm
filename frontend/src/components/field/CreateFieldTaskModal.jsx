@@ -18,6 +18,7 @@ import toast from 'react-hot-toast';
 import Button from '../common/ui/Button';
 import Badge from '../common/ui/Badge';
 import { fieldReviewAPI } from '../../services/api/fieldReviewAPI';
+import apiClient from '../../services/api/baseAPI';
 
 // Dealers extracted from Receivable-22 Sept 26.pdf (Bright Connections Tally Master)
 const MUMBAI_PRESETS = [
@@ -109,8 +110,10 @@ const MUMBAI_PRESETS = [
   }
 ];
 
-export const CreateFieldTaskModal = ({ isOpen, onClose, onSuccess }) => {
+export const CreateFieldTaskModal = ({ isOpen, onClose, onSuccess, initialDealer = null }) => {
   const [agents, setAgents] = useState([]);
+  const [pdfDealers, setPdfDealers] = useState([]);
+  const [dealerSearch, setDealerSearch] = useState('');
   const [selectedAgentId, setSelectedAgentId] = useState('');
   const [storeName, setStoreName] = useState('');
   const [storeId, setStoreId] = useState('');
@@ -126,27 +129,46 @@ export const CreateFieldTaskModal = ({ isOpen, onClose, onSuccess }) => {
   const [loadingAgents, setLoadingAgents] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Fetch agents on mount or when opened
+  // Fetch agents and ingested PDF dealers on mount or when opened
   useEffect(() => {
     if (!isOpen) return;
 
-    const fetchAgents = async () => {
+    if (initialDealer) {
+      setStoreName(initialDealer.name || '');
+      setStoreId(initialDealer.code || initialDealer.storeCode || `BC-MUM-${Date.now().toString().slice(-4)}`);
+      setAddress(initialDealer.address || '');
+      setPhone(initialDealer.phone || '+91 98201 23456');
+      if (initialDealer.geofence?.lat) setLat(String(initialDealer.geofence.lat));
+      else if (initialDealer.lat) setLat(String(initialDealer.lat));
+      if (initialDealer.geofence?.lng) setLng(String(initialDealer.geofence.lng));
+      else if (initialDealer.lng) setLng(String(initialDealer.lng));
+      const outstandingVal = Number(initialDealer.outstanding || 0).toLocaleString('en-IN');
+      setNotes(`Bright Connection Tally Receivable Verification — Pending ₹${outstandingVal} (${initialDealer.invoiceCount || initialDealer.invoices?.length || 0} entries, max overdue ${initialDealer.maxOverdueDays || 0}d)`);
+    }
+
+    const fetchAgentsAndDealers = async () => {
       try {
         setLoadingAgents(true);
-        const res = await fieldReviewAPI.getFieldAgents();
-        if (res?.data?.success && res.data.agents?.length > 0) {
-          setAgents(res.data.agents);
-          setSelectedAgentId(res.data.agents[0]._id);
+        const [agentsRes, recRes] = await Promise.allSettled([
+          fieldReviewAPI.getFieldAgents(),
+          apiClient.get('/api/setu/bright/receivables'),
+        ]);
+        if (agentsRes.status === 'fulfilled' && agentsRes.value?.data?.success && agentsRes.value.data.agents?.length > 0) {
+          setAgents(agentsRes.value.data.agents);
+          setSelectedAgentId(agentsRes.value.data.agents[0]._id);
+        }
+        if (recRes.status === 'fulfilled' && recRes.value?.data?.success && Array.isArray(recRes.value.data.dealers)) {
+          setPdfDealers(recRes.value.data.dealers);
         }
       } catch (err) {
-        console.warn('Notice loading agents:', err);
+        console.warn('Notice loading agents/dealers:', err);
       } finally {
         setLoadingAgents(false);
       }
     };
 
-    fetchAgents();
-  }, [isOpen]);
+    fetchAgentsAndDealers();
+  }, [isOpen, initialDealer]);
 
   // Apply a quick Mumbai location preset
   const applyPreset = (preset) => {
@@ -293,6 +315,50 @@ export const CreateFieldTaskModal = ({ isOpen, onClose, onSuccess }) => {
                 </button>
               ))}
             </div>
+
+            {pdfDealers.length > 0 && (
+              <div className="mt-3 p-3 rounded-xl border border-purple-500/30 bg-purple-500/5 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-bold text-purple-400">
+                    All Ingested PDF Dealers ({pdfDealers.length})
+                  </span>
+                  <input
+                    type="text"
+                    value={dealerSearch}
+                    onChange={(e) => setDealerSearch(e.target.value)}
+                    placeholder="Filter PDF dealer..."
+                    className="px-2.5 py-1 text-xs rounded-lg bg-background border border-border text-foreground w-48"
+                  />
+                </div>
+                <select
+                  value=""
+                  onChange={(e) => {
+                    const picked = pdfDealers.find((d) => d.id === e.target.value);
+                    if (picked) {
+                      setStoreName(picked.name);
+                      setStoreId(picked.code);
+                      setAddress(picked.address);
+                      setPhone(picked.phone);
+                      setLat(String(picked.geofence.lat));
+                      setLng(String(picked.geofence.lng));
+                      setNotes(`PDF Receivable Verification — Pending ₹${Number(picked.outstanding || 0).toLocaleString('en-IN')} (${picked.invoiceCount} entries, max overdue ${picked.maxOverdueDays}d)`);
+                      toast.success(`Selected ${picked.name} (₹${Number(picked.outstanding || 0).toLocaleString('en-IN')})`);
+                    }
+                  }}
+                  className="w-full px-3 py-2 text-xs rounded-lg bg-background border border-border text-foreground"
+                >
+                  <option value="">-- Pick any of {pdfDealers.length} ingested Bright Connection dealers --</option>
+                  {pdfDealers
+                    .filter((d) => !dealerSearch || d.name.toLowerCase().includes(dealerSearch.toLowerCase()))
+                    .slice(0, 150)
+                    .map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.name} — ₹{Number(d.outstanding || 0).toLocaleString('en-IN')} ({d.area})
+                      </option>
+                    ))}
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Agent Selection */}

@@ -175,10 +175,25 @@ const fieldAgentTaskSchema = new mongoose.Schema(
         required: true,
         trim: true,
       },
+      address: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+      phone: {
+        type: String,
+        default: '',
+        trim: true,
+      },
       location: {
         type: coordinateSchema,
         required: true,
       },
+    },
+
+    items: {
+      type: [mongoose.Schema.Types.Mixed],
+      default: [],
     },
 
     state: {

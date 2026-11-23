@@ -580,161 +580,179 @@ export const FieldProofReviews = () => {
                     )}
                   </div>
 
-                  {/* Photo Container with Live Agent Upload Detection */}
-                  <div
-                    onClick={() => setShowPhotoZoom(true)}
-                    className="relative rounded-2xl overflow-hidden border border-border bg-black/95 aspect-video flex items-center justify-center group shadow-xl cursor-pointer"
-                    title="Click to view full-resolution photo"
-                  >
-                    <img
-                      src={getProofImageSrc(activeTask)}
-                      alt={`Storefront proof for ${activeTask.store?.name}`}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-
-                    {/* Gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/40 pointer-events-none" />
-
-                    {/* Top Badges */}
-                    <div className="absolute top-3 left-3 flex items-center gap-2">
-                      <div className="bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-lg text-white text-[11px] font-medium border border-white/10 flex items-center gap-1.5">
-                        <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>Signboard OCR:</span>
-                        <span className="text-emerald-400 font-bold">
-                          {activeTask.proof?.extractedFields?.matchScore || 98.6}% Match
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="absolute top-3 right-3 flex items-center gap-2">
-                      {isLiveProofUpload(activeTask) ? (
-                        <span className="bg-emerald-600/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-white text-[10px] font-extrabold border border-emerald-400/40 shadow-lg flex items-center gap-1">
-                          <Camera className="w-3 h-3" />
-                          Live Agent Upload
-                        </span>
-                      ) : (
-                        <span className="bg-black/60 backdrop-blur-md px-2 py-0.5 rounded text-zinc-300 text-[10px] border border-white/10">
-                          Archive Proof Photo
-                        </span>
-                      )}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowPhotoZoom(true);
-                        }}
-                        className="p-1.5 rounded-lg bg-black/60 hover:bg-black/80 text-white border border-white/20 transition"
-                        title="Enlarge"
+                  {activeTask.proof ? (
+                    <>
+                      {/* Photo Container with Live Agent Upload Detection */}
+                      <div
+                        onClick={() => setShowPhotoZoom(true)}
+                        className="relative rounded-2xl overflow-hidden border border-border bg-black/95 aspect-video flex items-center justify-center group shadow-xl cursor-pointer"
+                        title="Click to view full-resolution photo"
                       >
-                        <ZoomIn className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                        <img
+                          src={getProofImageSrc(activeTask)}
+                          alt={`Storefront proof for ${activeTask.store?.name}`}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
 
-                    {/* Bottom Metadata Bar */}
-                    <div className="absolute bottom-3 left-3 right-3 text-white flex items-end justify-between">
-                      <div>
-                        <p className="font-bold text-sm leading-tight drop-shadow">
-                          {activeTask.proof?.extractedFields?.detectedStoreName || activeTask.store?.name}
-                        </p>
-                        <p className="text-[11px] text-zinc-300 mt-0.5 flex items-center gap-2">
-                          <span>Ref: {activeTask.proof?.proofId || activeTask.proof?.fileReference || `proof:storefront_${activeTask.taskId.slice(-4)}`}</span>
-                          {activeTask.proof?.submittedAt && (
-                            <>
-                              <span>•</span>
-                              <span>Uploaded {formatDateTime(activeTask.proof.submittedAt)}</span>
-                            </>
+                        {/* Gradient overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/40 pointer-events-none" />
+
+                        {/* Top Badges */}
+                        <div className="absolute top-3 left-3 flex items-center gap-2">
+                          <div className="bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-lg text-white text-[11px] font-medium border border-white/10 flex items-center gap-1.5">
+                            <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>Signboard OCR:</span>
+                            <span className="text-emerald-400 font-bold">
+                              {activeTask.proof?.extractedFields?.matchScore || 98.6}% Match
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="absolute top-3 right-3 flex items-center gap-2">
+                          {isLiveProofUpload(activeTask) ? (
+                            <span className="bg-emerald-600/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-white text-[10px] font-extrabold border border-emerald-400/40 shadow-lg flex items-center gap-1">
+                              <Camera className="w-3 h-3" />
+                              Live Agent Upload
+                            </span>
+                          ) : (
+                            <span className="bg-black/60 backdrop-blur-md px-2 py-0.5 rounded text-zinc-300 text-[10px] border border-white/10">
+                              Stored Proof Photo
+                            </span>
                           )}
-                        </p>
-                      </div>
-                      <span className="text-[10px] text-zinc-400 bg-black/60 px-2 py-1 rounded flex items-center gap-1">
-                        <Maximize2 className="w-3 h-3" /> Click to Enlarge
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* AI Signboard OCR Verification Engine Report */}
-                  <div className="mt-3 p-4 rounded-xl bg-card border border-border shadow-sm space-y-3">
-                    <div className="flex items-center justify-between border-b border-border pb-2.5">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-500">
-                          <Sparkles className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                            AI Signboard OCR Verification Engine
-                          </h4>
-                          <p className="text-[10px] text-muted-foreground">
-                            Physical signboard text extraction and merchant corroboration
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                          <CheckCircle className="w-3 h-3" />
-                          {activeTask.proof?.extractedFields?.matchScore || 98.6}% Match Confidence
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* OCR Extracted Text Display Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                      <div className="p-3 rounded-lg bg-muted/30 border border-border space-y-1">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                          Detected Signboard Header Text
-                        </span>
-                        <p className="text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                          {activeTask.proof?.extractedFields?.detectedStoreName || activeTask.store?.name?.toUpperCase()}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground">
-                          {activeTask.proof?.extractedFields?.detectedCategory || 'FMCG WHOLESALE & PROVISIONS'}
-                        </p>
-                      </div>
-
-                      <div className="p-3 rounded-lg bg-muted/30 border border-border space-y-1">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                          Verified Shop Contact & License
-                        </span>
-                        <p className="text-xs font-mono font-semibold text-foreground">
-                          TEL: {activeTask.proof?.extractedFields?.detectedPhone || activeTask.store?.phone || '+91 98201 44552'}
-                        </p>
-                        <p className="text-[10px] font-mono text-muted-foreground">
-                          GSTIN: {activeTask.proof?.extractedFields?.detectedGst || '27AABCS1429B1Z8'}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Keywords Extracted */}
-                    <div>
-                      <span className="text-[10px] font-semibold text-muted-foreground block mb-1.5">
-                        Extracted Signboard Trade Keywords:
-                      </span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {(activeTask.proof?.extractedFields?.detectedKeywords || ['SUPERMART', 'KIRANA', 'WHOLESALE', 'PROVISIONS', 'MUMBAI', 'DEALER']).map((kw, i) => (
-                          <span
-                            key={i}
-                            className="px-2 py-0.5 rounded text-[10px] font-mono bg-primary/10 text-primary border border-primary/20 font-medium"
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowPhotoZoom(true);
+                            }}
+                            className="p-1.5 rounded-lg bg-black/60 hover:bg-black/80 text-white border border-white/20 transition"
+                            title="Enlarge"
                           >
-                            #{kw}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
+                            <ZoomIn className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
 
-                    {/* Raw OCR Stream Log */}
-                    <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-[10px] font-mono text-slate-300 space-y-1">
-                      <div className="flex items-center justify-between text-slate-500 pb-1 border-b border-slate-800">
-                        <span className="flex items-center gap-1">
-                          <Terminal className="w-3 h-3 text-cyan-400" />
-                          RAW SIGNBOARD SCAN LOG (OCR ENGINE v2.4)
-                        </span>
-                        <span className="text-emerald-400 font-bold">PARSED OK ✓</span>
+                        {/* Bottom Metadata Bar */}
+                        <div className="absolute bottom-3 left-3 right-3 text-white flex items-end justify-between">
+                          <div>
+                            <p className="font-bold text-sm leading-tight drop-shadow">
+                              {activeTask.proof?.extractedFields?.detectedStoreName || activeTask.store?.name}
+                            </p>
+                            <p className="text-[11px] text-zinc-300 mt-0.5 flex items-center gap-2">
+                              <span>Ref: {activeTask.proof?.proofId || activeTask.proof?.fileReference}</span>
+                              {activeTask.proof?.submittedAt && (
+                                <>
+                                  <span>•</span>
+                                  <span>Uploaded {formatDateTime(activeTask.proof.submittedAt)}</span>
+                                </>
+                              )}
+                            </p>
+                          </div>
+                          <span className="text-[10px] text-zinc-400 bg-black/60 px-2 py-1 rounded flex items-center gap-1">
+                            <Maximize2 className="w-3 h-3" /> Click to Enlarge
+                          </span>
+                        </div>
                       </div>
-                      <pre className="whitespace-pre-wrap leading-relaxed text-slate-300 max-h-24 overflow-y-auto">
-                        {activeTask.proof?.extractedFields?.rawText || `[HEADER] ${activeTask.store?.name?.toUpperCase()}\n[LOCATION] ${activeTask.store?.address || 'MUMBAI'}\n[CONTACT] ${activeTask.store?.phone || '+91 98201 44552'}\n[STATUS] CORROBORATED MATCH`}
-                      </pre>
+
+                      {/* AI Signboard OCR Verification Engine Report */}
+                      <div className="mt-3 p-4 rounded-xl bg-card border border-border shadow-sm space-y-3">
+                        <div className="flex items-center justify-between border-b border-border pb-2.5">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-500">
+                              <Sparkles className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                                AI Signboard OCR Verification Engine
+                              </h4>
+                              <p className="text-[10px] text-muted-foreground">
+                                Physical signboard text extraction and merchant corroboration
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                              <CheckCircle className="w-3 h-3" />
+                              {activeTask.proof?.extractedFields?.matchScore || 98.6}% Match Confidence
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* OCR Extracted Text Display Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                          <div className="p-3 rounded-lg bg-muted/30 border border-border space-y-1">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                              Detected Signboard Header Text
+                            </span>
+                            <p className="text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                              {activeTask.proof?.extractedFields?.detectedStoreName || activeTask.store?.name?.toUpperCase()}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground">
+                              {activeTask.proof?.extractedFields?.detectedCategory || 'FMCG WHOLESALE & PROVISIONS'}
+                            </p>
+                          </div>
+
+                          <div className="p-3 rounded-lg bg-muted/30 border border-border space-y-1">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                              Verified Shop Contact & License
+                            </span>
+                            <p className="text-xs font-mono font-semibold text-foreground">
+                              TEL: {activeTask.proof?.extractedFields?.detectedPhone || activeTask.store?.phone || '+91 98201 44552'}
+                            </p>
+                            <p className="text-[10px] font-mono text-muted-foreground">
+                              GSTIN: {activeTask.proof?.extractedFields?.detectedGst || '27AABCS1429B1Z8'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Keywords Extracted */}
+                        <div>
+                          <span className="text-[10px] font-semibold text-muted-foreground block mb-1.5">
+                            Extracted Signboard Trade Keywords:
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {(activeTask.proof?.extractedFields?.detectedKeywords || ['SUPERMART', 'KIRANA', 'WHOLESALE', 'PROVISIONS', 'MUMBAI', 'DEALER']).map((kw, i) => (
+                              <span
+                                key={i}
+                                className="px-2 py-0.5 rounded text-[10px] font-mono bg-primary/10 text-primary border border-primary/20 font-medium"
+                              >
+                                #{kw}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Raw OCR Stream Log */}
+                        <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-[10px] font-mono text-slate-300 space-y-1">
+                          <div className="flex items-center justify-between text-slate-500 pb-1 border-b border-slate-800">
+                            <span className="flex items-center gap-1">
+                              <Terminal className="w-3 h-3 text-cyan-400" />
+                              RAW SIGNBOARD SCAN LOG (OCR ENGINE v2.4)
+                            </span>
+                            <span className="text-emerald-400 font-bold">PARSED OK ✓</span>
+                          </div>
+                          <pre className="whitespace-pre-wrap leading-relaxed text-slate-300 max-h-24 overflow-y-auto">
+                            {activeTask.proof?.extractedFields?.rawText || `[HEADER] ${activeTask.store?.name?.toUpperCase()}\n[LOCATION] ${activeTask.store?.address || 'MUMBAI'}\n[CONTACT] ${activeTask.store?.phone || '+91 98201 44552'}\n[STATUS] CORROBORATED MATCH`}
+                          </pre>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="rounded-2xl border-2 border-dashed border-amber-500/30 bg-amber-500/5 p-8 text-center space-y-2.5">
+                      <div className="w-12 h-12 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-500">
+                        <Clock className="w-6 h-6" />
+                      </div>
+                      <h4 className="text-sm font-bold text-foreground">
+                        Awaiting Storefront Photo & OCR Proof
+                      </h4>
+                      <p className="text-xs text-muted-foreground max-w-md mx-auto">
+                        No storefront photo has been uploaded by the field agent yet. Current task status:{' '}
+                        <span className="font-mono font-bold text-amber-500">{activeTask.state}</span>.
+                        Once the agent confirms arrival and submits a photo in the Field Agent Portal, the real photo and OCR scan will appear here.
+                      </p>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Telemetry & GPS Geofence Verification Grid */}
@@ -744,8 +762,10 @@ export const FieldProofReviews = () => {
                       <span className="font-medium">Geofence Distance</span>
                       <MapPin className="w-3.5 h-3.5 text-emerald-500" />
                     </div>
-                    <p className="text-lg font-bold font-heading text-emerald-600 dark:text-emerald-400">
-                      {Math.round(activeTask.arrivalEvidence?.distanceMeters || 11.2)} meters
+                    <p className={`text-lg font-bold font-heading ${activeTask.arrivalEvidence ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-500'}`}>
+                      {activeTask.arrivalEvidence?.distanceMeters != null
+                        ? `${Math.round(activeTask.arrivalEvidence.distanceMeters)} meters`
+                        : 'Pending Arrival'}
                     </p>
                     <span className="text-[11px] text-muted-foreground">
                       Max Threshold: 50.0m allowed
@@ -758,10 +778,12 @@ export const FieldProofReviews = () => {
                       <ShieldCheck className="w-3.5 h-3.5 text-primary" />
                     </div>
                     <p className="text-lg font-bold font-heading text-foreground">
-                      ±{activeTask.arrivalEvidence?.accuracyMeters ? activeTask.arrivalEvidence.accuracyMeters.toFixed(1) : '3.0'}m
+                      {activeTask.arrivalEvidence?.accuracyMeters != null
+                        ? `±${activeTask.arrivalEvidence.accuracyMeters.toFixed(1)}m`
+                        : 'Awaiting GPS'}
                     </p>
                     <span className="text-[11px] text-muted-foreground">
-                      High-Precision Satellite Lock
+                      {activeTask.arrivalEvidence ? 'High-Precision Satellite Lock' : 'Agent has not checked in at store yet'}
                     </span>
                   </div>
 

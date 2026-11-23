@@ -28,11 +28,15 @@ function safeTaskView(task) {
     store: {
       storeId: source.store.storeId,
       name: source.store.name,
+      address: source.store.address || '',
+      phone: source.store.phone || '',
       location: {
         lat: source.store.location.lat,
         lng: source.store.location.lng,
       },
     },
+    items: Array.isArray(source.items) ? source.items : [],
+    auditEvents: Array.isArray(source.auditEvents) ? source.auditEvents : [],
     createdAt: source.createdAt,
     updatedAt: source.updatedAt,
     arrivalEvidence: source.arrivalEvidence

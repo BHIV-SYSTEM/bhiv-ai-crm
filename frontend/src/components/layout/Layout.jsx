@@ -67,8 +67,8 @@ export const Layout = () => {
 
   if (user?.role === 'field_agent') {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-emerald-500 selection:text-white">
-        <main className="w-full flex-1 pb-16">
+      <div className="min-h-screen bg-[#f8fafc] dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 antialiased font-sans flex flex-col justify-between">
+        <main className="w-full flex-1">
           <Outlet />
         </main>
       </div>

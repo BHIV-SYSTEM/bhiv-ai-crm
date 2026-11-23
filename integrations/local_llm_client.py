@@ -9,10 +9,14 @@ and synthesis of Artha ledger summaries with field visit proof.
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, AsyncGenerator, Dict, List, Optional
 from pydantic import BaseModel, Field
+
+_RECEIVABLES_JSON = Path(__file__).resolve().parents[1] / "data" / "bright_connection_receivables.json"
 
 
 class MitraQueryRequest(BaseModel):
@@ -110,11 +114,69 @@ class LocalLLMClient:
         },
     }
 
+    def _lookup_ingested_receivable(self, store_id: str, query: str) -> Optional[Dict[str, Any]]:
+        if not _RECEIVABLES_JSON.exists():
+            return None
+        try:
+            data = json.loads(_RECEIVABLES_JSON.read_text(encoding="utf-8"))
+        except Exception:
+            return None
+
+        customers = data.get("customers", [])
+        if store_id == "BRIGHT_CONNECTION_RECEIVABLES":
+            return {"mode": "summary", "data": data}
+        for c in customers:
+            if c.get("customer_id") == store_id or store_id.lower() in c.get("customer_name", "").lower():
+                return {"mode": "customer", "data": data, "customer": c}
+        return None
+
     def query_mitra_sync(self, request: MitraQueryRequest) -> MitraQueryResponse:
         """
         Execute an intelligence query strictly scoped to tenant_id and store_id (synchronous core).
         """
         start_time = datetime.now()
+
+        # Check ingested Bright Connection Receivable PDF records for tenant_bright_connection
+        if request.tenant_id == "tenant_bright_connection":
+            rec_match = self._lookup_ingested_receivable(request.store_id, request.query)
+            if rec_match:
+                data = rec_match["data"]
+                meta = data.get("metadata", {})
+                if rec_match["mode"] == "summary":
+                    top5 = sorted(data.get("customers", []), key=lambda x: x.get("total_pending_amount", 0), reverse=True)[:5]
+                    top_str = ", ".join(f"{c['customer_name']} (₹{c['total_pending_amount']:,.2f})" for c in top5)
+                    response_text = (
+                        f"Mitra Receivable Intelligence for {meta.get('company_name', 'Bright Connections')} "
+                        f"(Group: {meta.get('group')}, GSTIN: {meta.get('gstin')}):\n"
+                        f"• Total Customers: {data.get('total_customers')} | Total Outstanding: ₹{data.get('total_amount', 0):,.2f}\n"
+                        f"• Source Report: {meta.get('source_file')} ({meta.get('report_date')})\n"
+                        f"• Top 5 Receivables: {top_str}"
+                    )
+                    summary_payload = {"total_customers": data.get("total_customers"), "total_amount": data.get("total_amount"), "metadata": meta}
+                else:
+                    cust = rec_match["customer"]
+                    response_text = (
+                        f"Mitra Receivable Intelligence for {cust['customer_name']} ({cust['customer_id']}):\n"
+                        f"• Pending Amount: ₹{cust['total_pending_amount']:,.2f} across {cust['invoice_count']} entries.\n"
+                        f"• Max Overdue Days: {cust.get('max_overdue_days', 0)} days.\n"
+                        f"• Group: {meta.get('group')} | Source: {meta.get('source_file')}"
+                    )
+                    summary_payload = cust
+                latency = (datetime.now() - start_time).total_seconds() * 1000.0
+                return MitraQueryResponse(
+                    success=True,
+                    query=request.query,
+                    response=response_text,
+                    store_summary=summary_payload,
+                    provenance=MitraQueryProvenance(
+                        source_system="tally_bizanalyst_pdf",
+                        tenant_id=request.tenant_id,
+                        store_id=request.store_id,
+                        data_boundary_enforced=True,
+                        circuit_breaker_status="CLOSED" if not self._circuit_open else "OPEN",
+                        latency_ms=round(latency, 2),
+                    ),
+                )
 
         # Strict Tenant & Store Data Boundary Guard
         store_data = self.STORE_KNOWLEDGE_BASE.get(request.store_id)

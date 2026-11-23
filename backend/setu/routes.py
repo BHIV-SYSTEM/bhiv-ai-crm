@@ -15,6 +15,12 @@ from .contract_validation import ContractValidator, ContractValidationError
 from .failure_handler import FailureHandler
 from .ui_visibility_service import SetuUIVisibilityService
 from .bright_connection_connector import BrightConnectionConnector
+from .bright_connection_pdf_ingestor import (
+    DEFAULT_OUTPUT_PATH as RECEIVABLES_DATA_PATH,
+    ROOT_DIR as PROJECT_ROOT,
+    ingest_receivable_pdf,
+    load_ingested_receivables,
+)
 
 try:
     from notification_service import send_info_alert
@@ -193,6 +199,64 @@ def create_setu_router(
             "tenant_id": BrightConnectionConnector.TENANT_ID, 
             "canonical_record": canonical_evidence,
             "notification_sent": True
+        }
+
+    @router.post("/bright/receivables/ingest-pdf")
+    async def ingest_bright_receivables_pdf(
+        payload: Dict[str, Any] = None,
+        current_user: User = Depends(get_current_user)
+    ):
+        """Ingest a Bright Connection Tally/BizAnalyst Receivable PDF into SETU."""
+        payload = payload or {}
+        pdf_path = payload.get("file_path") or str(PROJECT_ROOT / "Receivable-22 Sept 26.pdf")
+        try:
+            canonical = ingest_receivable_pdf(
+                pdf_path=pdf_path,
+                sync_id=payload.get("sync_id"),
+            )
+            return {
+                "success": True,
+                "tenant_id": BrightConnectionConnector.TENANT_ID,
+                "report_id": canonical["report_id"],
+                "total_customers": canonical["total_customers"],
+                "total_amount": canonical["total_amount"],
+                "validation": canonical["validation"],
+                "metadata": canonical["metadata"],
+                "stored_at": str(RECEIVABLES_DATA_PATH),
+            }
+        except FileNotFoundError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to ingest receivable PDF: {e}")
+
+    @router.get("/bright/receivables")
+    async def get_bright_receivables(
+        search: str = "",
+        min_overdue_days: int = 0,
+        limit: int = 50,
+        current_user: User = Depends(get_current_user)
+    ):
+        """Query ingested Bright Connection Receivable Ledger records."""
+        data = load_ingested_receivables()
+        if not data:
+            raise HTTPException(status_code=404, detail="No Bright Connection receivable ledger ingested yet")
+
+        customers = data.get("customers", [])
+        if search:
+            q = search.lower()
+            customers = [c for c in customers if q in c.get("customer_name", "").lower()]
+        if min_overdue_days > 0:
+            customers = [c for c in customers if (c.get("max_overdue_days") or 0) >= min_overdue_days]
+
+        return {
+            "success": True,
+            "tenant_id": BrightConnectionConnector.TENANT_ID,
+            "report_id": data.get("report_id"),
+            "metadata": data.get("metadata"),
+            "total_customers": data.get("total_customers"),
+            "total_amount": data.get("total_amount"),
+            "matched_count": len(customers),
+            "customers": customers[:limit],
         }
 
     # PHASE 1B - MITRA ACCOUNT SCOPED QUERY

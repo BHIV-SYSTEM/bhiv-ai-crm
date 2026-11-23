@@ -75,20 +75,16 @@ class BrightConnectionConnector:
     TENANT_ID = "tenant_bright_connection"
 
     @classmethod
-<<<<<<< HEAD
-    def transform_product_catalog(cls, raw_items: List[Dict[str, Any]], tally_provenance: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
-        """Transforms Bright Connection raw catalog into Canonical MDU Product format"""
-=======
     def transform_product_catalog(
         cls,
         raw_items: List[Dict[str, Any]],
         sync_id: Optional[str] = None,
+        tally_provenance: Optional[Dict[str, Any]] = None,
     ) -> List[Dict[str, Any]]:
         """
         Transforms Bright Connection raw catalog into Canonical MDU Product format.
         Each record carries a source_context envelope with full provenance.
         """
->>>>>>> 2055cff64d67f00e72de903fea2f88da12d6b36a
         canonical_products = []
         for item in raw_items:
             sku = (
@@ -135,15 +131,11 @@ class BrightConnectionConnector:
         return canonical_products
 
     @classmethod
-<<<<<<< HEAD
-    def transform_order_payload(cls, raw_order: Dict[str, Any], tally_provenance: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Transforms Bright Connection order payload into Canonical MDU Order format"""
-        order_id = raw_order.get("order_id") or f"ORD-BC-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
-=======
     def transform_order_payload(
         cls,
         raw_order: Dict[str, Any],
         sync_id: Optional[str] = None,
+        tally_provenance: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Transforms Bright Connection order payload into Canonical MDU Order format.
@@ -153,7 +145,6 @@ class BrightConnectionConnector:
             raw_order.get("order_id")
             or f"ORD-BC-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
         )
->>>>>>> 2055cff64d67f00e72de903fea2f88da12d6b36a
         items = []
         total_amount = 0.0
 
@@ -189,7 +180,7 @@ class BrightConnectionConnector:
             "status":       raw_order.get("status") or "Placed",
         }
 
-        return {
+        result = {
             "mdu_type":          "order_record",
             "tenant_id":         cls.TENANT_ID,
             "order_id":          order_id,
@@ -211,31 +202,11 @@ class BrightConnectionConnector:
         return result
 
     @classmethod
-<<<<<<< HEAD
-    def transform_field_visit_evidence(cls, raw_visit: Dict[str, Any], tally_provenance: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Transforms Bright Connection field visit evidence into Canonical MDU Evidence format"""
-        result = {
-            "mdu_type": "field_visit_evidence",
-            "tenant_id": cls.TENANT_ID,
-            "account_id": raw_visit.get("account_id") or raw_visit.get("tally_account_id"),
-            "store_id": raw_visit.get("store_id") or raw_visit.get("tally_store_id"),
-            "visit_id": raw_visit.get("visit_id") or f"VIS-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
-            "route_id": raw_visit.get("route_id") or raw_visit.get("beat_id"),
-            "dealer_id": raw_visit.get("dealer_id"),
-            "agent_id": raw_visit.get("agent_id") or raw_visit.get("submitted_by"),
-            "location_proof": {
-                "lat": float(raw_visit.get("lat") or raw_visit.get("latitude") or 0.0),
-                "lng": float(raw_visit.get("lng") or raw_visit.get("longitude") or 0.0),
-                "verified": raw_visit.get("location_verified", True)
-            },
-            "display_photo_url": raw_visit.get("display_photo_url") or raw_visit.get("shelf_image"),
-            "damaged_goods_report": raw_visit.get("damaged_goods") or [],
-            "invoice_capture_url": raw_visit.get("invoice_url") or raw_visit.get("receipt_url"),
-=======
     def transform_field_visit_evidence(
         cls,
         raw_visit: Dict[str, Any],
         sync_id: Optional[str] = None,
+        tally_provenance: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Transforms Bright Connection field visit evidence into Canonical MDU Evidence format.
@@ -261,12 +232,11 @@ class BrightConnectionConnector:
             "route_id":         raw_visit.get("route_id") or raw_visit.get("beat_id"),
             "dealer_id":        raw_visit.get("dealer_id"),
             "agent_id":         raw_visit.get("agent_id") or raw_visit.get("submitted_by"),
->>>>>>> 2055cff64d67f00e72de903fea2f88da12d6b36a
             "payment_collected": float(raw_visit.get("payment_collected") or 0.0),
             "parikshak_reviewed": False,
         }
 
-        return {
+        result = {
             "mdu_type":           "field_visit_evidence",
             "tenant_id":          cls.TENANT_ID,
             "visit_id":           visit_id,
@@ -293,3 +263,79 @@ class BrightConnectionConnector:
         if tally_provenance:
             result["tally_provenance"] = tally_provenance
         return result
+
+    @classmethod
+    def transform_receivable_ledger(
+        cls,
+        raw_receivable: Dict[str, Any],
+        sync_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Transforms a parsed Bright Connection Receivable Aging / Outstanding Due report
+        (e.g. BizAnalyst / Tally PDF) into Canonical MDU Receivable Ledger format.
+        Each customer ledger carries a source_context envelope with full provenance.
+        """
+        report_id = (
+            raw_receivable.get("report_id")
+            or f"RCV-BC-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+        )
+        metadata = raw_receivable.get("metadata", {})
+        customers = raw_receivable.get("customers", [])
+        total_amount = float(raw_receivable.get("total_amount", 0.0))
+
+        source_context = _build_source_context(
+            source_entity="receivable_ledger",
+            source_record_id=report_id,
+            source_timestamp=metadata.get("report_date") or raw_receivable.get("ingested_at"),
+            sync_id=sync_id,
+            store_id=metadata.get("store_id"),
+            store_name=metadata.get("company_name") or "Bright Connections",
+            location_identifier=metadata.get("location") or "Mumbai 400104",
+        )
+        source_context["source_system"] = "tally_bizanalyst_pdf"
+        source_context["gstin"] = metadata.get("gstin")
+        source_context["group"] = metadata.get("group")
+
+        canonical_customers = []
+        for idx, cust in enumerate(customers, start=1):
+            cust_name = cust.get("customer_name", "Unknown Customer")
+            cust_id = f"CUST-BC-{idx:03d}"
+            cust_ctx = _build_source_context(
+                source_entity="receivable_customer_ledger",
+                source_record_id=cust_id,
+                source_timestamp=metadata.get("report_date"),
+                sync_id=sync_id,
+                store_id=cust_id,
+                store_name=cust_name,
+                location_identifier=metadata.get("location") or "Mumbai",
+            )
+            cust_ctx["source_system"] = "tally_bizanalyst_pdf"
+            cust_ctx["group"] = metadata.get("group")
+
+            canonical_customers.append({
+                "mdu_type": "receivable_customer_ledger",
+                "tenant_id": cls.TENANT_ID,
+                "customer_id": cust_id,
+                "customer_name": cust_name,
+                "group": metadata.get("group"),
+                "total_pending_amount": float(cust.get("total", 0.0)),
+                "invoice_count": len(cust.get("entries", [])),
+                "max_overdue_days": cust.get("max_overdue_days", 0),
+                "entries": cust.get("entries", []),
+                "canonical_version": "1.0",
+                "transformed_at": datetime.utcnow().isoformat() + "Z",
+                "source_context": cust_ctx,
+            })
+
+        return {
+            "mdu_type": "receivable_ledger",
+            "tenant_id": cls.TENANT_ID,
+            "report_id": report_id,
+            "metadata": metadata,
+            "total_customers": len(canonical_customers),
+            "total_amount": total_amount,
+            "customers": canonical_customers,
+            "canonical_version": "1.0",
+            "transformed_at": datetime.utcnow().isoformat() + "Z",
+            "source_context": source_context,
+        }

@@ -13,6 +13,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import toast from 'react-hot-toast';
 
+import Card, { CardHeader, CardTitle, CardContent } from '../components/common/ui/Card';
 import Button from '../components/common/ui/Button';
 import Badge from '../components/common/ui/Badge';
 import { LoadingSpinner } from '../components/common/ui/Spinner';
@@ -133,8 +134,14 @@ export const FieldAgentPortal = () => {
   // Phone Frame Simulator (for desktop preview testing)
   const [isPhoneFrame, setIsPhoneFrame] = useState(false);
 
-  // Unloading checklist states (item id -> checked boolean)
-  const [checkedItems, setCheckedItems] = useState({});
+  // Unloading checklist states (persisted per taskId:itemId)
+  const [checkedItems, setCheckedItems] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('setu_agent_checklist') || '{}');
+    } catch {
+      return {};
+    }
+  });
 
   // Audit trail drawer toggle
   const [showAuditDrawer, setShowAuditDrawer] = useState(false);
@@ -147,10 +154,23 @@ export const FieldAgentPortal = () => {
 
   // Camera & Proof state
   const [capturedImage, setCapturedImage] = useState(null);
+  const [capturedFile, setCapturedFile] = useState(null);
   const [proofReference, setProofReference] = useState('');
   const [isCameraActive, setIsCameraActive] = useState(false);
   const fileInputRef = useRef(null);
   const videoRef = useRef(null);
+
+  // Reset transient camera/upload preview when switching tasks
+  useEffect(() => {
+    if (videoRef.current?.srcObject) {
+      videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
+      videoRef.current.srcObject = null;
+    }
+    setIsCameraActive(false);
+    setCapturedImage(null);
+    setCapturedFile(null);
+    setProofReference('');
+  }, [selectedTaskId]);
 
   // Active selected task
   const activeTask = useMemo(() => {
@@ -274,8 +294,17 @@ export const FieldAgentPortal = () => {
     canvas.height = videoRef.current.videoHeight || 480;
     const ctx = canvas.getContext('2d');
     ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-    const dataUrl = canvas.toDataURL('image/jpeg');
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
     setCapturedImage(dataUrl);
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          setCapturedFile(new File([blob], `camera_${activeTask.taskId}.jpg`, { type: 'image/jpeg' }));
+        }
+      },
+      'image/jpeg',
+      0.92
+    );
 
     // Stop camera stream
     const stream = videoRef.current.srcObject;
@@ -293,20 +322,18 @@ export const FieldAgentPortal = () => {
     if (!activeTask) return;
     setActionLoading(true);
     try {
-      await fieldAgentAPI.updateState(activeTask.taskId, nextState);
+      const res = await fieldAgentAPI.updateState(activeTask.taskId, nextState);
+      const updatedTask = res?.task || res?.data?.task;
       toast.success(`Delivery updated: ${nextState}`);
       setTasks((prev) =>
         prev.map((t) =>
-          t.taskId === activeTask.taskId ? { ...t, state: nextState } : t
+          t.taskId === activeTask.taskId
+            ? { ...t, ...(updatedTask || {}), state: updatedTask?.state || nextState }
+            : t
         )
       );
     } catch (error) {
-      toast.success(`[Local Dev] Status transitioned to ${nextState}`);
-      setTasks((prev) =>
-        prev.map((t) =>
-          t.taskId === activeTask.taskId ? { ...t, state: nextState } : t
-        )
-      );
+      toast.error(error?.response?.data?.message || `Failed to update status to ${nextState}`);
     } finally {
       setActionLoading(false);
     }
@@ -356,7 +383,10 @@ export const FieldAgentPortal = () => {
         locationToSubmit,
         accuracy
       );
-      if (response?.data?.decision?.outcome === 'ARRIVAL_CONFIRMED') {
+      const updatedTask = response?.task || response?.data?.task;
+      const decision = response?.decision || response?.data?.decision;
+
+      if (decision?.outcome === 'ARRIVAL_CONFIRMED') {
         toast.success('Arrival confirmed inside 50m geofence!');
       } else {
         toast.success('Arrival recorded successfully');
@@ -375,8 +405,9 @@ export const FieldAgentPortal = () => {
           t.taskId === activeTask.taskId
             ? {
                 ...t,
-                state: 'ARRIVED',
-                arrivalEvidence: {
+                ...(updatedTask || {}),
+                state: updatedTask?.state || 'ARRIVED',
+                arrivalEvidence: updatedTask?.arrivalEvidence || {
                   outcome: 'ARRIVAL_CONFIRMED',
                   distanceMeters: simulate ? 11 : distanceToStore,
                   radiusMeters: 50,
@@ -391,42 +422,31 @@ export const FieldAgentPortal = () => {
       if (error.response?.status === 422) {
         toast.error(`Geofence failed: You are ${distanceToStore}m away (max 50m allowed).`);
       } else {
-        toast.success('Arrival confirmed inside 50m geofence!');
-        notifyManagerAlert(
-          'arrival',
-          `Field Agent Arrived: ${activeTask.store.name}`,
-          `Field Agent verified arrival inside 50m geofence for ${activeTask.store.name}.`,
-          activeTask.taskId,
-          'warning'
-        );
-        setTasks((prev) =>
-          prev.map((t) =>
-            t.taskId === activeTask.taskId
-              ? {
-                  ...t,
-                  state: 'ARRIVED',
-                  arrivalEvidence: {
-                    outcome: 'ARRIVAL_CONFIRMED',
-                    distanceMeters: 12,
-                    radiusMeters: 50,
-                    accuracyMeters: 3.5,
-                    evaluatedAt: new Date().toISOString(),
-                  },
-                }
-              : t
-          )
-        );
+        toast.error(error?.response?.data?.message || 'Failed to record arrival at store.');
       }
     } finally {
       setActionLoading(false);
     }
   };
 
-  // Handle Photo File selection
+  // Handle Photo File selection (validates JPEG/PNG/WebP <= 5 MB and preserves File)
   const handlePhotoSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type) && !/\.(jpe?g|png|webp)$/i.test(file.name || '')) {
+      toast.error('Please upload a JPEG, PNG, or WebP image.');
+      e.target.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be 5 MB or smaller.');
+      e.target.value = '';
+      return;
+    }
+
+    setCapturedFile(file);
     const reader = new FileReader();
     reader.onload = (event) => {
       const dataUrl = event.target.result;
@@ -439,6 +459,7 @@ export const FieldAgentPortal = () => {
       toast.success(`Photo loaded: ${file.name || 'Storefront'}`);
     };
     reader.readAsDataURL(file);
+    e.target.value = '';
   };
 
   // Generate a high-res sample signboard for quick demo testing
@@ -486,6 +507,15 @@ export const FieldAgentPortal = () => {
 
     const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
     setCapturedImage(dataUrl);
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          setCapturedFile(new File([blob], `signboard_${activeTask.taskId}.jpg`, { type: 'image/jpeg' }));
+        }
+      },
+      'image/jpeg',
+      0.95
+    );
     const cleanName = storeName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
     const generatedRef = `proof:storefront_${cleanName}_${Date.now()}`;
     setProofReference(generatedRef);
@@ -494,24 +524,26 @@ export const FieldAgentPortal = () => {
 
   // Submit Storefront Proof
   const handleSubmitProof = async () => {
-    if (!activeTask || !proofReference || !capturedImage) {
+    if (!activeTask || (!capturedFile && !capturedImage)) {
       toast.error('Please snap or upload a storefront photo first.');
       return;
     }
 
     setActionLoading(true);
     try {
-      const response = await fieldAgentAPI.submitProof(activeTask.taskId, proofReference, capturedImage);
-      const backendProof = response?.data?.task?.proof || {
-        proofId: proofReference,
-        fileReference: proofReference,
-        imageData: capturedImage,
-        submittedAt: new Date().toISOString(),
-        reviewState: 'REVIEW_REQUIRED',
-        ocrStatus: 'COMPLETED',
-      };
+      const response = await fieldAgentAPI.submitProof(
+        activeTask.taskId,
+        capturedFile || capturedImage,
+        capturedImage
+      );
+      const updatedTask = response?.task || response?.data?.task;
+      const backendProof = updatedTask?.proof || response?.proof;
 
-      toast.success('Signboard photo & OCR proof submitted! Sent to manager review queue.');
+      if (!backendProof) {
+        throw new Error(response?.message || 'Proof upload did not return a saved proof record.');
+      }
+
+      toast.success('Signboard photo & OCR proof uploaded! Sent to manager review queue.');
       notifyManagerAlert(
         'proof',
         `Storefront Proof Submitted: ${activeTask.store.name}`,
@@ -524,73 +556,101 @@ export const FieldAgentPortal = () => {
           t.taskId === activeTask.taskId
             ? {
                 ...t,
-                state: 'PROOF_SUBMITTED',
+                ...(updatedTask || {}),
+                state: updatedTask?.state || 'PROOF_SUBMITTED',
                 proof: backendProof,
               }
             : t
         )
       );
+      setCapturedFile(null);
+      setCapturedImage(null);
+      setProofReference('');
     } catch (error) {
-      toast.success('Storefront Proof submitted to audit trail');
-      notifyManagerAlert(
-        'proof',
-        `Storefront Proof Submitted: ${activeTask.store.name}`,
-        `Field agent uploaded storefront signboard photo proof for ${activeTask.store.name}. Manager review required.`,
-        activeTask.taskId,
-        'critical'
-      );
-      setTasks((prev) =>
-        prev.map((t) =>
-          t.taskId === activeTask.taskId
-            ? {
-                ...t,
-                state: 'PROOF_SUBMITTED',
-                proof: {
-                  proofId: proofReference,
-                  fileReference: proofReference,
-                  imageData: capturedImage,
-                  submittedAt: new Date().toISOString(),
-                  reviewState: 'REVIEW_REQUIRED',
-                  ocrStatus: 'COMPLETED',
-                },
-              }
-            : t
-        )
-      );
+      toast.error(error?.response?.data?.message || error.message || 'Failed to upload storefront proof.');
     } finally {
       setActionLoading(false);
     }
   };
 
-  // Toggle item check
-  const toggleItemCheck = (id) => {
-    setCheckedItems((prev) => ({ ...prev, [id]: !prev[id] }));
+  // Toggle item check (scoped per taskId and persisted in localStorage)
+  const toggleItemCheck = (itemKey) => {
+    if (!activeTask) return;
+    const compositeKey = `${activeTask.taskId}:${itemKey}`;
+    setCheckedItems((prev) => {
+      const next = { ...prev, [compositeKey]: !prev[compositeKey] };
+      try {
+        localStorage.setItem('setu_agent_checklist', JSON.stringify(next));
+      } catch {
+        // ignore storage quota
+      }
+      return next;
+    });
   };
 
   // Filter tasks
   const filteredTasks = tasks.filter((t) => {
     if (filterTab === 'ALL') return true;
     if (filterTab === 'ACTIVE') return ['ASSIGNED', 'ACCEPTED', 'EN_ROUTE'].includes(t.state);
-    if (filterTab === 'DONE') return ['ARRIVED', 'PROOF_SUBMITTED', 'REVIEW_REQUIRED', 'VERIFIED', 'COMPLETED'].includes(t.state);
+    if (filterTab === 'DONE') return ['ARRIVED', 'PROOF_SUBMITTED', 'REVIEW_REQUIRED'].includes(t.state);
+    if (filterTab === 'VERIFIED') return ['VERIFIED', 'COMPLETED'].includes(t.state);
     return true;
   });
 
-  return (
-    <div className={`min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-start ${isPhoneFrame ? 'p-4 sm:p-8 bg-slate-900' : 'p-0'}`}>
-      {/* Mobile Outer Container: Full width on phone, or framed on desktop */}
-      <div className={`w-full ${isPhoneFrame ? 'max-w-[420px] rounded-[40px] border-[8px] border-slate-800 shadow-2xl overflow-hidden' : 'max-w-2xl sm:px-4'} flex flex-col min-h-screen bg-slate-950`}>
+  const taskSummary = useMemo(() => ({
+    total: tasks.length,
+    active: tasks.filter((t) => ['ASSIGNED', 'ACCEPTED', 'EN_ROUTE'].includes(t.state)).length,
+    review: tasks.filter((t) => ['ARRIVED', 'PROOF_SUBMITTED', 'REVIEW_REQUIRED'].includes(t.state)).length,
+    verified: tasks.filter((t) => ['VERIFIED', 'COMPLETED'].includes(t.state)).length,
+  }), [tasks]);
 
-        {/* 1. Mobile App Top Bar */}
-        <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800/80 px-3 sm:px-4 py-2.5">
-          <div className="flex items-center justify-between gap-2">
-            {/* Left: Agent Avatar & Status Beacon */}
-            <div className="flex items-center gap-2.5 min-w-0">
-              {/* Optional Admin/Manager Exit Arrow */}
+  const getStateBadgeClasses = (state) => {
+    switch (state) {
+      case 'VERIFIED':
+      case 'COMPLETED':
+        return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30';
+      case 'REJECTED':
+        return 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30';
+      case 'PROOF_SUBMITTED':
+      case 'REVIEW_REQUIRED':
+        return 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30';
+      case 'ARRIVED':
+        return 'bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-500/30';
+      case 'EN_ROUTE':
+        return 'bg-sky-500/15 text-sky-700 dark:text-sky-400 border-sky-500/30';
+      default:
+        return 'bg-primary/10 text-primary border-primary/25';
+    }
+  };
+
+  const activeItemsList = activeTask?.items && activeTask.items.length > 0 ? activeTask.items : DEMO_TASKS[0].items;
+  const checkedItemCount = activeTask
+    ? activeItemsList.filter((item, idx) => checkedItems[`${activeTask.taskId}:${item.id || idx}`]).length
+    : 0;
+
+  return (
+    <div className={`min-h-screen w-full overflow-x-hidden bg-background text-foreground flex flex-col items-center justify-start ${isPhoneFrame ? 'p-3 sm:p-6 bg-muted/60' : 'p-0 sm:p-4 lg:p-6'}`}>
+      {/* Responsive Enterprise Shell matching Admin Panel (or 420px Phone Preview when toggled) */}
+      <div className={`w-full flex flex-col transition-all ${
+        isPhoneFrame
+          ? 'max-w-[420px] rounded-[36px] border-[8px] border-slate-800 dark:border-slate-700 shadow-2xl overflow-hidden bg-background min-h-[85vh]'
+          : 'max-w-7xl space-y-5'
+      }`}>
+
+        {/* 1. Enterprise Header Bar (matches Admin Panel styling) */}
+        <header className={`${
+          isPhoneFrame
+            ? 'sticky top-0 z-40 bg-card/95 backdrop-blur-md border-b border-border px-3.5 py-3'
+            : 'bg-card border border-border rounded-xl p-4 sm:p-5 shadow-card'
+        }`}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            {/* Left: Agent Identity & Portal Title */}
+            <div className="flex items-center gap-3 min-w-0">
               {(user?.role === 'admin' || user?.role === 'manager') && (
                 <button
                   type="button"
                   onClick={() => navigate('/')}
-                  className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 active:scale-95 transition"
+                  className="flex items-center justify-center w-9 h-9 flex-shrink-0 rounded-lg bg-muted hover:bg-muted/80 text-foreground border border-border transition"
                   title="Back to Admin Dashboard"
                 >
                   <ArrowLeft className="w-4 h-4" />
@@ -598,59 +658,65 @@ export const FieldAgentPortal = () => {
               )}
 
               <div className="relative flex-shrink-0">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-primary to-indigo-500 flex items-center justify-center font-bold text-white shadow-md text-xs border border-slate-700">
+                <div className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-heading font-bold text-sm shadow-sm">
                   {user?.name ? user.name.slice(0, 2).toUpperCase() : 'FA'}
                 </div>
                 {onDuty && (
-                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-slate-950 animate-pulse" />
+                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-card" />
                 )}
               </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <h1 className="text-xs sm:text-sm font-bold text-white leading-tight truncate">
-                    {user?.name || 'Rahul Sharma'}
+
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-base sm:text-lg font-heading font-bold text-foreground truncate">
+                    Field Agent Operations
                   </h1>
-                  <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-primary/20 text-primary border border-primary/30 flex-shrink-0">
-                    AGENT
+                  <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                    {user?.name || 'Rahul Sharma'}
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
-                  <span className={`w-1.5 h-1.5 rounded-full ${onDuty ? 'bg-emerald-400' : 'bg-slate-600'}`} />
-                  <span className="truncate">{onDuty ? 'Active' : 'Off Duty'}</span>
-                  <span>&bull;</span>
-                  <span className="font-mono text-cyan-300">GPS &plusmn;{gpsAccuracy}m</span>
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className={`w-1.5 h-1.5 rounded-full ${onDuty ? 'bg-emerald-500' : 'bg-muted-foreground'}`} />
+                    {onDuty ? 'On Duty • Broadcasting GPS' : 'Off Duty'}
+                  </span>
+                  <span>•</span>
+                  <span className="font-mono text-foreground font-medium">GPS &plusmn;{gpsAccuracy}m</span>
+                  <span>•</span>
+                  <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    Zero Financial Exposure
+                  </span>
                 </div>
               </div>
             </div>
 
-            {/* Right: Navbar Action Buttons */}
-            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-              {/* Admin/Manager Fast Dispatch Task & Proof Reviews Buttons */}
+            {/* Right: Operational Toolbar */}
+            <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
               {(user?.role === 'admin' || user?.role === 'manager') && (
                 <>
-                  <button
+                  <Button
                     type="button"
+                    size="sm"
                     onClick={() => setShowCreateTaskModal(true)}
-                    className="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-lg bg-primary/20 hover:bg-primary/30 border border-primary/40 text-primary text-[11px] font-bold active:scale-95 transition shadow-sm"
-                    title="Dispatch New Task to Field Agent"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold shadow-sm"
                   >
-                    <PlusCircle className="w-3.5 h-3.5" />
-                    <span>+ Task</span>
-                  </button>
-
-                  <button
+                    <PlusCircle className="w-3.5 h-3.5 mr-1.5" />
+                    Dispatch Job
+                  </Button>
+                  <Button
                     type="button"
+                    size="sm"
+                    variant="outline"
                     onClick={() => navigate('/field-reviews')}
-                    className="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-[11px] font-bold active:scale-95 transition"
-                    title="Go to Manager Proof Approvals"
+                    className="text-xs font-semibold"
                   >
-                    <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-                    <span className="hidden sm:inline">Reviews</span>
-                  </button>
+                    <ShieldCheck className="w-3.5 h-3.5 mr-1.5 text-amber-500" />
+                    Proof Approvals
+                  </Button>
                 </>
               )}
 
-              {/* Duty Toggle Pill Button */}
               <button
                 type="button"
                 onClick={() => {
@@ -658,18 +724,17 @@ export const FieldAgentPortal = () => {
                   setOnDuty(next);
                   toast.success(next ? 'Switched to ON DUTY (Broadcasting GPS)' : 'Switched to OFF DUTY');
                 }}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-[11px] font-bold transition-all active:scale-95 ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition ${
                   onDuty
-                    ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400 shadow-glow-primary'
-                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
+                    ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-400'
+                    : 'bg-muted border-border text-muted-foreground hover:text-foreground'
                 }`}
                 title="Toggle Duty Mode"
               >
-                <Power className={`w-3.5 h-3.5 ${onDuty ? 'text-emerald-400' : 'text-slate-500'}`} />
-                <span className="hidden xs:inline">{onDuty ? 'ON' : 'OFF'}</span>
+                <Power className="w-3.5 h-3.5" />
+                <span>{onDuty ? 'On Duty' : 'Off Duty'}</span>
               </button>
 
-              {/* Refresh Tasks Button */}
               <button
                 type="button"
                 onClick={async () => {
@@ -677,76 +742,105 @@ export const FieldAgentPortal = () => {
                   toast.success('Deliveries refreshed');
                 }}
                 disabled={loading}
-                className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white active:scale-95 transition"
+                className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-muted hover:bg-muted/80 border border-border text-foreground transition"
                 title="Refresh Deliveries"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-primary' : ''}`} />
               </button>
 
-              {/* Desktop Phone Frame Switcher Button */}
               <button
                 type="button"
                 onClick={() => setIsPhoneFrame(!isPhoneFrame)}
-                className={`hidden sm:flex items-center justify-center w-8 h-8 rounded-lg border transition active:scale-95 ${
+                className={`hidden md:inline-flex items-center justify-center w-8 h-8 rounded-lg border transition ${
                   isPhoneFrame
-                    ? 'bg-primary/20 border-primary text-primary shadow-glow'
-                    : 'bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-400 hover:text-white'
+                    ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                    : 'bg-muted hover:bg-muted/80 border-border text-muted-foreground hover:text-foreground'
                 }`}
-                title={isPhoneFrame ? 'Expand to Full Width' : 'Simulate Phone Frame'}
+                title={isPhoneFrame ? 'Expand to Desktop View' : 'Preview Mobile App Frame'}
               >
                 <Smartphone className="w-3.5 h-3.5" />
               </button>
 
-              {/* Sign Out Button (With working navigation) */}
               <button
                 type="button"
                 onClick={handleLogout}
-                className="flex items-center justify-center w-8 h-8 rounded-lg bg-red-950/40 hover:bg-red-900/60 border border-red-500/30 text-red-400 hover:text-red-200 active:scale-95 transition"
+                className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 text-red-600 dark:text-red-400 transition"
                 title="Sign Out"
               >
                 <LogOut className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
-
-          {/* Strict Security Guard Header Pill */}
-          <div className="mt-2 px-2.5 py-1 rounded-lg bg-emerald-950/50 border border-emerald-500/25 flex items-center justify-between text-[10px] text-emerald-300">
-            <div className="flex items-center gap-1.5">
-              <ShieldCheck className="w-3 h-3 text-emerald-400" />
-              <span>Zero Financial Exposure Enforced</span>
-            </div>
-            <span className="text-[10px] text-slate-400 font-mono">No Prices • Safe View</span>
-          </div>
         </header>
 
-        {/* 2. Sub-Navbar: Filter Buttons & Task Stop Selector */}
-        <div className="px-3 sm:px-4 py-2 bg-slate-950 border-b border-slate-800/60 space-y-2">
-          {/* Status Filter Buttons */}
-          <div className="flex items-center gap-1.5">
+        {/* 2. KPI Summary Cards (matches Admin Proof Approvals, hidden inside phone frame) */}
+        {!isPhoneFrame && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 px-3 sm:px-0">
             {[
-              { id: 'ALL', label: `All (${tasks.length})` },
-              { id: 'ACTIVE', label: `Active (${tasks.filter(t => ['ASSIGNED', 'ACCEPTED', 'EN_ROUTE'].includes(t.state)).length})` },
-              { id: 'DONE', label: `Done (${tasks.filter(t => ['ARRIVED', 'PROOF_SUBMITTED', 'REVIEW_REQUIRED', 'VERIFIED', 'COMPLETED'].includes(t.state)).length})` },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setFilterTab(tab.id)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition active:scale-95 ${
-                  filterTab === tab.id
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+              { id: 'ALL', label: 'Assigned Stops', value: taskSummary.total, sub: 'Total Route Stops', icon: PackageCheck, tone: 'bg-primary/10 text-primary', activeBorder: 'bg-primary/5 border-primary/40' },
+              { id: 'ACTIVE', label: 'Active / En Route', value: taskSummary.active, sub: 'Pending Arrival', icon: Navigation, tone: 'bg-sky-500/15 text-sky-600 dark:text-sky-400', activeBorder: 'bg-sky-500/10 border-sky-500/40' },
+              { id: 'DONE', label: 'Arrived & In Review', value: taskSummary.review, sub: 'Photo / Supervisor Queue', icon: Camera, tone: 'bg-amber-500/15 text-amber-600 dark:text-amber-400', activeBorder: 'bg-amber-500/10 border-amber-500/40' },
+              { id: 'VERIFIED', label: 'Verified & Unlocked', value: taskSummary.verified, sub: 'Approved Storefronts', icon: CheckCircle2, tone: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400', activeBorder: 'bg-emerald-500/10 border-emerald-500/40' },
+            ].map((kpi) => {
+              const Icon = kpi.icon;
+              const isSelected = filterTab === kpi.id;
+              return (
+                <button
+                  key={kpi.id}
+                  type="button"
+                  onClick={() => setFilterTab(kpi.id)}
+                  className={`p-4 rounded-xl border text-left transition-all ${
+                    isSelected ? `${kpi.activeBorder} shadow-sm` : 'bg-card border-border hover:border-primary/30'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-muted-foreground">{kpi.label}</span>
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${kpi.tone}`}>
+                      <Icon className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <p className="text-2xl font-bold font-heading mt-2 text-foreground">{kpi.value}</p>
+                  <span className="text-[11px] text-muted-foreground font-medium mt-0.5 inline-block">{kpi.sub}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* 3. Filter Bar & Stop Selector Strip */}
+        <div className={`${isPhoneFrame ? 'px-3.5 py-2.5 bg-muted/30 border-b border-border' : 'bg-card border border-border rounded-xl p-3 sm:p-4 mx-3 sm:mx-0 shadow-card'} space-y-2.5`}>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+              {[
+                { id: 'ALL', label: `All (${taskSummary.total})` },
+                { id: 'ACTIVE', label: `Active (${taskSummary.active})` },
+                { id: 'DONE', label: `In Review (${taskSummary.review})` },
+                { id: 'VERIFIED', label: `Verified (${taskSummary.verified})` },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setFilterTab(tab.id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
+                    filterTab === tab.id
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+            {!isPhoneFrame && (
+              <span className="hidden sm:inline text-xs text-muted-foreground font-medium">
+                {filteredTasks.length} stop{filteredTasks.length === 1 ? '' : 's'}
+              </span>
+            )}
           </div>
 
-          {/* Horizontal Scrollable Task Stops */}
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-0.5">
             {filteredTasks.length === 0 ? (
-              <p className="text-xs text-slate-500 py-1">No deliveries matching this filter.</p>
+              <p className="text-xs text-muted-foreground py-2">No deliveries matching this filter.</p>
             ) : (
               filteredTasks.map((t, idx) => {
                 const isSelected = activeTask?.taskId === t.taskId;
@@ -755,26 +849,21 @@ export const FieldAgentPortal = () => {
                     key={t.taskId}
                     type="button"
                     onClick={() => setSelectedTaskId(t.taskId)}
-                    className={`flex-shrink-0 px-3 py-1.5 rounded-xl border text-left transition-all active:scale-95 ${
+                    className={`flex-shrink-0 px-3 py-2 rounded-xl border text-left transition-all ${
                       isSelected
-                        ? 'bg-primary/20 border-primary text-white shadow-glow-primary ring-1 ring-primary/40'
-                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-850'
+                        ? 'bg-primary/5 border-primary shadow-sm ring-1 ring-primary/20'
+                        : 'bg-background border-border hover:border-primary/40'
                     }`}
                   >
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-mono text-[10px] font-bold text-cyan-300">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-[10px] font-semibold text-muted-foreground">
                         Stop #{idx + 1}
                       </span>
-                      <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${
-                        t.state === 'EN_ROUTE' ? 'bg-amber-500/20 text-amber-400' :
-                        t.state === 'ARRIVED' ? 'bg-purple-500/20 text-purple-400' :
-                        t.state === 'PROOF_SUBMITTED' ? 'bg-yellow-500/20 text-yellow-400' :
-                        'bg-slate-800 text-slate-300'
-                      }`}>
+                      <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${getStateBadgeClasses(t.state)}`}>
                         {t.state}
                       </span>
                     </div>
-                    <p className="text-xs font-semibold text-white mt-0.5 max-w-[140px] truncate">
+                    <p className="text-xs font-heading font-bold text-foreground mt-1 max-w-[170px] truncate">
                       {t.store?.name}
                     </p>
                   </button>
@@ -784,516 +873,614 @@ export const FieldAgentPortal = () => {
           </div>
         </div>
 
-        {/* 3. Main Task Content Body */}
+        {/* 4. Main Workspace Content */}
         {activeTask ? (
-          <div className="flex-1 px-4 py-4 space-y-4 pb-40">
+          <div className={`flex-1 ${isPhoneFrame ? 'px-3.5 py-4 space-y-4' : 'px-3 sm:px-0 space-y-5'}`}>
 
-            {/* A. Destination Store Hero Card */}
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-850 border border-slate-800 shadow-xl space-y-3">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <span className="text-[11px] font-mono text-cyan-400 font-semibold uppercase tracking-wider">
-                    {activeTask.store?.storeId || 'AUTHORIZED PARTNER'}
-                  </span>
-                  <h2 className="text-lg font-bold text-white mt-0.5 leading-snug">
-                    {activeTask.store?.name}
-                  </h2>
-                </div>
-
-                <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${
-                  activeTask.state === 'EN_ROUTE' ? 'border-amber-500 text-amber-400 bg-amber-500/10 animate-pulse' :
-                  activeTask.state === 'ARRIVED' ? 'border-purple-500 text-purple-400 bg-purple-500/10' :
-                  activeTask.state === 'PROOF_SUBMITTED' ? 'border-yellow-500 text-yellow-400 bg-yellow-500/10' :
-                  'border-blue-500 text-blue-400 bg-blue-500/10'
-                }`}>
-                  {activeTask.state}
-                </span>
-              </div>
-
-              <p className="text-xs text-slate-300 flex items-start gap-1.5 leading-relaxed">
-                <MapPin className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                {activeTask.store?.address || 'Mumbai Central Distribution Hub, Maharashtra'}
-              </p>
-
-              {/* 1-Tap Mobile Action Row (Call Store + Google Maps GPS Navigation) */}
-              <div className="grid grid-cols-2 gap-2 pt-1">
-                {/* 1-Tap Phone Call */}
-                <a
-                  href={`tel:${activeTask.store?.phone || '+919820144552'}`}
-                  className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 text-xs font-medium active:scale-95 transition"
-                >
-                  <Phone className="w-3.5 h-3.5 text-emerald-400" />
-                  Call Store
-                </a>
-
-                {/* 1-Tap Google Maps External App Navigation */}
-                <a
-                  href={`https://www.google.com/maps/dir/?api=1&destination=${activeTask.store?.location?.lat},${activeTask.store?.location?.lng}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 text-xs font-medium active:scale-95 transition"
-                >
-                  <ExternalLink className="w-3.5 h-3.5 text-blue-400" />
-                  Turn-by-Turn
-                </a>
-              </div>
-
-              {/* Transaction Access Control based on Admin Storefront Approval */}
-              {!isStorefrontApproved ? (
-                <div
-                  onClick={() => {
-                    toast.error('Transactions locked! Admin or Manager must verify and approve storefront proof first.', {
-                      icon: '🔒',
-                      duration: 3500,
-                    });
-                    setShowTransactionModal(true);
-                  }}
-                  className="w-full mt-2 py-2.5 px-3 rounded-xl bg-slate-900/95 border border-slate-700/80 hover:border-amber-500/50 cursor-pointer flex items-center justify-between transition-all group select-none shadow-sm"
-                  title="Transactions locked until Admin or Manager approves storefront proof"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform flex-shrink-0">
-                      <Lock className="w-4 h-4" />
-                    </div>
-                    <div className="text-left">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-semibold text-slate-300 group-hover:text-amber-300 transition-colors">
-                          Store Transactions & Invoices
-                        </span>
-                        <span className="px-1.5 py-0.5 rounded text-[9px] bg-amber-500/15 text-amber-400 border border-amber-500/30 font-semibold tracking-wide uppercase">
-                          Locked
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-slate-400 leading-tight mt-0.5">
-                        Awaiting Admin / Manager storefront approval
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-[11px] text-amber-400/80 font-medium flex items-center gap-1 group-hover:text-amber-400">
-                    <ShieldAlert className="w-3.5 h-3.5 text-amber-500" />
-                    View Status
-                  </span>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setShowTransactionModal(true)}
-                  className="w-full mt-2 py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-950/90 via-slate-900 to-emerald-950/60 border border-emerald-500/50 hover:border-emerald-400 text-emerald-200 text-xs font-semibold flex items-center justify-between active:scale-98 transition shadow-lg shadow-emerald-950/20 group"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform flex-shrink-0">
-                      <Receipt className="w-4 h-4" />
-                    </div>
-                    <div className="text-left">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-emerald-300">
-                          Store Transactions & Invoices
-                        </span>
-                        <span className="px-1.5 py-0.5 rounded text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-semibold tracking-wide uppercase">
-                          Unlocked ✓
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-emerald-400/80 leading-tight mt-0.5">
-                        Storefront verified • Ledger statement accessible
-                      </p>
-                    </div>
-                  </div>
-                  <span className="flex items-center gap-1 text-[11px] text-emerald-400 font-bold group-hover:translate-x-0.5 transition-transform">
-                    View Statement →
-                  </span>
-                </button>
-              )}
-            </div>
-
-            {/* B. Mobile Interactive GPS Map with 50m Geofence */}
-            <div
-              className="rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 shadow-xl relative z-0 isolate"
-              style={{ isolation: 'isolate', zIndex: 0 }}
-            >
-              <div className="h-56 sm:h-64 w-full relative z-0">
-                {activeTask.store?.location && (
-                  <MapContainer
-                    center={[activeTask.store.location.lat, activeTask.store.location.lng]}
-                    zoom={16}
-                    zoomControl={false}
-                    scrollWheelZoom={false}
-                    style={{ height: '100%', width: '100%', zIndex: 0 }}
-                  >
-                    <TileLayer
-                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    />
-                    <MapRecenter center={[activeTask.store.location.lat, activeTask.store.location.lng]} />
-
-                    {/* Store Target with 50-Meter Geofence Circle */}
-                    <Marker
-                      position={[activeTask.store.location.lat, activeTask.store.location.lng]}
-                      icon={STORE_ICON}
-                    >
-                      <Popup>
-                        <p className="font-bold text-xs">{activeTask.store.name}</p>
-                        <p className="text-[10px] text-slate-600">50m Geofence Target</p>
-                      </Popup>
-                    </Marker>
-
-                    <Circle
-                      center={[activeTask.store.location.lat, activeTask.store.location.lng]}
-                      radius={50}
-                      pathOptions={{
-                        color: '#10b981',
-                        fillColor: '#10b981',
-                        fillOpacity: 0.3,
-                        weight: 2,
-                      }}
-                    />
-
-                    {/* Agent Live Marker */}
-                    <Marker position={[agentCoords.lat, agentCoords.lng]} icon={AGENT_ICON}>
-                      <Popup>
-                        <p className="font-bold text-xs">Your Location</p>
-                      </Popup>
-                    </Marker>
-                  </MapContainer>
-                )}
-              </div>
-
-              {/* Dynamic Mobile Proximity Pill Overlay */}
-              <div className="absolute top-2.5 left-2.5 right-2.5 z-20 flex items-center justify-between gap-2 pointer-events-auto">
-                <div className={`px-3 py-1.5 rounded-full backdrop-blur-md text-xs font-bold flex items-center gap-1.5 shadow-lg border ${
-                  isWithinGeofence
-                    ? 'bg-emerald-950/85 border-emerald-500/80 text-emerald-300 animate-pulse'
-                    : 'bg-slate-900/90 border-slate-700 text-amber-300'
-                }`}>
-                  <LocateFixed className="w-3.5 h-3.5" />
-                  <span>
-                    {distanceToStore !== null ? `${distanceToStore}m away` : 'Locating...'}
-                  </span>
-                  <span className="text-[10px] opacity-80 font-normal">
-                    {isWithinGeofence ? '• Inside 50m' : '• 50m geofence'}
-                  </span>
-                </div>
-
-                {/* Instant Simulate Arrival Button (for testing anywhere) */}
-                {activeTask.state === 'EN_ROUTE' && !isWithinGeofence && (
-                  <button
-                    onClick={() => handleRecordArrival(true)}
-                    disabled={actionLoading}
-                    className="px-2.5 py-1.5 rounded-full bg-primary/90 hover:bg-primary border border-white/20 text-white text-[11px] font-semibold shadow-lg flex items-center gap-1"
-                  >
-                    <Sparkles className="w-3 h-3 text-amber-300" />
-                    Simulate 12m
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* C. Interactive Unloading Package Checklist (Zero Financial Exposure) */}
-            <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-                  <PackageCheck className="w-4 h-4 text-primary" />
-                  Delivery Manifest Checklist
-                </h3>
-                <span className="text-[11px] font-mono text-cyan-400 font-semibold">
-                  {Object.values(checkedItems).filter(Boolean).length} / {(activeTask.items || DEMO_TASKS[0].items).length} Unloaded
-                </span>
-              </div>
-
-              <div className="space-y-2">
-                {(activeTask.items || DEMO_TASKS[0].items).map((item, idx) => {
-                  const isChecked = checkedItems[item.id || idx];
-                  return (
-                    <div
-                      key={item.id || idx}
-                      onClick={() => toggleItemCheck(item.id || idx)}
-                      className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition ${
-                        isChecked
-                          ? 'bg-emerald-950/30 border-emerald-500/40'
-                          : 'bg-slate-950/60 border-slate-800'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        {isChecked ? (
-                          <CheckSquare className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                        ) : (
-                          <Square className="w-4 h-4 text-slate-500 flex-shrink-0" />
-                        )}
-                        <div>
-                          <p className={`text-xs font-semibold ${isChecked ? 'line-through text-slate-400' : 'text-white'}`}>
-                            {item.name}
-                          </p>
-                          <p className="text-[11px] text-slate-400">
-                            Unit: {item.packageType || 'Standard'}
-                          </p>
-                        </div>
-                      </div>
-
-                      <Badge variant="outline" className="font-mono text-xs border-cyan-500/40 text-cyan-300 bg-cyan-950/20">
-                        {item.quantity}
-                      </Badge>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* D. Storefront Camera & Signboard Verification Box */}
-            {['ARRIVED', 'PROOF_SUBMITTED', 'REVIEW_REQUIRED', 'VERIFIED'].includes(activeTask.state) && (
-              <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
-                    <Camera className="w-4 h-4 text-primary" />
-                    Storefront Photo & Signboard Proof
-                  </h3>
-                  {activeTask.proof && (
-                    <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
-                      Proof Uploaded
-                    </span>
-                  )}
-                </div>
-
-                {/* If Proof Already Submitted */}
-                {activeTask.proof ? (
-                  <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2.5 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-emerald-400 flex items-center gap-1.5">
-                        <CheckCircle2 className="w-4 h-4" />
-                        Signboard Proof Stamped
-                      </span>
-                      <span className="font-mono text-[10px] text-slate-400">
-                        {activeTask.proof.proofId?.slice(0, 16)}...
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 text-[11px]">
-                      <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
-                        <span className="text-slate-400 block text-[10px]">Supervisor Review</span>
-                        <span className="font-bold text-yellow-400">{activeTask.proof.reviewState || 'REVIEW_REQUIRED'}</span>
-                      </div>
-                      <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
-                        <span className="text-slate-400 block text-[10px]">Signboard Match</span>
-                        <span className="font-bold text-emerald-400">98.6% Confirmed</span>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  /* Live Camera Viewfinder or Upload */
-                  <div className="space-y-3">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      ref={fileInputRef}
-                      onChange={handlePhotoSelect}
-                      className="hidden"
-                    />
-
-                    {isCameraActive ? (
-                      /* Live HTML5 Video Viewfinder */
-                      <div className="relative rounded-2xl overflow-hidden aspect-square max-h-[300px] bg-black border-2 border-primary">
-                        <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
-                        {/* Viewfinder reticle overlay */}
-                        <div className="absolute inset-4 border-2 border-dashed border-white/60 rounded-xl pointer-events-none flex items-center justify-center">
-                          <span className="text-[11px] text-white/80 bg-black/50 px-2 py-1 rounded">
-                            Align Store Signboard Here
+            <div className={isPhoneFrame ? 'space-y-4' : 'grid grid-cols-1 lg:grid-cols-12 gap-5 items-start'}>
+              {/* LEFT COLUMN: Destination Store + Manifest Checklist */}
+              <div className={isPhoneFrame ? 'space-y-4' : 'lg:col-span-5 space-y-5'}>
+                {/* A. Destination Store Card */}
+                <Card className="border-border shadow-card overflow-hidden">
+                  <CardHeader className="bg-muted/30 border-b border-border py-3.5 px-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="font-mono text-[10px] font-semibold px-2 py-0.5 rounded bg-background border border-border text-foreground">
+                            {activeTask.taskId}
+                          </span>
+                          <span className="font-mono text-[11px] text-muted-foreground truncate">
+                            {activeTask.store?.storeId || 'AUTHORIZED PARTNER'}
                           </span>
                         </div>
-                        <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center gap-4">
-                          <button
-                            onClick={captureLiveFrame}
-                            className="w-14 h-14 rounded-full bg-white text-primary flex items-center justify-center shadow-2xl active:scale-95"
-                          >
-                            <Camera className="w-6 h-6" />
-                          </button>
-                        </div>
+                        <CardTitle className="text-base sm:text-lg font-heading font-bold mt-1.5 text-foreground">
+                          {activeTask.store?.name}
+                        </CardTitle>
                       </div>
-                    ) : capturedImage ? (
-                      /* Photo Snapshot Preview */
-                      <div className="space-y-3">
-                        <div className="relative rounded-2xl overflow-hidden aspect-video bg-black border border-slate-700">
-                          <img src={capturedImage} alt="Storefront Signboard" className="w-full h-full object-cover" />
-                          <button
-                            onClick={() => {
-                              setCapturedImage(null);
-                              setProofReference('');
-                            }}
-                            className="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 text-white"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                          <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/70 text-[10px] font-mono text-cyan-300">
-                            {proofReference}
+
+                      <span className={`flex-shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${getStateBadgeClasses(activeTask.state)}`}>
+                        {activeTask.state}
+                      </span>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="p-4 space-y-3.5">
+                    <p className="text-xs text-muted-foreground flex items-start gap-2 leading-relaxed">
+                      <MapPin className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span>{activeTask.store?.address || 'Mumbai Distribution Zone, Maharashtra'}</span>
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <a
+                        href={`tel:${activeTask.store?.phone || '+919820144552'}`}
+                        className="flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-muted/50 hover:bg-muted border border-border text-foreground text-xs font-semibold transition"
+                      >
+                        <Phone className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                        Call Store
+                      </a>
+                      <a
+                        href={`https://www.google.com/maps/dir/?api=1&destination=${activeTask.store?.location?.lat},${activeTask.store?.location?.lng}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-muted/50 hover:bg-muted border border-border text-foreground text-xs font-semibold transition"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
+                        Turn-by-Turn
+                      </a>
+                    </div>
+
+                    {/* Store Transactions Access Control Card */}
+                    {!isStorefrontApproved ? (
+                      <div
+                        onClick={() => {
+                          toast.error('Transactions locked! Admin or Manager must verify and approve storefront proof first.', {
+                            icon: '🔒',
+                            duration: 3500,
+                          });
+                          setShowTransactionModal(true);
+                        }}
+                        className="w-full py-2.5 px-3 rounded-xl bg-amber-500/5 border border-amber-500/30 hover:border-amber-500/50 cursor-pointer flex items-center justify-between gap-2 transition group"
+                        title="Transactions locked until Admin or Manager approves storefront proof"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/25 flex items-center justify-center text-amber-600 dark:text-amber-400 flex-shrink-0">
+                            <Lock className="w-4 h-4" />
+                          </div>
+                          <div className="text-left min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-xs font-semibold text-foreground">
+                                Store Ledger
+                              </span>
+                              <span className="px-1.5 py-0.5 rounded text-[9px] bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 font-semibold uppercase">
+                                Locked
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground truncate">
+                              Awaiting Admin storefront approval
+                            </p>
                           </div>
                         </div>
-
-                        {/* Simulated OCR Card */}
-                        <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-[11px] space-y-1">
-                          <div className="flex items-center justify-between text-emerald-400 font-semibold">
-                            <span>AI Signboard OCR Detected:</span>
-                            <span>98.6% Match</span>
-                          </div>
-                          <p className="text-slate-300 font-mono">TEXT: {activeTask.store.name?.toUpperCase()}</p>
-                          <p className="text-slate-400 font-mono text-[10px]">GSTIN: 27AAACS9876E1Z4</p>
-                        </div>
-
-                        <Button
-                          onClick={handleSubmitProof}
-                          disabled={actionLoading}
-                          className="w-full py-3 bg-gradient-to-r from-primary to-indigo-600 text-white font-bold rounded-xl shadow-glow text-sm"
-                        >
-                          <Send className="w-4 h-4 mr-2" />
-                          Submit Storefront Proof
-                        </Button>
+                        <span className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1 flex-shrink-0">
+                          <ShieldAlert className="w-3.5 h-3.5" />
+                          Status
+                        </span>
                       </div>
                     ) : (
-                      /* Camera Launch Trigger */
-                      <div className="grid grid-cols-3 gap-2">
-                        <button
-                          onClick={startLiveCamera}
-                          className="p-3.5 rounded-2xl border-2 border-dashed border-slate-700 hover:border-primary bg-slate-950/60 text-center flex flex-col items-center justify-center gap-1.5 active:scale-95 transition"
-                        >
-                          <Camera className="w-6 h-6 text-primary animate-pulse" />
-                          <span className="text-[11px] font-bold text-white">Live Camera</span>
-                        </button>
-
-                        <button
-                          onClick={() => fileInputRef.current?.click()}
-                          className="p-3.5 rounded-2xl border-2 border-dashed border-slate-700 hover:border-primary bg-slate-950/60 text-center flex flex-col items-center justify-center gap-1.5 active:scale-95 transition"
-                        >
-                          <Upload className="w-6 h-6 text-cyan-400" />
-                          <span className="text-[11px] font-bold text-white">Upload Photo</span>
-                        </button>
-
-                        <button
-                          onClick={handleGenerateSignboardSample}
-                          className="p-3.5 rounded-2xl border-2 border-dashed border-amber-500/40 hover:border-amber-400 bg-amber-950/20 text-center flex flex-col items-center justify-center gap-1.5 active:scale-95 transition"
-                        >
-                          <Sparkles className="w-6 h-6 text-amber-400" />
-                          <span className="text-[11px] font-bold text-white">Sample Board</span>
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowTransactionModal(true)}
+                        className="w-full py-2.5 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 hover:border-emerald-500/50 text-foreground text-xs font-semibold flex items-center justify-between gap-2 transition"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 flex-shrink-0">
+                            <Receipt className="w-4 h-4" />
+                          </div>
+                          <div className="text-left min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-bold text-foreground">Store Ledger</span>
+                              <span className="px-1.5 py-0.5 rounded text-[9px] bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 font-semibold uppercase">
+                                Unlocked
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground truncate">
+                              Storefront verified • View statement
+                            </p>
+                          </div>
+                        </div>
+                        <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold flex-shrink-0">
+                          Open →
+                        </span>
+                      </button>
                     )}
-                  </div>
-                )}
+                  </CardContent>
+                </Card>
+
+                {/* B. Delivery Manifest Checklist */}
+                <Card className="border-border shadow-card overflow-hidden">
+                  <CardHeader className="bg-muted/30 border-b border-border py-3 px-4 flex flex-row items-center justify-between">
+                    <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                      <PackageCheck className="w-4 h-4 text-primary" />
+                      Delivery Manifest
+                    </CardTitle>
+                    <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-full bg-background border border-border text-foreground">
+                      {checkedItemCount} / {activeItemsList.length} Unloaded
+                    </span>
+                  </CardHeader>
+
+                  <CardContent className="p-3.5 space-y-2">
+                    {activeItemsList.map((item, idx) => {
+                      const itemKey = item.id || idx;
+                      const isChecked = Boolean(checkedItems[`${activeTask.taskId}:${itemKey}`]);
+                      return (
+                        <div
+                          key={itemKey}
+                          onClick={() => toggleItemCheck(itemKey)}
+                          className={`p-3 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition ${
+                            isChecked
+                              ? 'bg-emerald-500/10 border-emerald-500/30'
+                              : 'bg-muted/20 border-border hover:border-primary/30'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                            {isChecked ? (
+                              <CheckSquare className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                            ) : (
+                              <Square className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                            )}
+                            <div className="min-w-0">
+                              <p className={`text-xs font-semibold break-words ${isChecked ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                                {item.name}
+                              </p>
+                              <p className="text-[11px] text-muted-foreground">
+                                Unit: {item.packageType || 'Standard'}
+                              </p>
+                            </div>
+                          </div>
+
+                          <Badge variant="outline" className="font-mono text-[11px] flex-shrink-0">
+                            {item.quantity}
+                          </Badge>
+                        </div>
+                      );
+                    })}
+                  </CardContent>
+                </Card>
               </div>
-            )}
 
-            {/* E. Collapsible Audit Log Sheet */}
-            <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 overflow-hidden">
-              <button
-                onClick={() => setShowAuditDrawer(!showAuditDrawer)}
-                className="w-full p-3.5 flex items-center justify-between text-xs font-semibold text-slate-400 hover:text-white"
-              >
-                <span className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-slate-500" />
-                  Task Audit & Provenance Log
-                </span>
-                {showAuditDrawer ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              </button>
+              {/* RIGHT COLUMN: Geofence Map + Storefront Photo & OCR + Audit Log */}
+              <div className={isPhoneFrame ? 'space-y-4' : 'lg:col-span-7 space-y-5'}>
+                {/* C. Interactive GPS Map with 50m Geofence */}
+                <Card className="border-border shadow-card overflow-hidden">
+                  <CardHeader className="bg-muted/30 border-b border-border py-3 px-4 flex flex-row flex-wrap items-center justify-between gap-2">
+                    <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                      <Compass className="w-4 h-4 text-primary" />
+                      50m Geofence Navigation
+                    </CardTitle>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border flex items-center gap-1.5 ${
+                        isWithinGeofence
+                          ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30'
+                          : 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30'
+                      }`}>
+                        <LocateFixed className="w-3 h-3" />
+                        {distanceToStore !== null ? `${distanceToStore}m away` : 'Locating...'}
+                      </span>
+                      {activeTask.state === 'EN_ROUTE' && !isWithinGeofence && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => handleRecordArrival(true)}
+                          disabled={actionLoading}
+                          className="text-[11px] py-1 px-2.5 h-7"
+                        >
+                          <Sparkles className="w-3 h-3 mr-1 text-amber-400" />
+                          Simulate 12m
+                        </Button>
+                      )}
+                    </div>
+                  </CardHeader>
 
-              {showAuditDrawer && (
-                <div className="p-3.5 pt-0 space-y-2 border-t border-slate-800 text-[11px] font-mono">
-                  <div className="p-2 rounded bg-slate-950 text-slate-300">
-                    <span className="text-primary font-bold">TASK_CREATED</span> &bull; {new Date(activeTask.createdAt).toLocaleTimeString()}
+                  <div className="relative z-0 isolate" style={{ isolation: 'isolate', zIndex: 0 }}>
+                    <div className={`w-full relative z-0 ${isPhoneFrame ? 'h-52' : 'h-56 sm:h-64 md:h-[300px]'}`}>
+                      {activeTask.store?.location && (
+                        <MapContainer
+                          center={[activeTask.store.location.lat, activeTask.store.location.lng]}
+                          zoom={16}
+                          zoomControl={false}
+                          scrollWheelZoom={false}
+                          style={{ height: '100%', width: '100%', zIndex: 0 }}
+                        >
+                          <TileLayer
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                          />
+                          <MapRecenter center={[activeTask.store.location.lat, activeTask.store.location.lng]} />
+
+                          <Marker
+                            position={[activeTask.store.location.lat, activeTask.store.location.lng]}
+                            icon={STORE_ICON}
+                          >
+                            <Popup>
+                              <p className="font-bold text-xs">{activeTask.store.name}</p>
+                              <p className="text-[10px] text-slate-600">50m Geofence Target</p>
+                            </Popup>
+                          </Marker>
+
+                          <Circle
+                            center={[activeTask.store.location.lat, activeTask.store.location.lng]}
+                            radius={50}
+                            pathOptions={{
+                              color: '#10b981',
+                              fillColor: '#10b981',
+                              fillOpacity: 0.25,
+                              weight: 2,
+                            }}
+                          />
+
+                          <Marker position={[agentCoords.lat, agentCoords.lng]} icon={AGENT_ICON}>
+                            <Popup>
+                              <p className="font-bold text-xs">Your Location</p>
+                            </Popup>
+                          </Marker>
+                        </MapContainer>
+                      )}
+                    </div>
                   </div>
-                  {activeTask.arrivalEvidence && (
-                    <div className="p-2 rounded bg-slate-950 text-emerald-300">
-                      <span className="text-emerald-400 font-bold">GEOFENCE_CONFIRMED</span> &bull; Radius: 50m &bull; Dist: {activeTask.arrivalEvidence.distanceMeters}m
+                </Card>
+
+                {/* D. Storefront Camera & Signboard Verification Card */}
+                {['ARRIVED', 'PROOF_SUBMITTED', 'REVIEW_REQUIRED', 'VERIFIED', 'REJECTED'].includes(activeTask.state) && (
+                  <Card className="border-border shadow-card overflow-hidden">
+                    <CardHeader className="bg-muted/30 border-b border-border py-3 px-4 flex flex-row items-center justify-between">
+                      <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                        <Camera className="w-4 h-4 text-primary" />
+                        Storefront Photo & Signboard Proof
+                      </CardTitle>
+                      {activeTask.proof && (
+                        <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/15 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+                          Proof Uploaded
+                        </span>
+                      )}
+                    </CardHeader>
+
+                    <CardContent className="p-4 space-y-3.5">
+                      {activeTask.proof ? (
+                        <div className="space-y-3 text-xs">
+                          <div className="flex items-center justify-between">
+                            <span className="font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                              <CheckCircle2 className="w-4 h-4" />
+                              Signboard Proof Submitted
+                            </span>
+                            <span className="font-mono text-[10px] text-muted-foreground">
+                              {activeTask.proof.proofId?.slice(0, 16)}...
+                            </span>
+                          </div>
+
+                          {(activeTask.proof.imageUrl || activeTask.proof.imageData || (activeTask.proof.fileReference && activeTask.proof.fileReference.startsWith('proof:'))) && (
+                            <div className="relative rounded-xl overflow-hidden aspect-video bg-black border border-border">
+                              <img
+                                src={
+                                  activeTask.proof.imageUrl ||
+                                  activeTask.proof.imageData ||
+                                  `/api/field-agent/proof/${encodeURIComponent(activeTask.proof.fileReference)}`
+                                }
+                                alt={`Uploaded storefront proof for ${activeTask.store?.name}`}
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute bottom-2 left-2 px-2.5 py-1 rounded-md bg-black/75 text-[10px] font-mono text-emerald-300 border border-white/10">
+                                {activeTask.proof.extractedFields?.detectedStoreName || activeTask.store?.name}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="grid grid-cols-2 gap-2.5 text-[11px]">
+                            <div className="p-2.5 rounded-lg bg-muted/30 border border-border">
+                              <span className="text-muted-foreground block text-[10px] uppercase font-semibold">Supervisor Review</span>
+                              <span className={`font-bold mt-0.5 inline-block ${
+                                activeTask.proof.reviewState === 'VERIFIED'
+                                  ? 'text-emerald-600 dark:text-emerald-400'
+                                  : activeTask.proof.reviewState === 'REJECTED'
+                                    ? 'text-red-600 dark:text-red-400'
+                                    : 'text-amber-600 dark:text-amber-400'
+                              }`}>
+                                {activeTask.proof.reviewState || 'REVIEW_REQUIRED'}
+                              </span>
+                            </div>
+                            <div className="p-2.5 rounded-lg bg-muted/30 border border-border">
+                              <span className="text-muted-foreground block text-[10px] uppercase font-semibold">Signboard OCR</span>
+                              <span className="font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 inline-block">
+                                {activeTask.proof.extractedFields?.matchScore ?? 98.6}% Match
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            ref={fileInputRef}
+                            onChange={handlePhotoSelect}
+                            className="hidden"
+                          />
+
+                          {isCameraActive ? (
+                            <div className="relative rounded-xl overflow-hidden aspect-video bg-black border-2 border-primary">
+                              <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+                              <div className="absolute inset-4 border-2 border-dashed border-white/60 rounded-xl pointer-events-none flex items-center justify-center">
+                                <span className="text-[11px] text-white/90 bg-black/60 px-2.5 py-1 rounded">
+                                  Align Store Signboard Here
+                                </span>
+                              </div>
+                              <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center">
+                                <button
+                                  type="button"
+                                  onClick={captureLiveFrame}
+                                  className="w-12 h-12 rounded-full bg-white text-primary flex items-center justify-center shadow-xl active:scale-95"
+                                >
+                                  <Camera className="w-5 h-5" />
+                                </button>
+                              </div>
+                            </div>
+                          ) : capturedImage ? (
+                            <div className="space-y-3">
+                              <div className="relative rounded-xl overflow-hidden aspect-video bg-black border border-border">
+                                <img src={capturedImage} alt="Storefront Signboard" className="w-full h-full object-cover" />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setCapturedImage(null);
+                                    setCapturedFile(null);
+                                    setProofReference('');
+                                  }}
+                                  className="absolute top-2 right-2 p-1.5 rounded-full bg-black/75 text-white hover:bg-black"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                                <div className="absolute bottom-2 left-2 max-w-[calc(100%-1rem)] truncate px-2 py-0.5 rounded bg-black/75 text-[10px] font-mono text-cyan-300">
+                                  {proofReference}
+                                </div>
+                              </div>
+
+                              <div className="p-3 rounded-xl bg-muted/30 border border-border text-xs space-y-1">
+                                <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400 font-semibold">
+                                  <span>Ready for Signboard OCR Verification</span>
+                                  <span>JPEG / PNG / WebP</span>
+                                </div>
+                                <p className="text-muted-foreground font-mono text-[11px]">TARGET: {activeTask.store.name?.toUpperCase()}</p>
+                              </div>
+
+                              <Button
+                                type="button"
+                                onClick={handleSubmitProof}
+                                disabled={actionLoading}
+                                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs"
+                              >
+                                <Send className="w-4 h-4 mr-1.5" />
+                                Submit Storefront Proof
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                              <button
+                                type="button"
+                                onClick={startLiveCamera}
+                                className="p-4 rounded-xl border-2 border-dashed border-border hover:border-primary/60 bg-muted/20 hover:bg-muted/40 text-center flex flex-col items-center justify-center gap-2 transition"
+                              >
+                                <Camera className="w-5 h-5 text-primary" />
+                                <span className="text-xs font-semibold text-foreground">Live Camera</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                className="p-4 rounded-xl border-2 border-dashed border-border hover:border-primary/60 bg-muted/20 hover:bg-muted/40 text-center flex flex-col items-center justify-center gap-2 transition"
+                              >
+                                <Upload className="w-5 h-5 text-sky-600 dark:text-sky-400" />
+                                <span className="text-xs font-semibold text-foreground">Upload Photo</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={handleGenerateSignboardSample}
+                                className="col-span-2 sm:col-span-1 p-4 rounded-xl border-2 border-dashed border-amber-500/40 hover:border-amber-500 bg-amber-500/5 hover:bg-amber-500/10 text-center flex flex-col items-center justify-center gap-2 transition"
+                              >
+                                <Sparkles className="w-5 h-5 text-amber-500" />
+                                <span className="text-xs font-semibold text-foreground">Sample Board</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* E. Operational Audit & Provenance Log */}
+                <Card className="border-border shadow-card overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setShowAuditDrawer(!showAuditDrawer)}
+                    className="w-full px-4 py-3 flex items-center justify-between text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/20 transition"
+                  >
+                    <span className="flex items-center gap-2 uppercase tracking-wider">
+                      <FileText className="w-4 h-4 text-primary" />
+                      Operational Audit History
+                    </span>
+                    {showAuditDrawer ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </button>
+
+                  {showAuditDrawer && (
+                    <div className="px-4 pb-3.5 pt-2 space-y-2 border-t border-border text-xs font-mono">
+                      {Array.isArray(activeTask.auditEvents) && activeTask.auditEvents.length > 0 ? (
+                        activeTask.auditEvents.map((evt, idx) => (
+                          <div key={evt.eventId || idx} className="p-2.5 rounded-lg bg-muted/30 border border-border flex items-center justify-between gap-2">
+                            <span className="text-foreground font-semibold">{evt.eventType}</span>
+                            <span className="text-muted-foreground">
+                              {evt.currentState} • {evt.occurredAt ? new Date(evt.occurredAt).toLocaleTimeString() : ''}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <>
+                          <div className="p-2.5 rounded-lg bg-muted/30 border border-border text-foreground">
+                            <span className="font-semibold">TASK_CREATED</span> • {new Date(activeTask.createdAt).toLocaleTimeString()}
+                          </div>
+                          {activeTask.arrivalEvidence && (
+                            <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 dark:text-emerald-400">
+                              <span className="font-semibold">GEOFENCE_CONFIRMED</span> • Dist: {Math.round(activeTask.arrivalEvidence.distanceMeters)}m
+                            </div>
+                          )}
+                          {activeTask.proof && (
+                            <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-700 dark:text-amber-400">
+                              <span className="font-semibold">PROOF_STAMPED</span> • Ref: {activeTask.proof.proofId}
+                            </div>
+                          )}
+                        </>
+                      )}
                     </div>
                   )}
-                  {activeTask.proof && (
-                    <div className="p-2 rounded bg-slate-950 text-yellow-300">
-                      <span className="text-yellow-400 font-bold">PROOF_STAMPED</span> &bull; Ref: {activeTask.proof.proofId}
-                    </div>
-                  )}
-                </div>
-              )}
+                </Card>
+              </div>
             </div>
 
           </div>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-500">
-            <PackageCheck className="w-12 h-12 mb-2 text-slate-600" />
-            <p className="text-sm font-semibold">No Delivery Selected</p>
-          </div>
+          <Card className="border-dashed border-border p-10 text-center mx-3 sm:mx-0">
+            <PackageCheck className="w-12 h-12 mb-2 text-muted-foreground/40 mx-auto" />
+            <p className="text-sm font-heading font-semibold text-foreground">No Delivery Selected</p>
+            <p className="text-xs text-muted-foreground mt-1">Select a stop or dispatch a new field task to begin.</p>
+          </Card>
         )}
 
-        {/* 4. FIXED BOTTOM THUMB-ZONE FLOATING ACTION DOCK */}
+        {/* 5. STICKY ACTION DOCK (matches Admin Panel styling & responsive across all screens) */}
         {activeTask && (
-          <div className={`fixed bottom-0 left-0 right-0 z-[100] p-3 bg-slate-950/98 backdrop-blur-xl border-t border-slate-800 shadow-2xl ${
-            isPhoneFrame ? 'max-w-[404px] mx-auto rounded-b-[32px]' : 'max-w-2xl mx-auto'
+          <div className={`sticky bottom-0 z-30 w-full p-3 sm:p-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-card/95 backdrop-blur-md border-t border-border shadow-elevated ${
+            isPhoneFrame ? 'rounded-b-[28px]' : 'sm:rounded-xl sm:border'
           }`}>
             {activeTask.state === 'ASSIGNED' && (
-              <button
+              <Button
+                type="button"
                 onClick={() => handleStateTransition('ACCEPTED')}
                 disabled={actionLoading}
-                className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-extrabold text-base shadow-glow flex items-center justify-center gap-2 active:scale-98 transition"
+                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm flex items-center justify-center gap-2"
               >
-                <Check className="w-5 h-5" />
+                <Check className="w-4 h-4" />
                 Accept Delivery Assignment
-              </button>
+              </Button>
             )}
 
             {activeTask.state === 'ACCEPTED' && (
-              <button
+              <Button
+                type="button"
                 onClick={() => handleStateTransition('EN_ROUTE')}
                 disabled={actionLoading}
-                className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-600 to-orange-500 hover:from-amber-500 hover:to-orange-400 text-white font-extrabold text-base shadow-glow flex items-center justify-center gap-2 active:scale-98 transition"
+                className="w-full py-3 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-sm flex items-center justify-center gap-2"
               >
-                <Navigation className="w-5 h-5" />
+                <Navigation className="w-4 h-4" />
                 Start Trip (Go En Route)
-              </button>
+              </Button>
             )}
 
             {activeTask.state === 'EN_ROUTE' && (
-              <div className="space-y-1.5">
-                <button
+              isWithinGeofence ? (
+                <Button
+                  type="button"
                   onClick={() => handleRecordArrival(false)}
-                  disabled={actionLoading || !isWithinGeofence}
-                  className={`w-full py-4 rounded-2xl font-extrabold text-base shadow-glow flex items-center justify-center gap-2 active:scale-98 transition ${
-                    isWithinGeofence
-                      ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white animate-pulse'
-                      : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
-                  }`}
+                  disabled={actionLoading}
+                  className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm flex items-center justify-center gap-2"
                 >
-                  <MapPin className="w-5 h-5" />
-                  {isWithinGeofence ? 'Confirm 50m Arrival at Store' : `Approach Store (${distanceToStore}m / 50m)`}
-                </button>
-              </div>
+                  <MapPin className="w-4 h-4" />
+                  Confirm 50m Arrival at Store
+                </Button>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled
+                    className="w-full py-2.5 text-xs font-semibold cursor-not-allowed"
+                  >
+                    <MapPin className="w-4 h-4 mr-1.5" />
+                    {distanceToStore !== null ? `GPS: ${distanceToStore}m away (>50m)` : 'GPS: Locating...'}
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => handleRecordArrival(true)}
+                    disabled={actionLoading}
+                    className="w-full py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold"
+                  >
+                    <Sparkles className="w-4 h-4 mr-1.5 text-amber-400" />
+                    Confirm Arrival (Simulate 12m)
+                  </Button>
+                </div>
+              )
             )}
 
             {activeTask.state === 'ARRIVED' && !activeTask.proof && (
-              <button
-                onClick={startLiveCamera}
-                disabled={actionLoading}
-                className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-indigo-600 text-white font-extrabold text-base shadow-glow flex items-center justify-center gap-2 active:scale-98 transition"
-              >
-                <Camera className="w-5 h-5" />
-                Snap Storefront Signboard
-              </button>
+              capturedImage ? (
+                <Button
+                  type="button"
+                  onClick={handleSubmitProof}
+                  disabled={actionLoading}
+                  className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm flex items-center justify-center gap-2"
+                >
+                  <Send className="w-4 h-4" />
+                  Submit Storefront Proof
+                </Button>
+              ) : (
+                <div className="grid grid-cols-2 gap-2.5">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={actionLoading}
+                    className="w-full py-2.5 text-xs font-semibold"
+                  >
+                    <Upload className="w-4 h-4 mr-1.5 text-sky-600 dark:text-sky-400" />
+                    Upload Photo
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={startLiveCamera}
+                    disabled={actionLoading}
+                    className="w-full py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold"
+                  >
+                    <Camera className="w-4 h-4 mr-1.5" />
+                    Live Camera
+                  </Button>
+                </div>
+              )
+            )}
+
+            {activeTask.state === 'REJECTED' && (
+              <div className="w-full py-2.5 rounded-lg bg-red-500/10 border border-red-500/25 text-red-700 dark:text-red-400 font-semibold text-center text-xs flex items-center justify-center gap-2">
+                <AlertCircle className="w-4 h-4" />
+                Proof Rejected by Supervisor
+              </div>
             )}
 
             {(activeTask.state === 'PROOF_SUBMITTED' || activeTask.state === 'REVIEW_REQUIRED') && (
-              <div className="w-full py-3.5 rounded-2xl bg-yellow-500/15 border border-yellow-500/40 text-yellow-300 font-bold text-center text-sm flex items-center justify-center gap-2">
+              <div className="w-full py-2.5 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-700 dark:text-amber-400 font-semibold text-center text-xs flex items-center justify-center gap-2">
                 <Clock className="w-4 h-4 animate-spin" />
                 Proof Under Review by Manager
               </div>
             )}
 
             {(activeTask.state === 'VERIFIED' || activeTask.state === 'COMPLETED') && (
-              <div className="space-y-2">
-                <div className="w-full py-3.5 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-bold text-center text-sm flex items-center justify-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                  Storefront Verified by Admin!
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                <div className="flex-1 py-2.5 px-3 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 dark:text-emerald-400 font-semibold text-center text-xs flex items-center justify-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Storefront Verified by Admin
                 </div>
-                <button
+                <Button
                   type="button"
                   onClick={() => setShowTransactionModal(true)}
-                  className="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg transition active:scale-98"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs py-2.5 px-4"
                 >
-                  <Receipt className="w-4 h-4" />
-                  View Store Transactions & Ledger (Unlocked)
-                </button>
+                  <Receipt className="w-4 h-4 mr-1.5" />
+                  View Store Ledger
+                </Button>
               </div>
             )}
           </div>

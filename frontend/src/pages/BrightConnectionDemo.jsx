@@ -18,6 +18,8 @@ import toast from 'react-hot-toast';
 import usePushNotifications from '../hooks/usePushNotifications';
 import { deviceNotificationService } from '@/services/deviceNotificationService';
 import { PDF_PARSED_BRIGHT_DATA, generateDemoVouchersForStore } from '../utils/brightDemoData';
+import apiClient from '../services/api/baseAPI';
+import { CreateFieldTaskModal } from '../components/field/CreateFieldTaskModal';
 
 // Custom Leaflet Map Icons
 const AGENT_MAP_ICON = L.divIcon({
@@ -97,6 +99,50 @@ export const BrightConnectionDemo = () => {
   const [pdfUploaded, setPdfUploaded] = useState(false);
   const [pdfFileName, setPdfFileName] = useState('');
   const [pdfParsing, setPdfParsing] = useState(false);
+  const [pdfValidation, setPdfValidation] = useState(null);
+  const [dealerSearch, setDealerSearch] = useState('');
+
+  // Field Agent Job Dispatch Modal state
+  const [showDispatchModal, setShowDispatchModal] = useState(false);
+  const [dispatchedTask, setDispatchedTask] = useState(null);
+
+  const applyIngestedReceivables = useCallback((data, fileNameOverride) => {
+    if (!data || !Array.isArray(data.dealers) || data.dealers.length === 0) return;
+    const meta = data.metadata || {};
+    const resolvedName = fileNameOverride || meta.source_file || 'Receivable-22 Sept 26.pdf';
+    setPdfMeta({
+      fileName: resolvedName,
+      company: meta.company_name || 'Bright Connections',
+      address: meta.address || PDF_PARSED_BRIGHT_DATA.address,
+      gstin: meta.gstin || '27AJKPN4994K1ZD',
+      email: meta.email || 'brightconnections9@gmail.com',
+      group: meta.group || 'ARUN CHALKE',
+      sourceSystem: meta.source_app || 'Biz Analyst App (Tally PDF)',
+      reportDate: meta.report_date || '22 Sept 26',
+      totalReceivables: data.total_amount ?? PDF_PARSED_BRIGHT_DATA.totalReceivables,
+      totalParties: data.total_customers ?? data.dealers.length,
+      dealers: data.dealers,
+    });
+    setStoresList(data.dealers);
+    setStoreContext(data.dealers[0]);
+    setPdfFileName(resolvedName);
+    setPdfValidation(data.validation || null);
+    setPdfUploaded(true);
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    apiClient.get('/api/setu/bright/receivables')
+      .then((res) => {
+        if (mounted && res?.data?.success && res.data.dealers?.length > 0) {
+          applyIngestedReceivables(res.data);
+        }
+      })
+      .catch(() => {
+        // Fallback to default state until user uploads or authenticates
+      });
+    return () => { mounted = false; };
+  }, [applyIngestedReceivables]);
 
   // Step 2: Geofence & GPS Map state
   const [isGeofenceVerifying, setIsGeofenceVerifying] = useState(false);
@@ -148,18 +194,13 @@ export const BrightConnectionDemo = () => {
 
       let resData = null;
       try {
-        const resp = await fetch('/api/v1/mitra/query', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if (resp.ok) {
-          resData = await resp.json();
+        const resp = await apiClient.post('/api/setu/mitra/query', payload);
+        if (resp?.data?.success) {
+          resData = resp.data;
         }
       } catch (err) {
-        // Fallback to local SETU endpoint if production api is unreachable
         try {
-          const respSetu = await fetch('/setu/mitra/query', {
+          const respSetu = await fetch('/api/v1/mitra/query', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -201,28 +242,46 @@ export const BrightConnectionDemo = () => {
     }
   };
 
-  // Handle PDF file upload
-  const handlePdfUpload = (e) => {
+  // Handle PDF file upload (real backend ingestion via SETU PDF parser)
+  const handlePdfUpload = async (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setPdfParsing(true);
-      setPdfFileName(file.name);
-      setTimeout(() => {
-        setPdfParsing(false);
-        setPdfUploaded(true);
-        toast.success(`Successfully parsed PDF "${file.name}"! Loaded ${storesList.length} Mumbai dealer records.`);
-      }, 1000);
+    if (!file) return;
+    setPdfParsing(true);
+    setPdfFileName(file.name);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await apiClient.post('/api/setu/bright/receivables/upload-pdf', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      if (res?.data?.success && res.data.dealers?.length > 0) {
+        applyIngestedReceivables(res.data, file.name);
+        toast.success(`Ingested "${file.name}" into SETU! Parsed ${res.data.total_customers} dealers (₹${Number(res.data.total_amount || 0).toLocaleString('en-IN')}).`);
+      } else {
+        throw new Error(res?.data?.message || 'Unexpected PDF parse response');
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || err.message || 'Failed to upload & parse PDF');
+    } finally {
+      setPdfParsing(false);
     }
   };
 
-  const handleLoadSamplePdf = () => {
+  const handleLoadSamplePdf = async () => {
     setPdfParsing(true);
-    setTimeout(() => {
-      setPdfParsing(false);
+    try {
+      const res = await apiClient.get('/api/setu/bright/receivables');
+      if (res?.data?.success && res.data.dealers?.length > 0) {
+        applyIngestedReceivables(res.data);
+        toast.success(`Loaded "${res.data.metadata?.source_file || 'Receivable-22 Sept 26.pdf'}" — ${res.data.total_customers} dealers, ₹${Number(res.data.total_amount || 0).toLocaleString('en-IN')}`);
+      }
+    } catch (err) {
       setPdfUploaded(true);
       setPdfFileName('Receivable-22 Sept 26.pdf');
-      toast.success('Loaded "Receivable-22 Sept 26.pdf" — Extracted ₹11,49,012 Receivables across 12 Dealers');
-    }, 600);
+      toast.success('Loaded default Bright Connection demo dataset');
+    } finally {
+      setPdfParsing(false);
+    }
   };
 
   // Distance calculation in meters
@@ -491,6 +550,19 @@ export const BrightConnectionDemo = () => {
   };
 
   const rawTransactions = useMemo(() => {
+    if (Array.isArray(storeContext?.invoices) && storeContext.invoices.length > 0) {
+      return storeContext.invoices.map((inv) => {
+        const amt = Number(inv.pending || 0);
+        return {
+          date: inv.date || '-',
+          type: amt >= 0 ? 'Sale' : 'Receipt',
+          number: inv.ref || '-',
+          narration: `Due: ${inv.dueOn || '-'} | Overdue: ${inv.overdueDays ?? 0} days`,
+          amount: Math.abs(amt),
+          status: (inv.overdueDays || 0) > 0 ? `${inv.overdueDays}d Overdue` : 'Current',
+        };
+      });
+    }
     return generateDemoVouchersForStore(storeContext.code);
   }, [storeContext]);
 
@@ -605,7 +677,7 @@ export const BrightConnectionDemo = () => {
                         : 'Select any Tally PDF report to ingest dealer receivables & extract party master data'}
                     </p>
                   </div>
-                  <div className="flex items-center gap-3 pt-2">
+                  <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                     <input
                       type="file"
                       accept=".pdf"
@@ -631,6 +703,15 @@ export const BrightConnectionDemo = () => {
                         )}
                       </Button>
                     </label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleLoadSamplePdf}
+                      disabled={pdfParsing}
+                      className="border-purple-500/40 text-xs px-4 py-3"
+                    >
+                      <FileCheck className="w-4 h-4 mr-1.5 text-emerald-500" /> Load Ingested PDF (148 Dealers)
+                    </Button>
                   </div>
                 </div>
 
@@ -639,7 +720,9 @@ export const BrightConnectionDemo = () => {
                     <div>
                       <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
                         <span className="text-xs font-bold text-purple-400 uppercase tracking-wider">Extracted Header</span>
-                        <Badge variant="outline" className="text-[10px] font-mono text-emerald-400 border-emerald-500/40">Verified</Badge>
+                        <Badge variant="outline" className="text-[10px] font-mono text-emerald-400 border-emerald-500/40">
+                          {pdfValidation?.customer_total_mismatches?.length === 0 ? '0 Mismatches' : 'Verified'}
+                        </Badge>
                       </div>
                       <div className="mt-3 space-y-2 text-xs">
                         <p><span className="text-slate-400">File:</span> <strong className="text-white font-mono truncate block">{pdfFileName || pdfMeta.fileName}</strong></p>
@@ -659,6 +742,59 @@ export const BrightConnectionDemo = () => {
                   </div>
                 )}
               </div>
+
+              {pdfUploaded && storesList.length > 0 && (
+                <div className="border border-border rounded-xl p-4 space-y-3 bg-muted/10">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-foreground">
+                      Ingested Dealers ({storesList.length}) — Click any dealer to inspect or dispatch job
+                    </h4>
+                    <Input
+                      value={dealerSearch}
+                      onChange={(e) => setDealerSearch(e.target.value)}
+                      placeholder="Search dealer name or area..."
+                      className="text-xs sm:w-64"
+                    />
+                  </div>
+                  <div className="max-h-60 overflow-y-auto divide-y divide-border rounded-lg border border-border bg-card">
+                    {storesList
+                      .filter((s) => !dealerSearch || s.name.toLowerCase().includes(dealerSearch.toLowerCase()) || (s.area || '').toLowerCase().includes(dealerSearch.toLowerCase()))
+                      .slice(0, 50)
+                      .map((s) => (
+                        <div
+                          key={s.id}
+                          onClick={() => {
+                            setStoreContext(s);
+                            toast.success(`Selected ${s.name}`);
+                          }}
+                          className={`flex items-center justify-between px-3 py-2 text-xs cursor-pointer transition ${
+                            storeContext.id === s.id ? 'bg-purple-500/15 font-bold' : 'hover:bg-muted/40'
+                          }`}
+                        >
+                          <div className="min-w-0 pr-3">
+                            <p className="truncate text-foreground">{s.name}</p>
+                            <p className="text-[11px] text-muted-foreground">{s.code} • {s.area} • {s.invoiceCount || s.invoices?.length || 0} entries</p>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <span className="font-mono font-bold text-amber-500">{formatCurrency(s.outstanding)}</span>
+                            <Button
+                              size="sm"
+                              type="button"
+                              onClick={(ev) => {
+                                ev.stopPropagation();
+                                setStoreContext(s);
+                                setShowDispatchModal(true);
+                              }}
+                              className="bg-purple-600 hover:bg-purple-700 text-white text-[10px] px-2.5 py-1"
+                            >
+                              Dispatch Job
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
@@ -682,25 +818,65 @@ export const BrightConnectionDemo = () => {
 
             <CardContent className="pt-6 space-y-6">
 
-              {/* Active Target Banner */}
-              <div className="bg-purple-500/10 border border-purple-500/30 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-extrabold text-lg text-foreground">{storeContext.name}</h3>
-                    <Badge variant="outline" className="font-mono text-purple-400">{storeContext.code}</Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">{storeContext.address}</p>
-                </div>
-                <div className="flex items-center gap-4 text-xs font-mono border-t sm:border-t-0 sm:border-l border-purple-500/20 pt-2 sm:pt-0 sm:pl-4">
+              {/* Active Target Banner + Dealer Selector */}
+              <div className="bg-purple-500/10 border border-purple-500/30 p-4 rounded-xl space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <span className="text-muted-foreground block text-[10px] uppercase">PDF Receivable</span>
-                    <strong className="text-amber-400 text-sm">{formatCurrency(storeContext.outstanding)}</strong>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-extrabold text-lg text-foreground">{storeContext.name}</h3>
+                      <Badge variant="outline" className="font-mono text-purple-400">{storeContext.code}</Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">{storeContext.address}</p>
                   </div>
-                  <div>
-                    <span className="text-muted-foreground block text-[10px] uppercase">Agent Distance</span>
-                    <strong className="text-emerald-400 text-sm">{agentCoords.distanceMeters}m</strong>
+                  <div className="flex items-center gap-4 text-xs font-mono border-t sm:border-t-0 sm:border-l border-purple-500/20 pt-2 sm:pt-0 sm:pl-4">
+                    <div>
+                      <span className="text-muted-foreground block text-[10px] uppercase">PDF Receivable</span>
+                      <strong className="text-amber-400 text-sm">{formatCurrency(storeContext.outstanding)}</strong>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block text-[10px] uppercase">Agent Distance</span>
+                      <strong className="text-emerald-400 text-sm">{agentCoords.distanceMeters}m</strong>
+                    </div>
                   </div>
                 </div>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-2 border-t border-purple-500/20">
+                  <select
+                    value={storeContext.id}
+                    onChange={(e) => {
+                      const picked = storesList.find((s) => s.id === e.target.value);
+                      if (picked) setStoreContext(picked);
+                    }}
+                    className="flex-1 px-3 py-2 text-xs rounded-lg bg-card border border-border text-foreground"
+                  >
+                    {storesList.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name} — {formatCurrency(s.outstanding)} ({s.area})
+                      </option>
+                    ))}
+                  </select>
+                  <Button
+                    type="button"
+                    onClick={() => setShowDispatchModal(true)}
+                    className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-4 py-2"
+                  >
+                    <Send className="w-3.5 h-3.5 mr-1.5" /> Dispatch Field Agent Job
+                  </Button>
+                </div>
+                {dispatchedTask && (
+                  <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-xs">
+                    <span className="text-emerald-300 font-semibold">
+                      Dispatched Task <strong className="font-mono">{dispatchedTask.taskId}</strong> for {dispatchedTask.store?.name}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="outline" onClick={() => navigate('/field-reviews')} className="text-[11px] py-1">
+                        Open Proof Approvals
+                      </Button>
+                      <Button size="sm" onClick={() => navigate('/field-agent')} className="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] py-1">
+                        Open Field Agent Portal
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* INTERACTIVE LEAFLET MAP */}
@@ -1096,9 +1272,14 @@ export const BrightConnectionDemo = () => {
                     </CardTitle>
                   </div>
 
-                  <Button size="sm" onClick={handleExportCSV} className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs">
-                    <Download className="h-4 w-4 mr-1.5" /> Export CSV Ledger
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" onClick={() => setShowDispatchModal(true)} className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs">
+                      <Send className="h-4 w-4 mr-1.5" /> Dispatch Field Agent Job
+                    </Button>
+                    <Button size="sm" onClick={handleExportCSV} className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs">
+                      <Download className="h-4 w-4 mr-1.5" /> Export CSV Ledger
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
 
@@ -1260,6 +1441,16 @@ export const BrightConnectionDemo = () => {
         )}
 
       </div>
+
+      <CreateFieldTaskModal
+        isOpen={showDispatchModal}
+        onClose={() => setShowDispatchModal(false)}
+        initialDealer={storeContext}
+        onSuccess={(task) => {
+          setDispatchedTask(task);
+          toast.success(`Job ${task?.taskId || ''} dispatched to Field Agent!`);
+        }}
+      />
     </div>
   );
 };

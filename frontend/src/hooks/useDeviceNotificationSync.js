@@ -1,22 +1,28 @@
 import { useEffect, useCallback } from 'react';
 import { deviceNotificationService } from '@/services/deviceNotificationService';
 import { dashboardAPI } from '@/services/api/dashboardAPI';
+import { useAuth } from '@/context/MongoAuthContext';
 
 /**
  * Hook to automatically synchronize incoming SETU notifications with hardware device push notifications.
  * Periodically checks for new unread system alerts & listens to global alert dispatch events.
  */
 export const useDeviceNotificationSync = () => {
+  const { user } = useAuth();
+  const isStaff = user?.role === 'admin' || user?.role === 'manager';
+
   const syncNotifications = useCallback(async () => {
     try {
-      // 1. Fetch backend API alerts
+      // 1. Fetch backend API alerts (Admin/Manager only — skip for field_agent/customer/seller to avoid 403s)
       let apiAlerts = [];
-      try {
-        const response = await dashboardAPI.getAlerts();
-        const rawAlerts = response.data?.data?.alerts || response.data?.alerts || (Array.isArray(response.data) ? response.data : []);
-        apiAlerts = Array.isArray(rawAlerts) ? rawAlerts : [];
-      } catch (err) {
-        // Backend API silent fallback
+      if (isStaff) {
+        try {
+          const response = await dashboardAPI.getAlerts();
+          const rawAlerts = response.data?.data?.alerts || response.data?.alerts || (Array.isArray(response.data) ? response.data : []);
+          apiAlerts = Array.isArray(rawAlerts) ? rawAlerts : [];
+        } catch (err) {
+          // Backend API silent fallback
+        }
       }
 
       // Format backend alerts
@@ -39,7 +45,7 @@ export const useDeviceNotificationSync = () => {
     } catch (error) {
       console.warn('Error syncing device push notifications:', error);
     }
-  }, []);
+  }, [isStaff]);
 
   useEffect(() => {
     // Initial sync on component mount

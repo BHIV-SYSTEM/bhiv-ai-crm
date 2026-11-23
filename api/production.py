@@ -33,6 +33,7 @@ sys.path.insert(0, str(ROOT / "backend"))
 from evaluation_engine.rule_engine import EvaluationContext, EvaluationResult, RuleEngine
 from integrations.local_llm_client import LocalLLMClient, MitraQueryRequest, MitraQueryResponse
 from security.middleware import SecurityGovernanceMiddleware
+from setu.bright_connection_pdf_ingestor import ingest_receivable_pdf, load_ingested_receivables
 from task_selector.review_orchestrator import (
     ConcurrencyConflictError,
     InvalidStateTransitionError,
@@ -62,6 +63,36 @@ TENANTS_DB: Dict[str, Dict[str, Any]] = {
         ],
     }
 }
+
+
+def _sync_bright_receivables_to_tenant(data: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+    receivables = data or load_ingested_receivables()
+    if not receivables:
+        return None
+    tenant = TENANTS_DB["tenant_bright_connection"]
+    tenant["gstin"] = receivables.get("metadata", {}).get("gstin")
+    tenant["group"] = receivables.get("metadata", {}).get("group")
+    tenant["receivable_summary"] = {
+        "report_id": receivables.get("report_id"),
+        "report_date": receivables.get("metadata", {}).get("report_date"),
+        "total_customers": receivables.get("total_customers"),
+        "total_amount": receivables.get("total_amount"),
+        "source_file": receivables.get("metadata", {}).get("source_file"),
+    }
+    tenant["records"] = [
+        {
+            "record_id": c["customer_id"],
+            "store_id": c["customer_id"],
+            "customer_name": c["customer_name"],
+            "balance": c["total_pending_amount"],
+            "max_overdue_days": c.get("max_overdue_days", 0),
+        }
+        for c in receivables.get("customers", [])
+    ]
+    return receivables
+
+
+_sync_bright_receivables_to_tenant()
 
 app = FastAPI(
     title="PARIKSHAK & NIYANTRAN Production Runtime API",
@@ -337,6 +368,61 @@ def process_bright_field_visit(payload: FieldVisitIngestRequest) -> Dict[str, An
 @app.post("/api/v1/bright/field-visits", tags=["bright_connection"])
 async def ingest_bright_field_visit(payload: FieldVisitIngestRequest):
     return process_bright_field_visit(payload)
+
+
+class ReceivablePdfIngestRequest(BaseModel):
+    file_path: Optional[str] = None
+    sync_id: Optional[str] = None
+
+
+@app.post("/api/v1/bright/receivables/ingest", tags=["bright_connection"])
+async def ingest_bright_receivables(request: Optional[ReceivablePdfIngestRequest] = None):
+    """Ingest Bright Connection Receivable PDF into SETU & Pravah ledger."""
+    pdf_path = (request.file_path if request and request.file_path else str(ROOT / "Receivable-22 Sept 26.pdf"))
+    canonical = ingest_receivable_pdf(pdf_path=pdf_path, sync_id=request.sync_id if request else None)
+    _sync_bright_receivables_to_tenant(canonical)
+    ledger.append_event(
+        stream_id="bright_receivables",
+        event_type="RECEIVABLE_PDF_INGESTED",
+        payload={
+            "report_id": canonical["report_id"],
+            "total_customers": canonical["total_customers"],
+            "total_amount": canonical["total_amount"],
+            "source_file": canonical["metadata"].get("source_file"),
+        },
+    )
+    return {
+        "success": True,
+        "tenant_id": "tenant_bright_connection",
+        "report_id": canonical["report_id"],
+        "total_customers": canonical["total_customers"],
+        "total_amount": canonical["total_amount"],
+        "validation": canonical["validation"],
+    }
+
+
+@app.get("/api/v1/bright/receivables", tags=["bright_connection"])
+async def get_bright_receivables(search: str = "", min_overdue_days: int = 0, limit: int = 50):
+    """Query ingested Bright Connection Receivable Ledger records."""
+    receivables = load_ingested_receivables()
+    if not receivables:
+        raise HTTPException(status_code=404, detail="No Bright Connection receivables ingested yet")
+    customers = receivables.get("customers", [])
+    if search:
+        q = search.lower()
+        customers = [c for c in customers if q in c.get("customer_name", "").lower()]
+    if min_overdue_days > 0:
+        customers = [c for c in customers if (c.get("max_overdue_days") or 0) >= min_overdue_days]
+    return {
+        "success": True,
+        "tenant_id": "tenant_bright_connection",
+        "report_id": receivables.get("report_id"),
+        "metadata": receivables.get("metadata"),
+        "total_customers": receivables.get("total_customers"),
+        "total_amount": receivables.get("total_amount"),
+        "matched_count": len(customers),
+        "customers": customers[:limit],
+    }
 
 
 # ── Tenant Lifecycle & Isolation ──────────────────────────────────────────────

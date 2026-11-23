@@ -40,29 +40,37 @@ export const fieldAgentAPI = {
   },
 
   async submitProof(taskId, fileOrRef, maybeImage = null) {
-    let file = fileOrRef;
-    const candidateDataUrl = (typeof maybeImage === 'string' && maybeImage.startsWith('data:image'))
-      ? maybeImage
-      : (typeof fileOrRef === 'string' && fileOrRef.startsWith('data:image'))
-        ? fileOrRef
-        : null;
+    let file = fileOrRef instanceof File || fileOrRef instanceof Blob ? fileOrRef : null;
 
-    if (candidateDataUrl) {
-      const arr = candidateDataUrl.split(',');
-      const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
-      const bstr = atob(arr[1]);
-      let n = bstr.length;
-      const u8arr = new Uint8Array(n);
-      while (n--) {
-        u8arr[n] = bstr.charCodeAt(n);
+    if (!file) {
+      const candidateDataUrl =
+        typeof maybeImage === 'string' && maybeImage.startsWith('data:image')
+          ? maybeImage
+          : typeof fileOrRef === 'string' && fileOrRef.startsWith('data:image')
+            ? fileOrRef
+            : null;
+
+      if (candidateDataUrl) {
+        const arr = candidateDataUrl.split(',');
+        const rawMime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+        const mime = ['image/jpeg', 'image/png', 'image/webp'].includes(rawMime) ? rawMime : 'image/jpeg';
+        const ext = mime === 'image/png' ? 'png' : mime === 'image/webp' ? 'webp' : 'jpg';
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+          u8arr[n] = bstr.charCodeAt(n);
+        }
+        file = new File([u8arr], `storefront_proof.${ext}`, { type: mime });
       }
-      file = new File([u8arr], 'storefront_proof.jpg', { type: mime });
+    }
+
+    if (!file) {
+      throw new Error('Please select or capture a valid JPEG, PNG, or WebP image.');
     }
 
     const formData = new FormData();
-    if (file instanceof Blob || file instanceof File) {
-      formData.append('file', file);
-    }
+    formData.append('file', file);
 
     const response = await apiClient.post(
       `${FIELD_AGENT_BASE}/tasks/${encodeURIComponent(taskId)}/proof`,
